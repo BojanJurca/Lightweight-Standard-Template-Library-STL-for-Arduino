@@ -19,7 +19,7 @@ void setup () {
 
     // Serial (console) input
     int i;
-    cout << "Please enter an integer: ";
+    cout << "Please enter an integer ... ";
     cin >> i;
 
     // Serial (console) output
@@ -39,6 +39,7 @@ CString.hpp defines a class template for C char arrays with C++ operators that d
 
 void setup () {
     Cstring<15> cs3 = "abc";              // cs3 can hold max 15 characters and is assigned "abc" value after construction
+    cs3 += "def";
     string s;                             // equivalent of Cstring<300>
 }
 ```
