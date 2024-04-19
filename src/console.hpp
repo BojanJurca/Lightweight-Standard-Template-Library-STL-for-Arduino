@@ -1,9 +1,9 @@
 /*
- *  console.hpp for Arduino (ESP boards)
+ *  console.hpp for Arduino
  * 
- *  This file is part of C++ std package for Arduino: https://github.com/BojanJurca/std-package-for-Arduino
+ *  This file is part of C++ std package for Arduino: https://github.com/BojanJurca/console-string-vector-map-for-Arduino
  * 
- *  April 27, 2024, Bojan Jurca
+ * Bojan Jurca, April 18, 2024
  *  
  */
 
@@ -21,11 +21,12 @@
 
 
     // Serial initialization
-    void cinit (bool waitForSerial = false, unsigned int serialSpeed = 115200) {
+    void cinit (bool waitForSerial = false, unsigned int serialSpeed = 115200, unsigned int waitAfterSerial = 1000) {
         Serial.begin (serialSpeed);
         if (waitForSerial)
             while (!Serial) 
                 delay (10);
+        delay (waitAfterSerial);
     }    
 
 
@@ -55,6 +56,23 @@
             // Cout << vector<T>
             template<typename T>
             Cout& operator << (vector<T>& value) {
+                bool first = true;
+                Serial.print ("[");
+                for (auto e: value) {
+                    if (!first)
+                        Serial.print (",");
+                    first = false;
+                    this->operator<<(e);
+                }
+                Serial.print ("]");
+                return *this;
+            }
+        #endif
+
+        #ifdef __QUEUE_HPP__
+            // Cout << queue<T, N>
+            template<typename T, size_t N>
+            Cout& operator << (queue<T, N>& value) {
                 bool first = true;
                 Serial.print ("[");
                 for (auto e: value) {
