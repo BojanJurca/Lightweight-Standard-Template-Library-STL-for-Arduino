@@ -1,8 +1,11 @@
 #include "std/Map.hpp"
 
+
 void setup () {
     Serial.begin (115200);
-    while (!Serial) delay (10);
+    while (!Serial) 
+        delay (10);
+    delay (1000);
 
 
     // Quick test
@@ -136,12 +139,9 @@ void setup () {
                         break;
                 }
                 unsigned long endMillis = millis ();
-                Serial.printf ("Free heap: %lu, free PSRAM: %lu\n", ESP.getFreeHeap (), ESP.getFreePsram ());
                 mp6.clear ();
-                Serial.printf ("Maximum number of Map<unsigned long, unsigned long> in the memory is %lu\n", l); // ESP32-S2: heap: 64231, PSRAM: 58197
-                Serial.printf ("Average insert time = %lu us\n", (endMillis - startMillis) * 1000 / l);
-                Serial.printf ("Free heap: %lu, free PSRAM: %lu\n", ESP.getFreeHeap (), ESP.getFreePsram ());
-
+                Serial.println ("Maximum number of Map<unsigned long, unsigned long> in the memory is " + String (l));
+                Serial.println ("Average insert time = " + String ((float) (endMillis - startMillis) * 1000 / (float) l) + " us");
 }
 
 void loop () {
