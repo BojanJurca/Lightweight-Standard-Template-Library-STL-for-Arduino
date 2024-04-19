@@ -1,8 +1,11 @@
 #include "std/vector.hpp"
 
+
 void setup () {
     Serial.begin (115200);
-    while (!Serial) delay (10);
+    while (!Serial) 
+        delay (10);
+    delay (1000);
 
 
     // Quick test
@@ -12,8 +15,7 @@ void setup () {
     v.push_back ('c');
     Serial.println (v [1]);
     for (auto e: v)
-        Serial.println (String (e));    
-
+        Serial.println (e);    
 
     // Examples of vector constructors
     vector<String> v1;                          // empty vector of Strings
@@ -24,6 +26,10 @@ void setup () {
 
     // Examples of vector assignment
     v2 = { 3, 2, 1 };                           // assignment from brace enclosed initializer list
+    v2.clear ();
+    v2.push_back (3);
+    v2.push_back (2);
+    v2.push_back (1);
     v3 = v2;                                    // assignemnt from another vector
 
 
@@ -73,10 +79,10 @@ void setup () {
     // Finding min and max elements of the vector
     auto minElement = min_element (v2);
     if (minElement)                             // check if min element is found (if v3 is not empty)
-        Serial.printf ("min element of v2 = %i\n", *minElement);
+        Serial.println ("min element of v2 = " + String (*minElement));
     auto maxElement = max_element (v2);
     if (maxElement)                             // check if max element is found (if v3 is not empty)
-        Serial.printf ("max element of v2 = %i\n", *maxElement);
+        Serial.println ("max element of v2 = " + String (*maxElement));
 
 
     // Detecting errors that occured in vector operations
@@ -86,14 +92,13 @@ void setup () {
         Serial.println ("push_back succeeded");
     else {
         // report error or check flags
-        Serial.printf ("insert error: ");
+        Serial.print ("insert error: ");
         switch (e) {
-            case BAD_ALLOC:       Serial.printf ("BAD_ALLOC\n"); break;
-            case OUT_OF_RANGE:    Serial.printf ("OUT_OF_RANGE\n"); break;
-            case NOT_FOUND:       Serial.printf ("NOT_FOUND\n"); break;
+            case BAD_ALLOC:       Serial.print ("BAD_ALLOC\n"); break;
+            case OUT_OF_RANGE:    Serial.print ("OUT_OF_RANGE\n"); break;
+            case NOT_FOUND:       Serial.print ("NOT_FOUND\n"); break;
         }
     }
-        
 
     // Checking if an error has occurred only once after many vector operations
     v1.clearErrorFlags ();  // clear possible error flags from previous operations
@@ -104,7 +109,7 @@ void setup () {
     if (!e) // OK
         Serial.println ("100 push_backs succeeded");
     else {
-        Serial.printf ("an error occured at least once in 100 push_backs: ");  // check flags for details
+        Serial.print (String (v1.size ()) + " push_backs succeeded, but an error has occured at least once: ");  // check flags for details
         // or check specific error
         if (e & BAD_ALLOC) Serial.println ("BAD_ALLOC");       
         if (e & OUT_OF_RANGE) Serial.println ("OUT_OF_RANGE");   
@@ -119,19 +124,6 @@ void setup () {
                 v4.clear ();
 
                 vector<unsigned long> v5;
-                #ifdef __USE_PSRAM_FOR_VECTORS__
-                    size_t r = ESP.getFreePsram () / sizeof (unsigned long);
-                    while (v5.reserve (r)) {
-                        Serial.printf ("PSRAM reserve (%lu) failed\n", r);
-                        r -= 100;
-                    }
-                #else
-                    size_t r = heap_caps_get_largest_free_block (MALLOC_CAP_DEFAULT) / sizeof (unsigned long);
-                    while (v5.reserve (r)) {
-                        Serial.printf ("Heap reserve (%lu) failed\n", r);
-                        r -= 100;
-                    }
-                #endif
                 unsigned long l;
                 unsigned long startMillis = millis ();
                 for (l = 1; l <= 1000000; l++) {
@@ -139,12 +131,17 @@ void setup () {
                         break;
                 }
                 unsigned long endMillis = millis ();
-                Serial.printf ("Free heap: %lu, free PSRAM: %lu\n", ESP.getFreeHeap (), ESP.getFreePsram ());
                 // for (auto e: v5) Serial.println (e);
                 v5.clear ();
-                Serial.printf ("Maximum number of vector<unsigned long> elements in the memory is %lu\n", l); // ESP32-S2: heap: 516094, PSRAM: 516076
-                Serial.printf ("Average push_back time = %lf us\n", l, (double) (endMillis - startMillis) * 1000 / l);
-                Serial.printf ("Free heap: %lu, free PSRAM: %lu\n", ESP.getFreeHeap (), ESP.getFreePsram ());
+                Serial.println ("Maximum number of vector<unsigned long> elements in the memory (without prior reservation) is " + String (l));
+                Serial.println ("Average push_back time (without prior reservation of memory) = " + String ((float) (endMillis - startMillis) * 1000 / (float) l) + " us");
+
+
+    // Try something more complicated for the end
+    vector<vector<float>> matrix;
+    vector<float> line;
+    line.push_back (1.0);
+    matrix.push_back (line);
 }
 
 void loop () {
