@@ -1,8 +1,12 @@
 #include "std/Cstring.hpp"
 
+
 void setup () {
     Serial.begin (115200);
-    while (!Serial) delay (10);
+    while (!Serial) 
+        delay (10);
+    delay (1000);
+
 
     // Examples of Cstring constructors
     Cstring<10> cs1;                      // cs1 can hold max 10 characters and is empty when constructed
@@ -141,7 +145,6 @@ void setup () {
             Serial.printf ("Sjson length: %i : %s\n", Sjson.length (), Sjson.c_str ()); 
             Serial.printf ("Sjson construction finished in %lu milliseconds\n", millisEnd - millisStart);
             // output: Sjson construction finished in 2 milliseconds
-
 }
 
 void loop () {
