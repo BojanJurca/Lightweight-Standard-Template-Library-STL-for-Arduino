@@ -1,4 +1,4 @@
-# C++ std package for Arduino: console, strings, vectors and maps (ESP boards)
+# C++ std package for Arduino: console, strings, vectors, queues and maps
 
 
 Four libraries that bring some std STL functionality to Arduino. They can be used together or completely independently one from another.
@@ -61,6 +61,22 @@ v.push_back ('c');
 Serial.println (v [1]);                   // address vector's element by it's position
 for (auto e: v)                           // iterate through vector elements
     Serial.println (String (e));  
+```
+
+
+### queues
+
+
+Circular queues with an extra flag to keep and report the information about errors that occured during queue operations. Queues reside either on the stack or global memory, heap or in PSRAM (if it is available).
+
+```C++
+#include "std/queue.hpp"
+
+queue<int, 10> q;                         // create a circular queue of integers containing max 10 elements
+for (int i = 0; i < 100; i ++)
+    q.push_back (i);                      // add elements
+for (int i = q.size () - 1; i >= 0; i--)  // list all queue elements in FIFO order
+    Serial.println (q [i]);
 ```
 
 
