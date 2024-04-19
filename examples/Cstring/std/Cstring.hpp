@@ -1,7 +1,7 @@
 /*
  * Cstring.hpp for Arduino (ESP boards)
  * 
- * This file is part of C++ std package for Arduino: https://github.com/BojanJurca/std-package-for-Arduino
+ * This file is part of C++ std package for Arduino: https://github.com/BojanJurca/console-string-vector-map-for-Arduino
  * 
  * Bojan Jurca, April 27, 2024
  *  
