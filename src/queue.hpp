@@ -1,5 +1,5 @@
 /*
- *  queue.hpp for Arduino - circular queue with defined maxSize, a more simple version of vector
+ *  queue.hpp for Arduino (ESP boards) - circular queue with defined maxSize, a more simple version of vector
  * 
  *  This file is part of C++ std package for Arduino: https://github.com/BojanJurca/std-package-for-Arduino
  * 
@@ -11,7 +11,7 @@
  *                              |<---------------- maxSize ------------>|  
  *
  * 
- *  Bojan Jurca, April 18, 2024
+ *  Bojan Jurca, April 20, 2024
  * 
  */
 
@@ -60,12 +60,26 @@
             */
       
             queue () {
-                // different ways of memory allocation for the queue
+                // allocate new memory for the queue
                 #if QUEUE_MEMORY_TYPE == PSRAM_MEM
-                    __elements__ = new (ps_malloc (sizeof (queueType) * maxSize)) queueType [maxSize];
+                    __elements__ = (queueType *) ps_malloc (sizeof (queueType) * maxSize);
                 #elif QUEUE_MEMORY_TYPE == HEAP_MEM
-                    __elements__ = new (std::nothrow) queueType [maxSize];
-                #endif // STACK_OR_GLOBAL_MEM: memory is allocated in private section
+                    __elements__ = (queueType *) malloc (sizeof (queueType) * maxSize);
+                #else // use stack or global memory
+                    // __elemets__ aray is already created
+                #endif
+                if (__elements__ == NULL) {
+                    #ifdef __THROW_QUEUE_EXCEPTIONS__
+                        throw BAD_ALLOC;
+                    #endif
+                    __errorFlags__ |= BAD_ALLOC;
+                }
+
+                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    new (__elements__) queueType [maxSize]; 
+                #else                 
+                    // we can skip this step but won't be able to use objects as queue elements then
+                #endif
 
                 if (__elements__ == NULL) {
                     #ifdef __THROW_QUEUE_EXCEPTIONS__
@@ -82,7 +96,11 @@
             
             ~queue () { 
                 #if QUEUE_MEMORY_TYPE != STACK_OR_GLOBAL_MEM
-                    if (__elements__ != NULL) delete [] __elements__; 
+                    if (__elements__ != NULL) {
+                        for (int i = 0; i < maxSize; i++)
+                            __elements__ [i].~queueType ();
+                        free (__elements__);
+                    }
                 #endif
             }
 
@@ -272,23 +290,10 @@
             Iterator begin () { return Iterator (this, 0); }  
 
             Iterator begin (queueType *p) { 
-
               int absPos = (p - __elements__) / sizeof (queueType);
-              Serial.printf ("absPos %i\n", absPos);
-              
-              // at = (__front__ + position) % maxSize bbbbbbbbbbbbbbbbbbbbbbb
-
-              // pos = at - front = at + maxSizwe
               int relPos = absPos >= __front__ ?  absPos - __front__ :  maxSize - (__front__ - absPos);
               return Iterator (this, relPos);
-
-
-              // return Iterator (this, changeNumber >= __front__ ?  changeNumber - __front__ :  maxSize - (__front__ - changeNumber)); 
-              
-              } // start iterating at a given element address - calculate position from it
-
-
-
+            } // start iterating at a given element address - calculate position from it
 
             Iterator end () { return Iterator (this, this->size () - 1); }
 
@@ -333,12 +338,29 @@
             */
       
             queue () {
-                // different ways of memory allocation for the queue
+                // allocate new memory for the queue
                 #if QUEUE_MEMORY_TYPE == PSRAM_MEM
-                    __elements__ = new (ps_malloc (sizeof (String) * maxSize)) String [maxSize];
+                    __elements__ = (String *) ps_malloc (sizeof (String) * maxSize);
                 #elif QUEUE_MEMORY_TYPE == HEAP_MEM
-                    __elements__ = new (std::nothrow) String [maxSize];
-                #endif // STACK_OR_GLOBAL_MEM: memory is allocated in private section
+                    __elements__ = (String *) malloc (sizeof (String) * maxSize);
+                #else // use stack or global memory
+                    // __elemets__ aray is already created
+                #endif
+
+                if (__elements__ == NULL) {
+                    #ifdef __THROW_QUEUE_EXCEPTIONS__
+                        throw BAD_ALLOC;
+                    #endif
+                    __errorFlags__ |= BAD_ALLOC;
+                }
+
+                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    new (__elements__) String [maxSize]; 
+                #else                 
+                    // if this is not supported by older boards, we can use the following instead:
+                    memset (__elements__, 0, sizeof (String) * maxSize); // prevent caling String destructors at the following assignments
+                    for (int i = 0; i < maxSize; i++) __elements__ [i] = String (); // assign empty String
+                #endif
 
                 if (__elements__ == NULL) {
                     #ifdef __THROW_QUEUE_EXCEPTIONS__
@@ -355,7 +377,13 @@
             
             ~queue () { 
                 #if QUEUE_MEMORY_TYPE != STACK_OR_GLOBAL_MEM
-                    if (__elements__ != NULL) delete [] __elements__; 
+                    if (__elements__ != NULL) {
+                        #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                            for (int i = 0; i < maxSize; i++)
+                                __elements__ [i].~String ();
+                        #endif
+                        free (__elements__);
+                    }
                 #endif
             }
 

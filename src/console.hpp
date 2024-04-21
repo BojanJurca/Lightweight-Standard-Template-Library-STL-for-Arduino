@@ -1,9 +1,9 @@
 /*
- *  console.hpp for Arduino
+ *  console.hpp for Arduino (ESP boards)
  * 
  *  This file is part of C++ std package for Arduino: https://github.com/BojanJurca/console-string-vector-map-for-Arduino
  * 
- * Bojan Jurca, April 18, 2024
+ *  April 20, 2024, Bojan Jurca
  *  
  */
 
@@ -21,13 +21,23 @@
 
 
     // Serial initialization
-    void cinit (bool waitForSerial = false, unsigned int serialSpeed = 115200, unsigned int waitAfterSerial = 1000) {
-        Serial.begin (serialSpeed);
-        if (waitForSerial)
-            while (!Serial) 
-                delay (10);
-        delay (waitAfterSerial);
-    }    
+    #ifdef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+        void cinit (bool waitForSerial = false, unsigned int serialSpeed = 9600, unsigned int waitAfterSerial = 1000) {
+            Serial.begin (serialSpeed);
+            if (waitForSerial)
+                while (!Serial) 
+                    delay (10);
+            delay (waitAfterSerial);
+        }
+    #else
+        void cinit (bool waitForSerial = false, unsigned int serialSpeed = 115200, unsigned int waitAfterSerial = 1000) {
+            Serial.begin (serialSpeed);
+            if (waitForSerial)
+                while (!Serial) 
+                    delay (10);
+            delay (waitAfterSerial);
+        }
+    #endif
 
 
     // cout
@@ -47,7 +57,7 @@
             // Cout << Ctring<N>
             template<size_t N>
             Cout& operator << (const Cstring<N>& value) {
-                Serial.printf ((char *) &value);            
+                Serial.print ((char *) &value);            
                 return *this;
             }
         #endif
