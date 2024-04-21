@@ -3,7 +3,7 @@
 
 void setup () {
     // Serial (console) initialization
-    cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200, unsigned int waitAfterSerial = 1000
+    cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200 (9600 for Mega or Uno), unsigned int waitAfterSerial = 1000
 
     // Serial (console) input
     int i;
