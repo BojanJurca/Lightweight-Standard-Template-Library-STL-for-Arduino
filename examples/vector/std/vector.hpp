@@ -32,7 +32,7 @@
     #define __VECTOR_HPP__
 
 
-    // ----- TUNNING PARAMETERS ----- 
+    // ----- TUNNING PARAMETERS -----
 
     // #define __THROW_VECTOR_EXCEPTIONS__  // uncomment this line if you want vector to throw exceptions
 
@@ -75,7 +75,7 @@
             
             vector (int increment = 1) { __increment__ = increment < 1 ? 1 : increment; }
 
-            #if defined (ESP32) || defined (ESP8266) // brace enclosed initializer list is supported for ESP boards
+            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
                 /*
                     *  Constructor of vector from brace enclosed initializer list allows the following kinds of creation of vectors: 
                     *  
@@ -100,8 +100,10 @@
             
             ~vector () { 
                 if (__elements__ != NULL) {
-                    for (int i = 0; i < __capacity__; i++)
-                        __elements__ [i].~vectorType ();
+                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                        for (int i = 0; i < __capacity__; i++)
+                            __elements__ [i].~vectorType ();
+                    #endif
                     free (__elements__);
                 }
             }
@@ -669,8 +671,10 @@
                 if (newCapacity == 0) {
                     // delete old buffer
                     if (__elements__ != NULL) {
-                        for (int i = 0; i < __capacity__; i++)
-                            __elements__ [i].~vectorType ();
+                        #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                            for (int i = 0; i < __capacity__; i++)
+                                __elements__ [i].~vectorType ();
+                        #endif
                         free (__elements__);
                     }
                     
@@ -697,8 +701,11 @@
                     return BAD_ALLOC;
                 }
 
-                new (newElements) vectorType [newCapacity]; 
-                // this is not supported by older boards, we can skip this step but won't be able to use objects as vector elements then
+                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    new (newElements) vectorType [newCapacity]; 
+                #else                 
+                    // we can skip this step but won't be able to use objects as vector elements then
+                #endif
 
                 // copy existing elements to the new buffer
                 if (deleteElementAtPosition >= 0) __size__ --;      // one element will be deleted
@@ -719,8 +726,10 @@
 
                 // delete the old elements' buffer
                 if (__elements__ != NULL) {
-                    for (int i = 0; i < __capacity__; i++)
-                        __elements__ [i].~vectorType ();
+                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                        for (int i = 0; i < __capacity__; i++)
+                            __elements__ [i].~vectorType ();
+                    #endif
                     free (__elements__);
                 }
                 
@@ -783,7 +792,7 @@
             vector (int increment = 1) { __increment__ = increment < 1 ? 1 : increment; }
 
 
-            #if defined (ESP32) || defined (ESP8266) // brace enclosed initializer list is supported for ESP boards
+            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
                 /*
                     *  Constructor of vector from brace enclosed initializer list allows the following kinds of creation of vectors: 
                     *  
@@ -1424,10 +1433,13 @@
                     return BAD_ALLOC;
                 }
 
-                new (newElements) String [newCapacity];
-                // if this is not supported by older boards, we can use the following instead:
-                //  memset (newElements, 0, sizeof (String) * newCapacity); // prevent caling String destructors at the following assignments
-                //  for (int i = 0; i < newCapacity; i++) newElements [i] = String (); // assign empty String
+                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    new (newElements) String [newCapacity];
+                #else
+                    // if this is not supported by older boards, we can use the following instead:
+                    memset (newElements, 0, sizeof (String) * newCapacity); // prevent caling String destructors at the following assignments
+                    for (int i = 0; i < newCapacity; i++) newElements [i] = String (); // assign empty String
+                #endif
 
                 // copy existing elements to the new buffer
                 if (deleteElementAtPosition >= 0) __size__ --;      // one element will be deleted
