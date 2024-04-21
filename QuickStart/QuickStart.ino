@@ -29,7 +29,7 @@ void setup () {
 
     string s;                                                 // create a Cstring of max 25 characters on the stack
     string t;                                                 // create a Cstring with (default) max 300 characters
-    s = "thirtytree";                                         // initialize the Cstring
+    s = "thirty tree";                                        // initialize the Cstring
     s = s + ", ...";                                          // calculate with Cstring
     cout << s << endl;
 
