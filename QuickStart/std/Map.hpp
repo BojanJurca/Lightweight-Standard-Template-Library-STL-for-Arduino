@@ -7,7 +7,7 @@
  *
  * Map functions are not thread-safe.
  * 
- * Bojan Jurca, April 18, 2024
+ * Bojan Jurca, April 20, 2024
  *  
  */
 
@@ -66,36 +66,38 @@
             Map () {}
 
     
-           /*
-            *  Constructor of Map from brace enclosed initializer list allows the following kinds of creation of Map pairs: 
-            *  
-            *     Map<int, String> mpB = { {1, "one"}, {2, "two"} };
-            *     Map<int, String> mpC ( { {1, "one"}, {2, "two"} } );
-            */
-      
-            Map (std::initializer_list<Pair> il) {
-                for (auto i: il) {
+          #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+               /*
+                *  Constructor of Map from brace enclosed initializer list allows the following kinds of creation of Map pairs: 
+                *  
+                *     Map<int, String> mpB = { {1, "one"}, {2, "two"} };
+                *     Map<int, String> mpC ( { {1, "one"}, {2, "two"} } );
+                */
+          
+                Map (std::initializer_list<Pair> il) {
+                    for (auto i: il) {
 
-                    if (std::is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                        if (!i.key) {                           // ... check if parameter construction is valid
-                            // log_e ("BAD_ALLOC");
-                            __errorFlags__ = BAD_ALLOC;         // report error if it is not
-                            return;
-                        }
+                        if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                            if (!i.key) {                           // ... check if parameter construction is valid
+                                // log_e ("BAD_ALLOC");
+                                __errorFlags__ = BAD_ALLOC;         // report error if it is not
+                                return;
+                            }
 
-                    if (std::is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                        if (!i.value) {                         // ... check if parameter construction is valid
-                            // log_e ("BAD_ALLOC");
-                            __errorFlags__ = BAD_ALLOC;         // report error if it is not
-                            return;
-                        }
+                        if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                            if (!i.value) {                         // ... check if parameter construction is valid
+                                // log_e ("BAD_ALLOC");
+                                __errorFlags__ = BAD_ALLOC;         // report error if it is not
+                                return;
+                            }
 
-                    __balancedBinarySearchTreeNode__ *pInserted = NULL; 
-                    signed char h = __insert__ (&__root__, i.key, i.value, &pInserted);
-                    if  (h >= 0)  // OK, h contains the balanced binary search tree height 
-                        __height__ = h;
+                        __balancedBinarySearchTreeNode__ *pInserted = NULL; 
+                        signed char h = __insert__ (&__root__, i.key, i.value, &pInserted);
+                        if  (h >= 0)  // OK, h contains the balanced binary search tree height 
+                            __height__ = h;
+                    }
                 }
-            }
+          #endif
 
 
            /*
@@ -169,7 +171,7 @@
                 // copy other's pairs
                 for (auto e: other) {
 
-                    if (std::is_same<keyType, String>::value)     // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                    if (is_same<keyType, String>::value)     // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                         if (!e->key) {                            // ... check if parameter construction is valid
                             // log_e ("BAD_ALLOC");
                             #ifdef __USE_MAP_EXCEPTIONS__
@@ -179,7 +181,7 @@
                             return this;
                         }
 
-                    if (std::is_same<valueType, String>::value)   // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                    if (is_same<valueType, String>::value)   // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                         if (!e->value) {                          // ... check if parameter construction is valid
                             // log_e ("BAD_ALLOC");
                             #ifdef __USE_MAP_EXCEPTIONS__
@@ -211,7 +213,7 @@
             
             valueType *find (keyType key) {
 
-                if (std::is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!(String *) &key) {                 // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
@@ -240,7 +242,7 @@
                 static valueType dummyValue1 = {};
                 static valueType dummyValue2 = {};
 
-                if (std::is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!(String *) &key) {                 // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
@@ -278,7 +280,7 @@
 
             signed char erase (keyType key) { 
 
-                if (std::is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!(String *) &key) {                 // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
@@ -304,7 +306,7 @@
 
             signed char insert (Pair pair) { 
 
-                if (std::is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!pair.key) {                        // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
@@ -314,7 +316,7 @@
                         return BAD_ALLOC;                   // report error if it is not
                     }
 
-                if (std::is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!pair.value) {                      // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
@@ -335,7 +337,7 @@
 
             signed char insert (keyType key, valueType value) { 
 
-                if (std::is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!key) {                             // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
@@ -345,7 +347,7 @@
                         return BAD_ALLOC;                   // report error if it is not
                     }
 
-                if (std::is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!(String *) &value) {               // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
@@ -531,10 +533,14 @@
             int __size__ = 0;
             int8_t __height__ = 0;
 
-            // we need 2 values to handle NOT_FOUND conditions
+            // we need 2 values to handle NOT_FOUND conditions with [] operator
             valueType __dummyValue1__ = {};            
             valueType __dummyValue2__ = {};          
-            
+
+            // Mega and Uno do no thave is_same implemented, so we have tio imelement it ourselves: https://stackoverflow.com/questions/15200516/compare-typedef-is-same-type
+            template<typename T, typename U> struct is_same { static const bool value = false; };
+            template<typename T> struct is_same<T, T> { static const bool value = true; };
+
             // internal functions
             
             signed char __insert__ (__balancedBinarySearchTreeNode__ **p, keyType& key, valueType& value, __balancedBinarySearchTreeNode__ **pInserted) { // returns the height of balanced binary search tree or error
@@ -544,9 +550,9 @@
                   
                     // different ways of allocation the memory for a new node
                     #if MAP_MEMORY_TYPE == PSRAM_MEM
-                        __balancedBinarySearchTreeNode__ *n = new (ps_malloc (sizeof (__balancedBinarySearchTreeNode__))) __balancedBinarySearchTreeNode__;
+                        __balancedBinarySearchTreeNode__ *n = (__balancedBinarySearchTreeNode__ *) ps_malloc (sizeof (__balancedBinarySearchTreeNode__));
                     #else
-                        __balancedBinarySearchTreeNode__ *n = new (malloc (sizeof (__balancedBinarySearchTreeNode__))) __balancedBinarySearchTreeNode__;                    
+                        __balancedBinarySearchTreeNode__ *n = (__balancedBinarySearchTreeNode__ *) malloc (sizeof (__balancedBinarySearchTreeNode__));
                     #endif
 
                     if (n == NULL) {
@@ -557,15 +563,17 @@
                         __errorFlags__ |= BAD_ALLOC;
                         return BAD_ALLOC;
                     }
+
+                    memset (n, 0, sizeof (__balancedBinarySearchTreeNode__)); // prevent caling String destructor at the following assignments
                     
                     *n = { {key, value}, NULL, NULL, 0, 0 };
                     *pInserted = n;
 
                         // in case of Strings - it is possible that key and value didn't get constructed, so just swap stack memory with parameters - this always succeeds
-                        if (std::is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                        if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                             if (!n->pair.key)                       // ... check if parameter construction is valid
                                 __swapStrings__ ((String *) &n->pair.key, (String *) &key); 
-                        if (std::is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                        if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                             if (!n->pair.value)                     // ... check if parameter construction is valid
                                 __swapStrings__ ((String *) &n->pair.value, (String *) &value);
 
