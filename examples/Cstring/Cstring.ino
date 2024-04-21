@@ -3,7 +3,7 @@
 
 void setup () {
     Serial.begin (115200);
-    while (!Serial) 
+    while (!Serial)
         delay (10);
     delay (1000);
 
@@ -20,11 +20,10 @@ void setup () {
     // Examples of Cstring usage
         // as C char array:
         Serial.println (cs2);
-        Serial.printf ("%s\n", cs2);
-        Serial.printf ("%s\n", &cs2 [3]);
+        Serial.print (cs2);
         char *f = stristr (cs3, "J");
         if (f)
-            Serial.printf ("%s\n", f);
+            Serial.print (f);
 
         // as Arduino String:
         Serial.println (cs2);
@@ -76,34 +75,19 @@ void setup () {
     cs3.clearErrorFlags (); // clear possible error flags from previous operations
     cs3 = cs2 + "123456789"; // please note that cs2 and cs3 are of the same type! (Cstring<15>) and the length exceeds 15 characters
     if (cs3.errorFlags ()) {
-        Serial.printf ("cs3 = %s, but there was an error %i while calculating its value\n", cs3, cs3.errorFlags ());  // in spite of the error Cstring is still fully initialized up to the maximum number of characters it can contain
+        Serial.print ("cs3 = "); Serial.print (cs3); Serial.print (" but there was an error %i while calculating its value: "); Serial.println (cs3.errorFlags ());
         if (cs3.errorFlags () & OVERFLOW) Serial.println ("OVERFLOW");                                                // if the content should actually be longer than it fits into csString
         if (cs3.errorFlags () & OUT_OF_RANGE) Serial.println ("OUT_OF_RANGE");                                        // if substr or substring addressed non-existing position
     }
 
 
     cs3 = cs2.substr (11, 3); // please note that error information from operands is passed to the result
-    Serial.printf ("   cs3 = %s, cs3.errorFlags () = %i\n", cs3, cs3.errorFlags ());
+    Serial.print ("cs3 = "); Serial.println (cs3); 
     if (cs3.errorFlags ()) {
-        Serial.printf ("cs3 = %s, but there was an error %i while calculating its value\n", cs3, cs3.errorFlags ());  // in spite of the error Cstring is still calculated from the data that is available
-        if (cs3.errorFlags () & OVERFLOW) Serial.println ("OVERFLOW");                                                // if the content should actually be longer than it fits into csString
-        if (cs3.errorFlags () & OUT_OF_RANGE) Serial.println ("OUT_OF_RANGE");                                        // if substr or substring addressed non-existing position
+        Serial.print ("... but there was an error %i while calculating its value: "); Serial.println (cs3.errorFlags ()); // in spite of the error Cstring is still calculated from the data that is available
+        if (cs3.errorFlags () & OVERFLOW) Serial.println ("OVERFLOW");                                                                                              // if the content should actually be longer than it fits into csString
+        if (cs3.errorFlags () & OUT_OF_RANGE) Serial.println ("OUT_OF_RANGE");                                                                                      // if substr or substring addressed non-existing position
     }
-
-
-    // memory efficiency of Cstring compared to Arduino String and std::string (demonstration for this particular case only, efficiency depends on the lenght of the text):
-
-            // Cstring uses only global or stack memory (unless you explicitly put it on the heap), so all the memory used will be sizeof (ftest)
-            Cstring<30> ftest = "This is not bad at all.";
-            Serial.printf ("Cstring<30> ftest uses %i bytes of stack memory (always N + 3), storage efficiency = %f\n", sizeof (ftest), (float) ftest.length () / (float) sizeof (ftest));
-            // output: Cstring<30> ftest uses 33 bytes of stack memory (always N + 3), storage efficiency = 0.696970
-
-            // Arduino String uses global or stack memory, but also the heap
-            size_t heapStart = ESP.getFreeHeap ();
-            String Stest = "This is not bad at all.";
-            size_t heapUsed = heapStart - ESP.getFreeHeap ();
-            Serial.printf ("String Stest uses %i bytes of stack memory (always 16) but also %i bytes of heap, altogether %i bytes, storage efficiency = %f\n", sizeof (Stest), heapUsed, sizeof (Stest) + heapUsed, (float) Stest.length () / (float) (sizeof (Stest) + heapUsed));
-            // output: String Stest uses 16 bytes of stack memory (always 16) but also 48 bytes of heap, altogether 64 bytes, storage efficiency = 0.359375
 
 
     // time efficiency of Cstring compared to Arduino String and std::string (demonstration for this particular case only):
@@ -120,9 +104,9 @@ void setup () {
                 csjson += "100\"]'";
 
             unsigned long millisEnd = millis ();
-            Serial.printf ("csjson construction error? %i\n", csjson.errorFlags ()); // check success
-            Serial.printf ("csjson length: %i : %s\n", csjson.length (), csjson); 
-            Serial.printf ("csjson construction finished in %lu milliseconds\n", millisEnd - millisStart);
+            Serial.println ("csjson construction error? " + String (csjson.errorFlags ())); // check success
+            Serial.println ("csjson length: " + String (csjson.length ())); 
+            Serial.println ("csjson construction finished in " + String (millisEnd - millisStart) + " milliseconds\n");
             // output: csjson construction finished in 11 milliseconds
             //         this is more than Arduino Strings or std::strings need, for C char arrays do not keep string length information and hence JSON construction requires O(n^2) steps
 
@@ -141,9 +125,9 @@ void setup () {
                 if (!Sjson.concat ("100\"]'")) error = true;
 
             millisEnd = millis ();
-            Serial.printf ("Sjson construction error? %i\n", error); // check success
-            Serial.printf ("Sjson length: %i : %s\n", Sjson.length (), Sjson.c_str ()); 
-            Serial.printf ("Sjson construction finished in %lu milliseconds\n", millisEnd - millisStart);
+            Serial.println ("Sjson construction error? " + String (error)); // check success
+            Serial.println ("Sjson length: " + String (Sjson.length ())); 
+            Serial.println ("Sjson construction finished in " + String (millisEnd - millisStart) + " milliseconds\n");
             // output: Sjson construction finished in 2 milliseconds
 }
 
