@@ -57,7 +57,7 @@
             // Cout << Ctring<N>
             template<size_t N>
             Cout& operator << (const Cstring<N>& value) {
-                Serial.print ((char *) &value);            
+                Serial.print ((char *) &value);
                 return *this;
             }
         #endif
