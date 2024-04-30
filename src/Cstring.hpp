@@ -15,20 +15,23 @@
         // missing C function in Arduino
         char *stristr (const char *haystack, const char *needle) { 
             if (!haystack || !needle) return NULL; // nonsense
-            int nCheckLimit = strlen (needle);                     
-            int hCheckLimit = strlen (haystack) - nCheckLimit + 1;
-            for (int i = 0; i < hCheckLimit; i++) {
+            int n = strlen (haystack) - strlen (needle) + 1;
+            for (int i = 0; i < n; i++) {
                 int j = i;
                 int k = 0;
                 char hChar, nChar;
+                bool match = true;
                 while (*(needle + k)) {
                     hChar = *(haystack + j); if (hChar >= 'a' && hChar <= 'z') hChar -= 32; // convert to upper case
                     nChar = *(needle + k); if (nChar >= 'a' && nChar <= 'z') nChar -= 32; // convert to upper case
-                    if (nChar != hChar || hChar) break;
+                    if (hChar != nChar && nChar) {
+                        match = false;
+                        break;
+                    }
                     j ++;
                     k ++;
                 }
-                if (nChar == hChar) return (char *) haystack + i; // match!
+                if (match) return (char *) haystack + i; // match!
             }
             return NULL; // no match
         }
@@ -140,12 +143,12 @@
             }
 
 
-            // char *() operator so that Cstring can be used the same way as C strings, like; Cstring<5> a = "123"; Serial.printf ("%s\n", a);
+            // char *() operator so that Cstring can be used the same way as C char arrays, like; Cstring<5> a = "123"; Serial.printf ("%s\n", a);
             inline operator char *() __attribute__((always_inline)) { return __c_str__; }
             
 
             // = operator
-            Cstring operator = (const char *other) {           // for assigning C string to Cstring, like: a = "abc";
+            Cstring operator = (const char *other) {           // for assigning C char array to Cstring, like: a = "abc";
                 if (other) {                                                  // check if NULL char * pointer to overcome from possible programmers' errors
                     strncpy (this->__c_str__, other, N + 1);
                     if (this->__c_str__ [N]) {
@@ -159,8 +162,17 @@
             }
     
             Cstring operator = (const Cstring& other) {       // for assigning other Cstring to Cstring, like: a = b;
-                strncpy (this->__c_str__, other.__c_str__, N + 1);
-                this->__errorFlags__ = other.__errorFlags__;                  // inherit all errors from original string
+                if (this != &other) {
+                    strncpy (this->__c_str__, other.__c_str__, N + 1);
+                    this->__errorFlags__ = other.__errorFlags__;              // inherit all errors from original string
+                }
+                return *this;
+            }
+
+            template<size_t M>
+            Cstring operator = (Cstring<M>& other) {    // for assigning other Cstring to Cstring of different size, like: a = b;
+                strncpy (this->__c_str__, other.c_str (), N + 1);
+                this->__errorFlags__ = other.errorFlags ();                   // inherit all errors from original string
                 return *this;
             }
 
@@ -268,6 +280,17 @@
                 return *this;
             }
 
+            template<size_t M>
+            Cstring operator += (Cstring<M>& other) {      // concatenate one Cstring to another of different size, like: a += b;
+                strncat (this->__c_str__, other.c_str (), N + 1 - strlen (this->__c_str__));
+                this->__errorFlags__ |= other.errorFlags ();                  // add all errors from other string
+                if (this->__c_str__ [N]) {
+                    this->__errorFlags__ |= OVERFLOW;                         // add OVERFLOW flag to possibe already existing error flags
+                    this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                } 
+                return *this;
+            }
+
             Cstring operator += (const char& other) {          // concatenate a charactr to Cstring, like: a += 'b';
                 size_t l = strlen (this->__c_str__);
                 if (l < N) { 
@@ -348,6 +371,13 @@
             }
         
             Cstring operator + (const Cstring& other) {       // for concatenating one Cstring with anoterh, like: a + b;
+                Cstring<N> tmp = *this; // copy of this, including error information
+                tmp += other;
+                return tmp;
+            }
+
+            template<size_t M>
+            Cstring operator + (Cstring<M>& other) {          // concatenate one Cstring to another of different size, like: a + b;
                 Cstring<N> tmp = *this; // copy of this, including error information
                 tmp += other;
                 return tmp;
