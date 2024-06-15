@@ -124,9 +124,9 @@ void setup () {
         // report error or check flags
         Serial.print ("insert error: ");
         switch (e) {
-            case BAD_ALLOC:       Serial.print ("BAD_ALLOC\n"); break;
-            case OUT_OF_RANGE:    Serial.print ("OUT_OF_RANGE\n"); break;
-            case NOT_FOUND:       Serial.print ("NOT_FOUND\n"); break;
+            case err_bad_alloc:       Serial.print ("err_bad_alloc\n"); break;
+            case err_out_of_range:    Serial.print ("err_out_of_range\n"); break;
+            case err_not_found:       Serial.print ("err_not_found\n"); break;
         }
     }
 
@@ -141,9 +141,9 @@ void setup () {
     else {
         Serial.print (String (v1.size ()) + " push_backs succeeded, but an error has occured at least once: ");  // check flags for details
         // or check specific error
-        if (e & BAD_ALLOC) Serial.println ("BAD_ALLOC");       
-        if (e & OUT_OF_RANGE) Serial.println ("OUT_OF_RANGE");   
-        if (e & NOT_FOUND) Serial.println ("NOT_FOUND");
+        if (e & err_bad_alloc) Serial.println ("err_bad_alloc");       
+        if (e & err_out_of_range) Serial.println ("err_out_of_range");   
+        if (e & err_not_found) Serial.println ("err_not_found");
     }
 
 
