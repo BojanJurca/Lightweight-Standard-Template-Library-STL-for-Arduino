@@ -1,7 +1,7 @@
 /*
  * Quick start for C++ package for Arduino (ESP boards)
  * 
- * Bojan Jurca, April 18, 2024
+ * Bojan Jurca, May 22, 2024
  */
 
 
@@ -27,8 +27,8 @@ void setup () {
     // Quick start with Cstring (string is, by default, #defined as Cstring<300>)
     cout << endl << "--- Cstring ---" << endl << endl;
 
-    string s;                                                 // create a Cstring of max 25 characters on the stack
-    string t;                                                 // create a Cstring with (default) max 300 characters
+    cstring s;                                                // create a Cstring of max 25 characters on the stack
+    cstring t;                                                // create a Cstring with (default) max 300 characters
     s = "thirty tree";                                        // initialize the Cstring
     s = s + ", ...";                                          // calculate with Cstring
     cout << s << endl;
@@ -73,7 +73,7 @@ void setup () {
     // Quick start with Map
     cout << endl << "--- Map ---" << endl << endl;
 
-    Map<int, string> mp;                                      // create a map - key-value pairs, where key is and integer and value is string
+    Map<int, cstring> mp;                                     // create a map - key-value pairs, where key is and integer and value is string
     mp [1] = "one";                                           // assign value of "one" to key 1
     mp [2] = "two";
     mp [3] = "tree";
@@ -81,7 +81,7 @@ void setup () {
     for (auto pair: mp)                                       // scan all key-value pairs in the map
         cout << pair->key << "-" << pair->value << endl;
 
-    if (mp.errorFlags ())                                     // check if mp is in error state
+    if (mp.errorFlags ())                                     // check if map is in error state
         cout << "Map error" << endl;                          // you may want to check individual flags: BAD_ALLOC, NOT_FOUND, NOT_UNIQUE or CANT_DO_IT_NOW
 }
 
