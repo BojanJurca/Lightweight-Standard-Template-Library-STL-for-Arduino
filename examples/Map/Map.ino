@@ -63,7 +63,7 @@ void setup () {
         Serial.println ("Key not found");
 
     String str = mp3 [6];
-    // it is more difficult to check NOT_FOUND in this case. One possibility is to check errorFlags (), the other is to check if str is assigned the default value (zerro memory)
+    // it is more difficult to check err_not_found in this case. One possibility is to check errorFlags (), the other is to check if str is assigned the default value (zerro memory)
     if (str != "")
         Serial.println ("Key found, its value = " + str); 
     else
@@ -83,14 +83,14 @@ void setup () {
         Serial.println ("Key found, its value = " + String (*intValue)); 
     else {
         // the key probably doesn't exist but we can't be 100% sure that some other error didn't occur
-        if (mp5.errorFlags () & NOT_FOUND)  Serial.println ("Key not found");
+        if (mp5.errorFlags () & err_not_found)  Serial.println ("Key not found");
         else {
             Serial.print ("An error occured while searching for the key ");
             // check flags for details
-            if (mp5.errorFlags () & BAD_ALLOC)      Serial.println ("BAD_ALLOC");
-            if (mp5.errorFlags () & NOT_FOUND)      Serial.println ("NOT_FOUND");
-            if (mp5.errorFlags () & NOT_UNIQUE)     Serial.println ("NOT_UNIQUE");
-            if (mp5.errorFlags () & CANT_DO_IT_NOW) Serial.println ("CANT_DO_IT_NOW");
+            if (mp5.errorFlags () & err_bad_alloc)      Serial.println ("err_bad_alloc");
+            if (mp5.errorFlags () & err_not_found)      Serial.println ("err_not_found");
+            if (mp5.errorFlags () & err_not_unique)     Serial.println ("err_not_unique");
+            if (mp5.errorFlags () & err_cant_do_it_now) Serial.println ("err_cant_do_it_now");
         }
     }
 
@@ -135,10 +135,10 @@ void setup () {
         // report error or check flags
         Serial.print ("insert error: ");
         switch (e) {
-            case BAD_ALLOC:       Serial.println ("BAD_ALLOC"); break;
-            case NOT_FOUND:       Serial.println ("NOT_FOUND"); break;
-            case NOT_UNIQUE:      Serial.println ("NOT_UNIQUE"); break;
-            case CANT_DO_IT_NOW:  Serial.println ("CANT_DO_IT_NOW"); break;
+            case err_bad_alloc:       Serial.println ("err_bad_alloc"); break;
+            case err_not_found:       Serial.println ("err_not_found"); break;
+            case err_not_unique:      Serial.println ("err_not_unique"); break;
+            case err_cant_do_it_now:  Serial.println ("err_cant_do_it_now"); break;
         }
     }
 
@@ -152,10 +152,10 @@ void setup () {
         Serial.println ("100 inserts succeeded");
     else {
         Serial.print ("100 inserts error: ");  // check flags for details
-        if (e & BAD_ALLOC)      Serial.println ("BAD_ALLOC");
-        if (e & NOT_FOUND)      Serial.println ("NOT_FOUND");
-        if (e & NOT_UNIQUE)     Serial.println ("NOT_UNIQUE");
-        if (e & CANT_DO_IT_NOW) Serial.println ("CANT_DO_IT_NOW");
+        if (e & err_bad_alloc)      Serial.println ("err_bad_alloc");
+        if (e & err_not_found)      Serial.println ("err_not_found");
+        if (e & err_not_unique)     Serial.println ("err_not_unique");
+        if (e & err_cant_do_it_now) Serial.println ("err_cant_do_it_now");
     }
 
 
