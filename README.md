@@ -1,7 +1,9 @@
 # C++ std package for Arduino: console, strings, vectors, queues and maps
 
 
-Four libraries that bring some std STL functionality to Arduino. They can be used together or completely independently one from another.
+Four libraries that bring some std STL functionality to Arduino. They can be used together or completely independently one from another. But why use them when there are std::vectors and std::maps, for example already available? The simple answer is: error handling. If you need to handle run-time errors by your code then these libraries may be what you are looking for.
+
+Besides this, you may find cout and cin a convenient replacement for Serial.print...
 
 
 ### console
