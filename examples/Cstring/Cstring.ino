@@ -76,8 +76,8 @@ void setup () {
     cs3 = cs2 + "123456789"; // please note that cs2 and cs3 are of the same type! (Cstring<15>) and the length exceeds 15 characters
     if (cs3.errorFlags ()) {
         Serial.print ("cs3 = "); Serial.print (cs3); Serial.print (" but there was an error %i while calculating its value: "); Serial.println (cs3.errorFlags ());
-        if (cs3.errorFlags () & OVERFLOW) Serial.println ("OVERFLOW");                                                // if the content should actually be longer than it fits into csString
-        if (cs3.errorFlags () & OUT_OF_RANGE) Serial.println ("OUT_OF_RANGE");                                        // if substr or substring addressed non-existing position
+        if (cs3.errorFlags () & err_overflow) Serial.println ("err_overflow");                                                // if the content should actually be longer than it fits into csString
+        if (cs3.errorFlags () & err_out_of_range) Serial.println ("err_out_of_range");                                        // if substr or substring addressed non-existing position
     }
 
 
@@ -85,8 +85,8 @@ void setup () {
     Serial.print ("cs3 = "); Serial.println (cs3); 
     if (cs3.errorFlags ()) {
         Serial.print ("... but there was an error %i while calculating its value: "); Serial.println (cs3.errorFlags ()); // in spite of the error Cstring is still calculated from the data that is available
-        if (cs3.errorFlags () & OVERFLOW) Serial.println ("OVERFLOW");                                                                                              // if the content should actually be longer than it fits into csString
-        if (cs3.errorFlags () & OUT_OF_RANGE) Serial.println ("OUT_OF_RANGE");                                                                                      // if substr or substring addressed non-existing position
+        if (cs3.errorFlags () & err_overflow) Serial.println ("err_overflow");                                                                                              // if the content should actually be longer than it fits into csString
+        if (cs3.errorFlags () & err_out_of_range) Serial.println ("err_out_of_range");                                                                                      // if substr or substring addressed non-existing position
     }
 
 
