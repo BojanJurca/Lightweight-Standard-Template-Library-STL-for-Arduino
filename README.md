@@ -3,6 +3,8 @@
 
 Four libraries that bring some std STL functionality to Arduino. They can be used together or completely independently one from another. But why use them when there are std::vectors and std::maps, for example already available? The simple answer is: error handling. If you need to handle run-time errors by your code then these libraries may be what you are looking for.
 
+Another benefit is the possibility of using PSRAM for internal memory structures, leaving heap memory free for other purposes.
+
 Besides this, you may find cout and cin a convenient replacement for Serial.print...
 
 
@@ -54,6 +56,9 @@ Vectors have an extra flag to keep and report the information about errors that 
 
 
 ```C++
+// #define VECTOR_MEMORY_TYPE  PSRAM_MEM
+// bool psramused = psramInit ();
+
 #include "std/vector.hpp"
 
 vector<char> v;                           // v is vector of chars
@@ -72,6 +77,8 @@ for (auto e: v)                           // iterate through vector elements
 Circular queues with an extra flag to keep and report the information about errors that occured during queue operations. Queues reside either on the stack or global memory, heap or in PSRAM (if it is available).
 
 ```C++
+// #define QUEUE_MEMORY_TYPE  PSRAM_MEM
+// bool psramused = psramInit ();
 #include "std/queue.hpp"
 
 queue<int, 10> q;                         // create a circular queue of integers containing max 10 elements
@@ -79,6 +86,33 @@ for (int i = 0; i < 100; i ++)
     q.push_back (i);                      // add elements
 for (int i = q.size () - 1; i >= 0; i--)  // list all queue elements in FIFO order
     Serial.println (q [i]);
+```
+
+Circular queues can be easily extended to keep running sum or running average of data entered.
+
+```C++
+template<class queueType, size_t maxSize> class queueWithRunningSum : public queue<queueType, maxSize> {
+    public:
+
+        inline queueType sum () __attribute__((always_inline)) { 
+            return __sum__;
+        }
+
+        inline float avg () __attribute__((always_inline)) { 
+            return (float) __sum__ / (float) queue<queueType, maxSize>::size ();
+        }
+
+        inline void push_back (queueType element) __attribute__((always_inline)) {
+            __sum__ += element;
+            if (queue<queueType, maxSize>::queue::size () == maxSize)
+                __sum__ -= queue<queueType, maxSize>::at (0);
+            queue<queueType, maxSize>::queue::push_back (element);
+        }
+
+    private:
+
+        queueType __sum__ =  {};
+};
 ```
 
 
@@ -89,6 +123,8 @@ Maps of key-value pairs are internally implemented as balanced binary search tre
 
 
 ```C++
+// #define MAP_MEMORY_TYPE     PSRAM_MEM
+// bool psramused = psramInit ()
 #include "std/Map.hpp"
 
 Map<char, int> mp;                        // mp is a map where keys are chars and values are integers
