@@ -51,7 +51,7 @@ void setup () {
 ### lists
 
 
-Lists are single linked nodes (to preserve memory space) and have extra flag to keep and report the information about errors that occured during vector operations. Lists reside either on the heap or in PSRAM (if it is available).
+Lists are single linked nodes (to preserve memory space) and have extra flag to keep and report the information about errors that occured during list operations. Lists reside either on the heap or in PSRAM (if it is available).
 
 
 ```C++
