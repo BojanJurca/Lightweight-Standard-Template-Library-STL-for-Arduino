@@ -1,11 +1,10 @@
-# C++ std package for Arduino: console, strings, vectors, queues and maps (runs also on AVR boards)
+# Lightweight C++ Standard Template Library (STL) for Arduino
 
+Lightweight C++ Standard Template Library (STL) for Arduino includes some STL and std functionalities, like console, cstrings (C char arrays with C++ operators) with optional locales, lists, vectors, queues, maps and algorithms.
+It runs also on AVR boards and enables error handling without needing try-catch functionality so posible run-time errors can be properly handled and the controller does not get restarted.
+Internal data structures can be placed also on PSRAM if it is available, leaving heap free for other purposes.
 
-Four libraries that bring some std STL functionality to Arduino. They can be used together or completely independently one from another. But why use them when there are std::vectors and std::maps, for example already available? The simple answer is: error handling. If you need to handle run-time errors by your code then these libraries may be what you are looking for.
-
-Another benefit is the possibility of using PSRAM for internal memory structures, leaving heap memory free for other purposes.
-
-Besides this, you may find cout and cin a convenient replacement for Serial.print...
+The latest changes are about using the same syntax as C++ STL.
 
 
 ### console
@@ -49,17 +48,43 @@ void setup () {
 ```
 
 
-### vectors
+### lists
 
 
-Vectors have an extra flag to keep and report the information about errors that occured during vector operations. Vectors reside either on the heap or in PSRAM (if it is available).
+Lists are single linked nodes (to preserve memory space) and have extra flag to keep and report the information about errors that occured during vector operations. Lists reside either on the heap or in PSRAM (if it is available).
 
 
 ```C++
-// #define VECTOR_MEMORY_TYPE  PSRAM_MEM
+// #define LIST_MEMORY_TYPE  PSRAM_MEM
+// bool psramused = psramInit ();
+
+#include "std/list.hpp"
+
+cinit (true);
+
+list<String> l;                           // l is list of Strings
+l.push_back ("grapefruit");
+l.push_back ("kiwi");
+l.push_front ("grapes");
+for (auto e: l)                           // iterate through list elements
+    cout << e << endl;
+```
+
+
+
+### vectors
+
+
+Vectors have extra flag to keep and report the information about errors that occured during vector operations. Vectors reside either on the heap or in PSRAM (if it is available).
+
+
+```C++
+// #define VECTOR_QUEUE_MEMORY_TYPE  PSRAM_MEM
 // bool psramused = psramInit ();
 
 #include "std/vector.hpp"
+
+cinit (true);
 
 vector<char> v;                           // v is vector of chars
 v.push_back ('a');
@@ -71,49 +96,28 @@ for (auto e: v)                           // iterate through vector elements
 ```
 
 
+
 ### queues
 
 
-Circular queues with an extra flag to keep and report the information about errors that occured during queue operations. Queues reside either on the stack or global memory, heap or in PSRAM (if it is available).
+Queues have extra flag to keep and report the information about errors that occured during queue operations. Queues reside either on the stack or global memory, heap or in PSRAM (if it is available).
 
 ```C++
-// #define QUEUE_MEMORY_TYPE  PSRAM_MEM
+// #define VECTOR_QUEUE_MEMORY_TYPE  PSRAM_MEM
 // bool psramused = psramInit ();
 #include "std/queue.hpp"
 
-queue<int, 10> q;                         // create a circular queue of integers containing max 10 elements
-for (int i = 0; i < 100; i ++)
-    q.push_back (i);                      // add elements
-for (int i = q.size () - 1; i >= 0; i--)  // list all queue elements in FIFO order
-    Serial.println (q [i]);
+cinit (true);
+
+queue<int> q;                             // q is queue of integers
+q.push (555);
+q.push (888);
+q.push (999);
+q.pop ();                                                       
+for (auto e: q)
+    cout << e << endl;
 ```
 
-Circular queues can be easily extended to keep running sum or running average of data entered.
-
-```C++
-template<class queueType, size_t maxSize> class queueWithRunningSum : public queue<queueType, maxSize> {
-    public:
-
-        inline queueType sum () __attribute__((always_inline)) { 
-            return __sum__;
-        }
-
-        inline float avg () __attribute__((always_inline)) { 
-            return (float) __sum__ / (float) queue<queueType, maxSize>::size ();
-        }
-
-        inline void push_back (queueType element) __attribute__((always_inline)) {
-            __sum__ += element;
-            if (queue<queueType, maxSize>::queue::size () == maxSize)
-                __sum__ -= queue<queueType, maxSize>::at (0);
-            queue<queueType, maxSize>::queue::push_back (element);
-        }
-
-    private:
-
-        queueType __sum__ =  {};
-};
-```
 
 
 ### maps
@@ -127,11 +131,72 @@ Maps of key-value pairs are internally implemented as balanced binary search tre
 // bool psramused = psramInit ()
 #include "std/Map.hpp"
 
+cinit (true);
+
 Map<char, int> mp;                        // mp is a map where keys are chars and values are integers
 mp ['a'] = 10;
 mp ['b'] = 20;
 mp ['c'] = 30;
-Serial.println (mp ['b']);                // address the value by it's key 
-for (auto pair: mp)                       // iterate through the map key-value pairs
-    Serial.println (String (pair->key) + "-" + String (pair->value));
+cout << mp ['b'] << endl;                 // address the value by it's key 
+for (auto pair: mp)                       // scan all key-value pairs in the map
+    cout << pair.first << "-" << pair.second << endl; // first = key, second = value
+```
+
+
+
+### algorithms
+
+
+Some algorithms functionalities are implemented, like sorting (of arrays, vectors) and finding certain or min, max elements (in arrays, lists, vectors, maps).
+
+
+```C++
+#include "std/algorithm.hpp"
+
+cinit (true);
+
+int arr [10] = { 3, 6, 4, 3, 3, 5, 8, 0, 9, 5 };
+int size = sizeof (arr) / sizeof (arr [0]);
+
+int *fa = find (arr, arr + size, 8);      // find an element in the array
+if (fa != arr + size)
+        cout << "8 found" << endl;
+
+sort (arr, arr + size);                   // sort the array
+for (int i = 0; i < size; i ++)
+    cout << arr [i] << endl;
+```
+
+
+
+### locale
+
+
+Only the framework for the locale settings is implemented. If you need your own locale settings you will have to modify the example included so that it works for you.
+
+
+```C++
+#include "std/locale.hpp"
+#include "std/Cstring.hpp"
+#include "std/algorithm.hpp"
+#include "std/console.hpp"
+
+cinit (true);
+
+setlocale (LC_ALL, "sl_SI.UTF-8");                             
+
+cout << "Please enter a float in local format ... ";
+f;
+cin >> f;
+cout << "you entered " << f << endl;
+
+cout << "Current time in local format is " << time (NULL) << endl;
+
+cstring sarr [3] = {"ČDE", "ŠTU", "ABC"};
+for (int i = 0; i < 3; i++)
+    sarr [i].tolower ();
+
+sort (sarr, sarr + 3);
+for (int i = 0; i < 3; i++)
+    cout << sarr [i] << endl;
 ```
