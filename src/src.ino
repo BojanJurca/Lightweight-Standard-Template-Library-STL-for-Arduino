@@ -3,7 +3,7 @@
  *
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  October 23, 2024, Bojan Jurca
+ *  November 26, 2024, Bojan Jurca
  */
 
 
@@ -90,6 +90,12 @@ void setup () {
     if (ml != l.end ())                                             // if not empty
         cout << "max element in list = " << *ml << endl;
 
+    cout << "Sorting:\n";
+    sort (l.begin (), l.end ());                                    // sorting
+    for (auto e: l)
+        cout << "    " << e << endl;
+
+
 
     // Quick start with vector
     cout << endl << "----- vector -----" << endl << endl;
@@ -136,9 +142,10 @@ void setup () {
     if (mv != v.end ())                                              // if not empty
         cout << "min element in vector = " << *mv << endl;
 
+    cout << "Sorting:\n";
     sort (v.begin (), v.end ());                                    // sorting
     for (auto e: v)
-        cout << e << endl;
+        cout << "    " << e << endl;
 
 
 
@@ -246,9 +253,10 @@ void setup () {
     if (fa != arr + size)
          cout << "8 found" << endl;
 
+    cout << "Sorting:\n";
     sort (arr, arr + size);                                         // sort the array
     for (int i = 0; i < size; i ++)
-        cout << arr [i] << endl;
+        cout << "    " << arr [i] << endl;
 
 
 
@@ -261,6 +269,7 @@ void setup () {
     f;
     cin >> f;
     cout << "you entered " << f << endl;
+    cout << "this is how π looks like in local format " << 3.14 << endl;
 
     cout << "Current time in local format is " << time (NULL) << endl;
 

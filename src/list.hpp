@@ -6,7 +6,7 @@
  *  In order to save as much memory as possible, list is implemented with minimal functionality. The elements are single - linked, so same
  *  functions, like pop_back for example can not be efficiently implemented.
  * 
- *  October 10, 2024, Bojan Jurca
+ *  November 26, 2024, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
  * 
  */
 
@@ -35,6 +35,10 @@
 
 
     template <class listType> class list {
+
+        // make __mergeSort__ function (algorithm.hpp) a friend so it can access internal structure
+        template <typename forwardIterator> 
+        friend void __mergeSort__(forwardIterator, forwardIterator);      
 
         private: 
 
@@ -319,6 +323,10 @@
             */
       
             class iterator {
+                // make __mergeSort__ function (algorithm.hpp) a friend so it can access internal structure
+                template <typename forwardIterator> 
+                friend void __mergeSort__(forwardIterator, forwardIterator);
+                
                 public:
 
                     // constructor
@@ -342,12 +350,48 @@
 
                 private:
 
-                    node_t * __p__;
+                    node_t * __p__ = NULL;
 
             };
 
-            iterator begin () { return iterator (__front__); }          // first element
-            iterator end () { return iterator (NULL); }                 // past the last element
+            iterator begin () { return iterator (__front__); }  // first element
+            iterator end () { return iterator (NULL); }         // past the last element
+
+
+
+           /*
+            *  Define operator (pop_front - push_back) that will be used for (merge) sorting
+            *     Since we are only switching the pointers no error can occur 
+            */
+
+            /*
+            void operator >> (list& other) {
+
+                if (this->__front__ == NULL) {
+                    #ifdef __THROW_LIST_EXCEPTIONS__
+                        throw err_out_of_range;
+                    #endif          
+                    this->__errorFlags__ |= err_out_of_range;
+                    other.__errorFlags__ |= err_out_of_range;
+                    return;
+                }
+
+                // remove the first element from "this"
+                node_t *tmp = this->__front__;
+                this->__front__ = this->__front__->next;
+                this->__size__ --;
+
+                // add it as the last element to "other"
+                tmp->next = NULL;
+                if (other.__front__ == NULL)
+                    other.__front__ = tmp;
+                if (other.__back__ != NULL)
+                    other.__back__->next = tmp;
+                other.__back__ = tmp;
+                
+                other.__size__ ++;
+            }
+            */
 
 
       private:
@@ -385,6 +429,10 @@
     */
 
     template <> class list<String> {
+
+        // make __mergeSort__ function (algorithm.hpp) a friend so it can access internal structure
+        template <typename forwardIterator> 
+        friend void __mergeSort__(forwardIterator, forwardIterator);      
 
         private: 
 
@@ -709,6 +757,11 @@
             */
       
             class iterator {
+
+                // make __mergeSort__ function (algorithm.hpp) a friend so it can access internal structure
+                template <typename forwardIterator> 
+                friend void __mergeSort__(forwardIterator, forwardIterator);
+                
                 public:
                               
                     // constructor
@@ -729,13 +782,48 @@
 
                 private:
 
-                    node_t * __p__;
+                    node_t * __p__ = NULL;
 
             };
 
             iterator begin () { return iterator (__front__); }          // first element
             iterator end () { return iterator (NULL); }                 // past the last element
 
+
+
+           /*
+            *  Define operator (pop_front - push_back) that will be used for (merge) sorting
+            *     Since we are only switching the pointers no error can occur 
+            */
+
+            /*
+            void operator >> (list& other) {
+
+                if (this->__front__ == NULL) {
+                    #ifdef __THROW_LIST_EXCEPTIONS__
+                        throw err_out_of_range;
+                    #endif          
+                    this->__errorFlags__ |= err_out_of_range;
+                    other.__errorFlags__ |= err_out_of_range;
+                    return;
+                }
+
+                // remove the first element from "this"
+                node_t *tmp = this->__front__;
+                this->__front__ = this->__front__->next;
+                this->__size__ --;
+
+                // add it as the last element to "other"
+                tmp->next = NULL;
+                if (other.__front__ == NULL)
+                    other.__front__ = tmp;
+                if (other.__back__ != NULL)
+                    other.__back__->next = tmp;
+                other.__back__ = tmp;
+                
+                other.__size__ ++;
+            }
+            */
 
       private:
 
