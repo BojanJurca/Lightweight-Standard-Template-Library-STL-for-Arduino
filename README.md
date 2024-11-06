@@ -4,7 +4,7 @@ Lightweight C++ Standard Template Library (STL) for Arduino includes some STL an
 It runs also on AVR boards and enables error handling without needing try-catch functionality so posible run-time errors can be properly handled and the controller does not get restarted.
 Internal data structures can be placed also on PSRAM if it is available, leaving heap free for other purposes.
 
-The latest changes are about using the same syntax as C++ STL.
+The latest changes are about using the same syntax as C++ STL and sorting of lists.
 
 
 ### console
