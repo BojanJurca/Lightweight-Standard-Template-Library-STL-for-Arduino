@@ -1,8 +1,16 @@
 # Lightweight C++ Standard Template Library (STL) for Arduino
 
 Lightweight C++ Standard Template Library (STL) for Arduino includes some STL and std functionalities, like console, cstrings (C char arrays with C++ operators) with optional locales, lists, vectors, queues, maps and algorithms.
-It runs also on AVR boards and enables error handling without needing try-catch functionality so posible run-time errors can be properly handled and the controller does not get restarted.
-Internal data structures can be placed also on PSRAM if it is available, leaving heap free for other purposes.
+
+But why use this library instead of st STL? It could be one of the following reasons:
+
+- If you are using one of AVR boards, std STL isn't supported there.
+- If you prefer the convenience of using standard C++ cin and cout instances rather than Serial.print.
+- If you need locale UTF-8 string operations.
+- If you want to make use of PSRAM if it is built-in your board.
+- If you need to detect and handle run-time errors. Std STL would just restart the controller if a run-time error occurs.
+- If you need to detect and handle run-time errors in string operations. Arduino Strings would mostly just ignore them.
+
 
 The latest changes are about using the same syntax as C++ STL and sorting of lists.
 
