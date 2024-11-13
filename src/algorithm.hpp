@@ -127,29 +127,29 @@
 
           // do the first merging from first iterator to workingList [0] and workingList [1] and loacate min element meanwhile
           auto pMin = first.__p__;
-          auto p = first.__p__->next;
-          while (p != last.__p__) {
+          while (first.__p__->next != last.__p__) {
 
               // 1. swith output lists if needed
-              if (pPrimaryOutputList->__front__ && p->element < pPrimaryOutputList->back ()) {
+              if (pPrimaryOutputList->__front__ && first.__p__->next->element < pPrimaryOutputList->back ()) {
                   list<listElementType> *pTmpOutputList = pPrimaryOutputList;
                   pPrimaryOutputList = pStandbyOutputList;
                   pStandbyOutputList = pTmpOutputList;
               }
-              // move p->next element to primaryOutputList
               // 2. is this min element so far?
-              if (p->element < pMin->element)
-                  pMin = p;
-              // 3. add it to the back of primaryOutputList
-              auto pTmp = p->next;
-              p->next = NULL;
+              if (first.__p__->next->element < pMin->element)
+                  pMin = first.__p__->next;
+              // 3. add first.__p__->next->next to the back of primaryOutputList and remove it from p list
               if (pPrimaryOutputList->__front__ == NULL)
-                  pPrimaryOutputList->__front__ = p;
-              if (pPrimaryOutputList->__back__ != NULL)
-                  pPrimaryOutputList->__back__->next = p;
-              pPrimaryOutputList->__back__ = p;
-              // 4. remove it from p list (without changing the size since all sorted elements wil be later added back again anyway)
-              first.__p__->next = p = pTmp;
+                  pPrimaryOutputList->__front__ = first.__p__->next;
+              if (pPrimaryOutputList->__back__ == NULL)
+                  pPrimaryOutputList->__back__ = first.__p__->next;
+              else {
+                  pPrimaryOutputList->__back__->next = first.__p__->next;
+                  pPrimaryOutputList->__back__ = pPrimaryOutputList->__back__->next;
+              }
+              first.__p__->next = first.__p__->next->next;
+              pPrimaryOutputList->__back__->next = NULL;
+
               // statistics
               // N ++;
           }
@@ -157,10 +157,11 @@
           // swith first iterator element with min element so this part of list is sorted and we won't have to deal with it again
           if (pMin->element < first.__p__->element) {
               // swithc elements in the way if they are objects their constructors and destructors would not get called
-              listElementType tmp;
-              memcpy (&tmp, &(first.__p__->element), sizeof (listElementType));
+              //listElementType tmp;
+              char tmp [sizeof (listElementType)];
+              memcpy (tmp, &(first.__p__->element), sizeof (listElementType));
               memcpy (&(first.__p__->element), &(pMin->element), sizeof (listElementType));
-              memcpy (&(pMin->element), &tmp, sizeof (listElementType));
+              memcpy (&(pMin->element), tmp, sizeof (listElementType));
           }
 
           // if we've only got a single output list then the sorting is already done and we only have to move primaryOutputList back to front iterator
@@ -177,7 +178,7 @@
                   // merge the input lists into output lists
                   list<listElementType> *pInputList = NULL;
                   listElementType *lastElementMerged = NULL;
-                      
+
                   while (pFirstInputList->__front__ || pSecondInputList->__front__) { // while there is any input
 
                       if (pFirstInputList->__front__) {
@@ -224,7 +225,6 @@
                   // statistics
                   // iterations ++;
           } // while we are getting more than one output
-
 
           // move all elements from (a single, which is) primaryOutputList back to front iterator
           pPrimaryOutputList->__back__ = last.__p__;
@@ -330,10 +330,10 @@
 
                     if (largest != j) {     // if largest is not root
                         // swap [j] and [largest]
-                        String tmp;
-                        memcpy (&tmp, &*(first + j), sizeof (String));
+                        char tmp [sizeof (String)];
+                        memcpy (tmp, &*(first + j), sizeof (String));
                         memcpy (&*(first + j), &*(first + largest), sizeof (String));
-                        memcpy (&*(first + largest), &tmp, sizeof (String));                        
+                        memcpy (&*(first + largest), tmp, sizeof (String));                        
 
                         // heapify the affected subtree in the next iteration
                         j = largest;
@@ -346,10 +346,10 @@
             // one by one extract an element from heap
             for (-- n; n > 0; n --) {
                 // move current root to end
-                String tmp;
-                memcpy (&tmp, &*(first + 0), sizeof (String));
+                char tmp [sizeof (String)];
+                memcpy (tmp, &*(first + 0), sizeof (String));
                 memcpy (&*(first + 0), &*(first + n), sizeof (String));
-                memcpy (&*(first + n), &tmp, sizeof (String));                        
+                memcpy (&*(first + n), tmp, sizeof (String));                        
 
                 // heapify the reduced heap 0 .. n
                 int j = 0;
@@ -363,10 +363,10 @@
 
                     if (largest != j) {     // if largest is not root
                         // swap [j] and [largest]
-                        String tmp;
-                        memcpy (&tmp, &*(first + j), sizeof (String));
+                        char tmp [sizeof (String)];
+                        memcpy (tmp, &*(first + j), sizeof (String));
                         memcpy (&*(first + j), &*(first + largest), sizeof (String));
-                        memcpy (&*(first + largest), &tmp, sizeof (String));                        
+                        memcpy (&*(first + largest), tmp, sizeof (String));                        
 
                         // heapify the affected subtree in the next iteration
                         j = largest;

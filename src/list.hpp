@@ -109,12 +109,12 @@
             * Clears all the elements from the list.
             */
 
-            void clear () { 
+            void clear () {            
                 node_t *p = __front__;
                 while (p) {
                     node_t *q = p->next;
 
-                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno                          
                         p->~node_t ();
                     #endif
                     free (p);
@@ -323,6 +323,7 @@
             */
       
             class iterator {
+              
                 // make __mergeSort__ function (algorithm.hpp) a friend so it can access internal structure
                 template <typename forwardIterator> 
                 friend void __mergeSort__(forwardIterator, forwardIterator);
@@ -467,7 +468,7 @@
                     *     list<int> D = { "200", "300", "400" };
                     *     list<int> E ( { "500", "600" } );
                     */
-            
+
                     list (std::initializer_list<String> il) {
                         for (String element: il) {
                             if (!element) {                             // ... check if parameter construction is valid

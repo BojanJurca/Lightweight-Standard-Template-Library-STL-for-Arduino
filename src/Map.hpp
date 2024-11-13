@@ -836,7 +836,7 @@
             // swap strings by swapping their stack memory so constructors doesn't get called and nothing can go wrong like running out of memory meanwhile 
             void __swapStrings__ (String *a, String *b) {
                 char tmp [sizeof (String)];
-                memcpy (&tmp, a, sizeof (String));
+                memcpy (tmp, a, sizeof (String));
                 memcpy (a, b, sizeof (String));
                 memcpy (b, tmp, sizeof (String));
             }
