@@ -16,398 +16,273 @@
 #include "algorithm.hpp"
 #include "console.hpp"
 
-#include <list> // std::list
-#include <vector> // std::vector
-#include <map> // std::map
-#include <algorithm> // std::find, std::sort
-
 
 /* place all the internal memory structures into PSRAM if the bord has one
     #define LIST_MEMORY_TYPE          PSRAM_MEM
     #define VECTOR_QUEUE_MEMORY_TYPE  PSRAM_MEM
     #define MAP_MEMORY_TYPE           PSRAM_MEM
-    bool psramused = psramInit ();
+    bool psramInitialized = psramInit ();
 */
 
 
 void setup () {
 
-    cinit (true);
+    // Quick start with console
+    cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200, unsigned int waitAfterSerial = 1000
     
-    unsigned long start;
-    unsigned long end;
-    unsigned long startFreeHeap;
-    unsigned long endFreeHeap;
-    int N = 100;
-    int i;
-    int lasti;
-    String lasts;
+    cout << endl << "--- console ---" << endl << endl;
+    cout << "Please enter a float ... ";
+    float f;
+    cin >> f;
+    cout << "you entered " << f << ", please note that you can use setlocale function to input/output floating point numbers in your local format" << endl;
+
+    // cout << "Current time is " << time (NULL) << ", please note that you can use setlocale function to input/output time in your local format" << endl;
+
+
+    // Quick start with Cstring (string is, by default, #defined as Cstring<300>)
+    cout << endl << "--- Cstring ---" << endl << endl;
+
+    cstring s;                                                // create a Cstring of max 25 characters on the stack
+    cstring t;                                                // create a Cstring with (default) max 300 characters
+    s = "thirty tree";                                        // initialize the Cstring
+    s = s + ", ...";                                          // calculate with Cstring
+    cout << s << endl;
+
+    if (s.errorFlags ())                                      // check if s is in error state
+        cout << "Cstring error" << endl;                      // you may want to check individual flags: err_overflow or OUT_OF_RANGE
+
+
+    // Quick start with list
+    cout << endl << "----- list -----" << endl << endl;
 
-    // instances to be tested
-    list<int> li;
-    std::list<int> stdli;
-    list<String> ls;
-
-    vector<int> vi;
-    std::vector<int> stdvi;
-    vector<String> vs;
-
-    Map<int, char> mi; // maps int keys  to char valzes, which is unrealistic, but we would like to eliminate value effect while focusing on keys
-    std::map<int, char> stdmi;
-
-    int *arr;
-
-
-    cout << "Plese enter N ... ";
-    cin >> N;
-    cout << N << endl;
-
-
-    cout << "\n----- testing list<int> of " << N << " elements -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 1; i <= N; i++)
-            li.push_back (lasti = random (1000));
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "list<int>: used memory: " << (startFreeHeap - endFreeHeap) + sizeof (li) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (li) - N * sizeof (int) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        for (int i = 0; i < 1000; i++)
-          auto fli = find (li.begin (), li.end (), i);
-        end = micros ();
-        cout << "find: " << (end - start) / 1000 << " µs" << endl;
+    list<String> l;                                                 // create a list containing Strings
+    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
+        l = {"banana", "apple", "orange"};                          // initialize the list from brace enclosed initializer list
+    #endif
+    l.push_back ("grapefruit");                                     // add element "grapefruit"
+    l.push_back ("kiwi");
+    l.pop_front ();                                                 // remove the first element
+    l.push_front ("grapes");
+
+    cout << "The first element = " << l.front () << endl;           // the first element in the list
+    cout << "The last element = " << l.back () << endl;             // the last element in the list
+    auto fl = find (l.begin (), l.end (), "grapes");                // find an element in the list
+    if (fl != l.end ())
+        cout << "Found " << *fl << endl;
+
+    cout << "There are " << l.size () << " elements in the list" << endl;
+    for (auto e: l)                                                 // scan all list elements
+        cout << e << endl;
+
+    // cout << l << endl;                                           // display all list elements at once
+
+    signed char e = l.errorFlags ();                                // check if list is in error state
+    if (e) {                                          
+        cout << "list error, flags: " << e << endl; 
+                                                                    
+        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for lists)
+        if (e & err_out_of_range) cout << "err_out_of_range\n";
+
+        l.clearErrorFlags ();   
+    }
+
+    auto ml = max_element (l.begin (), l.end ());                   // finding min, max elements
+    if (ml != l.end ())                                             // if not empty
+        cout << "max element in list = " << *ml << endl;
 
-        // push_back time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            li.push_back (random (1000));
-        end = micros ();
-        for (int i = 0; i < 10; i++)
-            li.pop_front ();
-        cout << "push_back: " << (end - start) / 10 << " µs\n";
-
-        // sort
-        start =  micros ();
-        sort (li.begin (), li.end ());
-        end = micros ();
-        cout << "sort: " << end - start << " µs merge-sorting: " << li.size () << " elements\n";
-
-        // any error so far?
-        cout << "Error flags: " << li.errorFlags () << endl;
-
-        // free the memory used
-        li.clear ();
-
-
-
-    cout << "\n----- testing std::list<int> of " << N << " elements -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 1; i <= N; i++)
-            stdli.push_back (lasti = random (1000));
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "std::list<int>: used memory: " << (startFreeHeap - endFreeHeap) + sizeof (stdli) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (stdli) - N * sizeof (int) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        for (int i = 0; i < 1000; i++)
-            auto fstdli = std::find (stdli.begin (), stdli.end (), i);
-        end = micros ();
-        cout << "std::find: " << (end - start) / 1000 << " µs" << endl;
-
-        // push_back time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            stdli.push_back (random (1000));
-        end = micros ();
-        for (int i = 0; i < 10; i++)
-            stdli.pop_front ();
-        cout << "std::push_back: " << (end - start) / 10 << " µs\n";
-
-        // sorting is not supported
-        cout << "size: " << stdli.size () << " elements\n";
-
-        // any error so far?
-        cout << "If the controller didn't restart it is OK" << endl;
-
-        // free the memory used
-        stdli.clear ();
-
-
-
-    cout << "\n----- testing list<String> of " << N << " elements -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 0; i < N; i++)
-            ls.push_back (lasts = String (random (1000)) + "                      ");
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "used memory (25 characters in each String): " << (startFreeHeap - endFreeHeap) + sizeof (ls) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (ls) - N * sizeof (String) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        auto fls = find (ls.begin (), ls.end (), lasts);
-        end = micros ();
-        cout << "find: " << end - start << " µs" << endl;
-
-        // push_back time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            ls.push_back (String (random (1000)));
-        end = micros ();
-        for (int i = 0; i < 10; i++)
-            ls.pop_front ();
-        cout << "push_back: " << (end - start) / 10 << " µs\n";
-
-        //  sort time
-        start =  micros ();
-        sort (ls.begin (), ls.end ());
-        end = micros ();
-        cout << "sort: " << end - start << " µs heap-sorting: " << ls.size () << " elements\n";
-
-        // any error so far?
-        cout << "Error flags: " << ls.errorFlags () << endl;
-
-        // free the memory used
-        ls.clear ();
-
-
-
-    cout << "\n----- testing vector<int> of " << N << " elements -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 1; i <= N; i++)
-            vi.push_back (lasti = random (1000));
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "vector<int>: used memory: " << (startFreeHeap - endFreeHeap) + sizeof (vi) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (vi) - N * sizeof (int) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        for (int i = 0; i < 1000; i++)
-            auto fvi = find (vi.begin (), vi.end (), i);
-        end = micros ();
-        cout << "find: " << (end - start) / 1000 << " µs" << endl;
-
-        // push_back time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            vi.push_back (random (1000));
-        end = micros ();
-        for (int i = 0; i < 10; i++)
-            vi.pop_front ();
-        cout << "push_back (without prior reservation of memory): " << (end - start) / 10 << " µs\n";
-
-        // sort time
-        start =  micros ();
-        sort (vi.begin (), vi.end ());
-        end = micros ();
-        cout << "sort: " << end - start << " µs heap-sorting: " << vi.size () << " elements\n";
-
-        // any error so far?
-        cout << "Error flags: " << vi.errorFlags () << endl;
-
-        // free the memory used
-        vi.clear ();
-
-
-
-    cout << "\n----- testing std::vector<int> of " << N << " elements -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 1; i <= N; i++)
-            stdvi.push_back (lasti = random (1000));
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "std::vector<int>: used memory: " << (startFreeHeap - endFreeHeap) + sizeof (stdvi) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (stdvi) - N * sizeof (int) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        for (int i = 0; i < 1000; i++)
-            auto fstdvi = std::find (stdvi.begin (), stdvi.end (), i);
-        end = micros ();
-        cout << "std::find: " << (end - start) / 1000 << " µs" << endl;
-
-        // push_back time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            stdvi.push_back (random (1000));
-        end = micros ();
-        for (int i = 0; i < 10; i++)
-            stdvi.pop_back ();
-        cout << "std::push_back (without prior reservation of memory): " << (end - start) / 10 << " µs\n";
-
-        // sort time
-        start =  micros ();
-        sort (stdvi.begin (), stdvi.end ());
-        end = micros ();
-        cout << "sort: " << end - start << " µs\n";
-
-        // std::sort time
-        start =  micros ();
-        std::sort (stdvi.begin (), stdvi.end ());
-        end = micros ();
-        cout << "std::sort: " << end - start << " µs intro-sorting: " << stdvi.size () << " elements\n";
-
-        // any error so far?
-        cout << "If the controller didn't restart it is OK" << endl;
-
-        // free the memory used
-        stdvi.clear ();
-
-
-
-    cout << "\n----- testing vector<String> of " << N << " elements -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 0; i < N; i++)
-            vs.push_back (lasts = String (random (1000)) + "                      ");
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "used memory (25 characters in each String): " << (startFreeHeap - endFreeHeap) + sizeof (vs) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (vs) - N * (sizeof (String) + 25) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        auto fvs = find (vs.begin (), vs.end (), lasts);
-        end = micros ();
-        cout << "find: " << end - start << " µs" << endl;
-
-        // push_back time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            vs.push_back (String (random (1000)));
-        end = micros ();
-        for (int i = 0; i < 10; i++)
-            vs.pop_front ();
-        cout << "push_back: " << (end - start) / 10 << " µs\n";
-
-        //  sort time
-        start =  micros ();
-        sort (vs.begin (), vs.end ());
-        end = micros ();
-        cout << "sort: " << end - start << " µs heap-sorting: " << vs.size () << " elements\n";
-
-        // any error so far?
-        cout << "Error flags: " << vs.errorFlags () << endl;
-
-        // free the memory used
-        vs.clear ();
-
-    cout << "\n----- testing int array of " << N << " elements -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        arr = (int *) malloc (N * sizeof (int));
-        if (N > 0 && arr) {
-
-            for (int i = 0; i < N; i++)
-                lasti = arr [i] = random (1000);
-            endFreeHeap = ESP.getFreeHeap ();
-            cout << "int array: used memory: " << (startFreeHeap - endFreeHeap) + sizeof (*arr) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (*arr) - N * sizeof (int) << " overhed)\n";
-
-            // find time
-            start =  micros ();
-            for (int i = 0; i < 1000; i++)
-                auto fai = find (arr, arr + N, i);
-            end = micros ();
-            cout << "find: " << (end - start) / 1000 << " µs" << endl;
-
-            // push_back time
-            start =  micros ();
-            arr [0] = 0;
-            end = micros ();
-            cout << "assign: " << (end - start) << " µs\n";
-
-            // sort time
-            start =  micros ();
-            sort (arr, arr + N);
-            end = micros ();
-            cout << "sort: " << end - start << " µs heap-sorting: " << N << " elements\n";
-
-            // std::sort time
-            start =  micros ();
-            std::sort (arr, arr + N);
-            end = micros ();
-            cout << "std::sort: " << end - start << " µs intro-sorting: " << N << " elements\n";
-
-            // any error so far?
-            cout << "Nothing unpredictible could have happened, so no error at all" << endl;
-
-            // free the memory used
-            free (arr);
-        }
-
-
-
-    cout << "\n----- testing map<int, char> of " << N << " pairs -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 1; i <= N; i++)
-            mi [lasti = random (1000)] = 'c';
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "map<int, char>: used memory: " << (startFreeHeap - endFreeHeap) + sizeof (mi) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (mi) - N * (sizeof (int) + sizeof (char)) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        for (int i = 0; i < 1000; i++)
-            auto fmi = mi.find (i);
-        end = micros ();
-        cout << "find: " << (end - start) / 1000 << " µs" << endl;
-
-        // insert time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            mi [1000 + i] = 'c';
-        end = micros ();
-        cout << "insert: " << (end - start) / 10 << " µs\n";
-
-        // any error so far?
-        cout << "Error flags: " << mi.errorFlags () << endl;
-
-        // free the memory used
-        mi.clear ();
-
-
-
-    cout << "\n----- testing std::map<int, char> of " << N << " pairs -----\n";
-
-        // memory used
-        startFreeHeap = ESP.getFreeHeap ();
-        for (int i = 1; i <= N; i++)
-            stdmi [lasti = random (1000)] = 'c';
-        endFreeHeap = ESP.getFreeHeap ();
-        cout << "std::map<int, char>: used memory: " << (startFreeHeap - endFreeHeap) + sizeof (stdmi) << " bytes (" << (startFreeHeap - endFreeHeap) + sizeof (stdmi) - N * (sizeof (int) + sizeof (char)) << " overhed)\n";
-
-        // find time
-        start =  micros ();
-        for (int i = 0; i < 1000; i++)
-            auto fstdmi = stdmi.find (i);
-        end = micros ();
-        cout << "find: " << (end - start) / 1000 << " µs" << endl;
-
-        // insert time
-        start =  micros ();
-        for (int i = 0; i < 10; i++)
-            stdmi [1000 + i] = 'c';
-        end = micros ();
-        cout << "insert: " << (end - start) / 10 << " µs\n";
-
-        // any error so far?
-        cout << "If the controller didn't restart it is OK" << endl;
-
-        // free the memory used
-        stdmi.clear ();
-
-
-    cout << "\n\nFinishing setup ()\n";
+    cout << "Sorting:\n";
+    sort (l.begin (), l.end ());                                    // sorting
+    for (auto e: l)
+        cout << "    " << e << endl;
+
+
+
+    // Quick start with vector
+    cout << endl << "----- vector -----" << endl << endl;
+
+    vector<int> v;                                                  // create a vector containing integers
+    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
+        v = {2, 1, 3};                                              // initialize the vector from brace enclosed initializer list
+    #endif
+    v.push_back (20);                                               // add element 20
+    v.push_back (10);
+    v.push_back (50);    
+    v.push_back (40);    
+    v.pop_front ();                                                 // remove the first element
+    v.pop_back ();                                                  // remove the last element
+    v.push_back (30);
+
+    cout << "The element at position 2 = " << v [2] << endl;        // access an element by its position in the vector
+    cout << "The first element = " << v.front () << endl;           // the first element in the vector
+    cout << "The last element = " << v.back () << endl;             // the last element in the vector
+    auto fv = find (v.begin (), v.end (), 20);                      // find an element in the vector
+    if (fv != v.end ()) {
+        cout << "Found " << *fv << " ... ";
+        v.erase (fv);                                               // delete it
+        cout << "and deleted" << endl;
+    }
+
+    cout << "There are " << v.size () << " elements in the vector" << endl;
+    for (auto e: v)                                                 // scan all vector elements
+        cout << e << endl;
+
+    // cout << v << endl;                                           // display all vector elements at once
+
+    /* signed char */ e = v.errorFlags ();                          // check if vector is in error state
+    if (e) {                                          
+        cout << "vector error, flags: " << e << endl; 
+                                                                    
+        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for vectors)
+        if (e & err_out_of_range) cout << "err_out_of_range\n";
+
+        v.clearErrorFlags ();
+    }
+
+    auto mv = min_element (v.begin (), v.end ());                    // finding min, max elements
+    if (mv != v.end ())                                              // if not empty
+        cout << "min element in vector = " << *mv << endl;
+
+    cout << "Sorting:\n";
+    sort (v.begin (), v.end ());                                    // sorting
+    for (auto e: v)
+        cout << "    " << e << endl;
+
+
+
+    // Quick start with queue
+    cout << endl << "----- queue -----" << endl << endl;
+
+    queue<int> q;                                                   // create a queue of integers
+
+    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
+        q = {222, 444, 333};                                        // initialize the queue from brace enclosed initializer list
+    #endif
+    q.push (555);                                                   // add some elements
+    q.push (888);
+    q.push (999);
+    q.pop ();                                                       // remove the first element
+
+    cout << "The element at position 1 = " << q [1] << endl;        // access an element by its position in the queue
+    cout << "The first element = " << q.front () << endl;           // the first element in the queue
+    cout << "The last element = " << q.back () << endl;             // the last element in the queue    
+
+    cout << "There are " << q.size () << " elements in the queue" << endl;
+    for (auto e: q)                                                 // scan all queue elements
+        cout << e << endl;
+
+    // cout << q << endl;                                           // display all queue elements at once        
+
+    cout << q << endl;                                              // display all queue elements at once
+
+    /* signed char */ e = q.errorFlags ();                          // check if queue is in error state
+    if (e) {                                          
+        cout << "queue error, flags: " << e << endl; 
+                                                                    
+        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for queues)
+        if (e & err_out_of_range) cout << "err_out_of_range\n";
+
+        v.clearErrorFlags ();
+    }
+
+    auto mq = min_element (q.begin (), q.end ());                   // finding min, max elements
+    if (mq != v.end ())                                             // if not empty
+        cout << "min element in queue = " << *mq << endl;
+
+
+
+    // Quick start with Map
+    cout << endl << "----- Map -----" << endl << endl;
+
+    Map<int, String> mp;                                      // create a map - key-value pairs, where key is and integer and value is string
+    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
+        mp = { {11, "eleven"}, {12, "twelve"} };              // initialize the map from brace enclosed initializer list
+    #endif
+
+    mp [1] = "one";                                           // assign value of "one" to key 1
+    mp [2] = "two";
+    mp [3] = "tree";
+    cout << mp [1] << endl;                                   // access the value if the key is known
+
+    mp.insert (4, "four");                                    // another way of inserting a pair
+    mp.insert ( {5, "five"} );                                // another way of inserting a pair
+
+
+    /* signed char */ e = mp.errorFlags ();                          // check if map is in error state
+    if (e) {                                          
+        cout << "map error, flags: " << e << endl; 
+                                                   
+        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 3 possible types of error flags for maps)
+        if (e & err_out_of_range) cout << "err_out_of_range\n";
+        if (e & err_not_unique) cout << "err_not_unique\n";
+
+        mp.clearErrorFlags ();
+    }
+
+    auto findIterator = mp.find (3);
+    if (findIterator != mp.end ())
+        cout << "Found " << findIterator->first << " with value " << findIterator->second << endl;
+
+    mp.erase (3);                                               // delete it
+    if (mp.errorFlags () & err_not_found)
+        cout << "the pair with key " << 3 << " not found" << endl;
+    else
+        cout << "deleted the pair with key " << 3 << endl;
+
+    cout << "There are " << mp.size () << " pairs in the map" << endl;
+    for (auto pair: mp)                                       // scan all key-value pairs in the map
+        cout << pair.first << "-" << pair.second << endl;
+
+    auto minIterator = mp.begin ();
+    auto endIterator = mp.end ();
+    if (minIterator != endIterator) {
+        cout << "min key = " << minIterator->first << endl;
+        -- endIterator;
+        cout << "max key = " << endIterator->first << endl;
+    }
+
+    cout << mp << endl;                                           // display all map elements at once        
+
+
+    // Quick start with algorithm (on arrays - other than what has already been demonstrated)
+    cout << endl << "----- algorithm (on arrays) -----" << endl << endl;
+
+    int arr [10] = { 3, 6, 4, 3, 3, 5, 8, 0, 9, 5 };
+    int size = sizeof (arr) / sizeof (arr [0]);
+
+    int *fa = find (arr, arr + size, 8);                            // find an element in the array
+    if (fa != arr + size)
+         cout << "8 found" << endl;
+
+    cout << "Sorting:\n";
+    sort (arr, arr + size);                                         // sort the array
+    for (int i = 0; i < size; i ++)
+        cout << "    " << arr [i] << endl;
+
+
+
+    // Quick start with locale - uncomment the following lines and example code in locale.hpp to make this work 
+    /*
+    setlocale (LC_ALL, "sl_SI.UTF-8");                             
+    
+    cout << endl << "--- locale ---" << endl << endl;
+    cout << "Please enter a float in local format ... ";
+    f;
+    cin >> f;
+    cout << "you entered " << f << endl;
+    cout << "this is how π looks like in local format " << 3.14 << endl;
+
+    cout << "Current time in local format is " << time (NULL) << endl;
+
+    cstring sarr [3] = {"ČDE", "ŠTU", "ABC"};
+    for (int i = 0; i < 3; i++)
+        sarr [i].tolower ();
+
+    sort (sarr, sarr + 3);
+    for (int i = 0; i < 3; i++)
+        cout << sarr [i] << endl;
+    */
 }
 
 void loop () {
-    delay (10000);
-    ESP.restart ();
-}
 
+}

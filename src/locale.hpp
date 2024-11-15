@@ -16,13 +16,13 @@
     // ----- TO DO: implement your own locale settings (an example is below) -----
 
     enum localeCategory_t {
-        LC_COLLATE  = 0b00000001, // LC_COLLATE is used for string comparison and sorting. It defines how strings are compared and sorted according to the rules of the specified locale.
-        LC_CTYPE    = 0b00000010, // LC_CTYPE is crucial for character classification and conversion functions. It governs what’s considered a letter, digit, punctuation mark, etc., and how characters convert between uppercase and lowercase.
-        LC_MONETARY = 0b00000100, // LC_MONETARY is used to format monetary values according to the rules of a specified locale.
-        LC_NUMERIC  = 0b00001000, // LC_NUMERIC controls the formatting of numbers, specifically the decimal point and thousands separator, according to the rules of a specified locale.
-        LC_TIME     = 0b00010000, // LC_TIME controls the formatting of dates and times according to the locale's rules.
-        LC_MESSAGES = 0b00100000, // LC_MESSAGES handles the localization of system messages and prompts. It ensures that messages, warnings, and errors are displayed in the appropriate language and format for the user's locale.
-        LC_ALL      = 0b00111111
+        lc_collate  = 0b00000001, // LC_COLLATE is used for string comparison and sorting. It defines how strings are compared and sorted according to the rules of the specified locale.
+        lc_ctype    = 0b00000010, // LC_CTYPE is crucial for character classification and conversion functions. It governs what’s considered a letter, digit, punctuation mark, etc., and how characters convert between uppercase and lowercase.
+        lc_monetary = 0b00000100, // LC_MONETARY is used to format monetary values according to the rules of a specified locale.
+        lc_numeric  = 0b00001000, // LC_NUMERIC controls the formatting of numbers, specifically the decimal point and thousands separator, according to the rules of a specified locale.
+        lc_time     = 0b00010000, // LC_TIME controls the formatting of dates and times according to the locale's rules.
+        lc_messages = 0b00100000, // LC_MESSAGES handles the localization of system messages and prompts. It ensures that messages, warnings, and errors are displayed in the appropriate language and format for the user's locale.
+        lc_all      = 0b00111111
     };
 
     bool setlocale (localeCategory_t category, const char *locale);
@@ -231,52 +231,52 @@
         if (locale == NULL) {
             __use_utf8__ = false;
 
-            if (category & LC_COLLATE) {
+            if (category & lc_collate) {
                 __locale_charOrder__ = __charOrder_ASCII__;
             }
 
-            if (category & LC_CTYPE) {
+            if (category & lc_ctype) {
                 __locale_toupper__ = __toupper_ASCII__;
                 __locale_tolower__ = __tolower_ASCII__;
             }
 
-            if (category & LC_NUMERIC) {
+            if (category & lc_numeric) {
                 __locale_decimalSeparator__ = '.';
                 __locale_thousandSeparator__ = ',';
             }
 
-            if (category & LC_TIME) {
+            if (category & lc_time) {
                 __locale_time__ = "%Y/%m/%d %T";
             }
 
             return true;
         }
 
-        /* ----- example for locale "sl_SI.UTF-8" -----
+        ///* ----- example for locale "sl_SI.UTF-8" -----
         if (!strcmp (locale, "sl_SI.UTF-8")) {
             __use_utf8__ = true;
 
-            if (category & LC_COLLATE) {
+            if (category & lc_collate) {
                 __locale_charOrder__ = __charOrder_sl_SI_UTF_8__;
             }
 
-            if (category & LC_CTYPE) {
+            if (category & lc_ctype) {
                 __locale_toupper__ = __toupper_sl_SI_UTF_8__;
                 __locale_tolower__ = __tolower_sl_SI_UTF_8__;
             }
 
-            if (category & LC_NUMERIC) {
+            if (category & lc_numeric) {
                 __locale_decimalSeparator__ = ',';
                 __locale_thousandSeparator__ = '.';
             }
 
-            if (category & LC_TIME) {
+            if (category & lc_time) {
                 __locale_time__ = "%d.%m.%Y %H:%M:%S";
             }
 
             return true;
         }
-        */
+        //*/
 
         return false; // locale not set
     }
