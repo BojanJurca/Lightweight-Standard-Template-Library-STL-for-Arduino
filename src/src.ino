@@ -262,11 +262,11 @@ void setup () {
 
     // Quick start with locale - uncomment the following lines and example code in locale.hpp to make this work 
     /*
-    setlocale (LC_ALL, "sl_SI.UTF-8");                             
+    setlocale (lc_all, "sl_SI.UTF-8");                             
     
     cout << endl << "--- locale ---" << endl << endl;
     cout << "Please enter a float in local format ... ";
-    f;
+
     cin >> f;
     cout << "you entered " << f << endl;
     cout << "this is how π looks like in local format " << 3.14 << endl;
@@ -280,6 +280,11 @@ void setup () {
     sort (sarr, sarr + 3);
     for (int i = 0; i < 3; i++)
         cout << sarr [i] << endl;
+
+    cout << (cstring ("abc") > "" ? "OK" : "Not OK") << endl;
+    cout << (cstring ("abc") < "" ? "Not OK" : "OK") << endl;
+    cout << (cstring ("") < cstring ("čšž") ? "OK" : "Not OK") << endl;
+    cout << (cstring ("") > cstring ("čšž") ? "Not OK" : "OK") << endl;
     */
 }
 

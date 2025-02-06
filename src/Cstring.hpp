@@ -12,7 +12,8 @@
     #define __CSTRING_HPP__
 
 
-        // missing C function in Arduino
+        // missing (Windows) C functions in Arduino
+
         char *stristr (const char *haystack, const char *needle) { 
             if (!haystack || !needle) return NULL; // nonsense
             int n = strlen (haystack) - strlen (needle) + 1;
@@ -34,6 +35,18 @@
                 if (match) return (char *) haystack + i; // match!
             }
             return NULL; // no match
+        }
+
+        int stricmp (const char *str1, const char *str2) { 
+            while (*str1 && *str2) {
+                char chr1 = *str1; if (chr1 >= 'a' && chr1 <= 'z') chr1 -= 32; // convert to upper case
+                char chr2 = *str2; if (chr2 >= 'a' && chr2 <= 'z') chr2 -= 32; // convert to upper case
+                if (chr1 < chr2) return -1;
+                if (chr1 > chr2) return 1;
+                str1 ++;
+                str2 ++;
+            }
+            return 0; // stings are equal
         }
 
 
@@ -585,12 +598,12 @@
             inline bool operator == (const Cstring& other) __attribute__((always_inline))     { return !strcmp (this->__c_str__, other.__c_str__); }    // Cstring : Cstring
             inline bool operator == (Cstring& other) __attribute__((always_inline))           { return !strcmp (this->__c_str__, other.__c_str__); }    // Cstring : Cstring
 
-            #ifndef __LOCALE_HPP__
-                inline bool operator != (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other); }               // Cstring : C string
-                inline bool operator != (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other); }               // Cstring : C string
-                inline bool operator != (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
-                inline bool operator != (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
+            inline bool operator != (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other); }               // Cstring : C string
+            inline bool operator != (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other); }               // Cstring : C string
+            inline bool operator != (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
+            inline bool operator != (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
 
+            #ifndef __LOCALE_HPP__
                 inline bool operator <  (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other) < 0; }           // Cstring : C string
                 inline bool operator <  (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other) < 0; }           // Cstring : C string
                 inline bool operator <  (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
@@ -611,11 +624,6 @@
                 inline bool operator >= (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
                 inline bool operator >= (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
             #else
-                inline bool operator != (const char *other) __attribute__((always_inline))        { return __strUtf8cmp__ (this->__c_str__, other); }               // Cstring : C string
-                inline bool operator != (char *other) __attribute__((always_inline))              { return __strUtf8cmp__ (this->__c_str__, other); }               // Cstring : C string
-                inline bool operator != (const Cstring& other) __attribute__((always_inline))     { return __strUtf8cmp__ (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
-                inline bool operator != (Cstring& other) __attribute__((always_inline))           { return __strUtf8cmp__ (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
-
                 inline bool operator <  (const char *other) __attribute__((always_inline))        { return __strUtf8cmp__ (this->__c_str__, other) < 0; }           // Cstring : C string
                 inline bool operator <  (char *other) __attribute__((always_inline))              { return __strUtf8cmp__ (this->__c_str__, other) < 0; }           // Cstring : C string
                 inline bool operator <  (const Cstring& other) __attribute__((always_inline))     { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
@@ -767,7 +775,7 @@
                 return -1;
             }
 
-            bool endsWith (char *str) { 
+            bool endsWith (const char *str) { 
               size_t lStr = strlen (str);
               size_t lThis = strlen (__c_str__);
               if (lStr > lThis) return false;
@@ -862,15 +870,32 @@
                 }
 
                 int __strUtf8cmp__ (const char *str1, const char*str2) {              // compare two strings in locale sort order
-                    while (*str1 && *str2) {
-                        int o1 = __locale_charOrder__ (&str1);
-                        int o2 = __locale_charOrder__ (&str2);
-                        if (o1 > o2)
-                            return 1;
-                        else if (o1 < o2)
-                            return -1;
+                    while (true) {
+                        if (*str1) {
+                            if (*str2) {
+                                // both strings still have characters
+                                int o1 = __locale_charOrder__ (&str1); // also increases the pointer
+                                int o2 = __locale_charOrder__ (&str2); // also increases the pointer
+                                if (o1 > o2) {
+                                    return 1;
+                                } else if (o1 < o2) {
+                                    return -1;
+                                }
+                                // both characters are the same, continue with the next ones
+                            } else {
+                                // str1 has a character but str2 already ended
+                                return 1;
+                            }
+                        } else {
+                            if (*str2) {
+                                // str2 has a character but str1 already ended
+                                return -1;
+                            } else {
+                                // both strings ended at the same time, they are the same
+                                return 0;
+                            }
+                        }
                     }
-                    return 0;
                 }
 
             #endif

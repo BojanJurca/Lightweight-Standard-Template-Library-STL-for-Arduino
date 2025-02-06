@@ -78,6 +78,7 @@
 
 
     // ----- example for locale "sl_SI.UTF-8", you may freely delete this part if not needed -----
+    /*
 
                 //  Slovenian alphabet, extended with some frequently used foreign letters:
                 //  A B C Č (Ć) D (Đ) E F G H I J K L M N O P (Q) R S Š T U V (W) (X) (Y) Z Ž
@@ -220,7 +221,7 @@
     
                     return __tolower_ASCII__ (pc);
                 }
-
+    */
 
 
 
@@ -252,7 +253,7 @@
             return true;
         }
 
-        ///* ----- example for locale "sl_SI.UTF-8" -----
+        /* ----- example for locale "sl_SI.UTF-8" -----
         if (!strcmp (locale, "sl_SI.UTF-8")) {
             __use_utf8__ = true;
 
@@ -276,7 +277,7 @@
 
             return true;
         }
-        //*/
+        */
 
         return false; // locale not set
     }
