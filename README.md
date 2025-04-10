@@ -4,15 +4,12 @@ Lightweight C++ Standard Template Library (STL) for Arduino includes some STL an
 
 But why use this library instead of st STL? It could be one of the following reasons:
 
-- If you are using one of AVR boards, std STL isn't supported there.
-- If you prefer the convenience of using standard C++ cin and cout instances rather than Serial.print.
+- If you need to properly detect and handle run-time errors. Std STL would just restart the controller if a run-time error occurs.
+- If you need to properly detect and handle run-time errors in string operations. Arduino Strings would mostly just ignore them.
+- If you are using one of AVR boards (simple data types are supported on AVR boards as well).
+- If you prefer the convenience of using standard C++ cin and cout objects rather than Serial.print.
 - If you need locale UTF-8 string operations.
 - If you want to make use of PSRAM if it is built-in your board.
-- If you need to detect and handle run-time errors. Std STL would just restart the controller if a run-time error occurs.
-- If you need to detect and handle run-time errors in string operations. Arduino Strings would mostly just ignore them.
-
-
-The latest changes are about using the same syntax as C++ STL and sorting of lists.
 
 
 ### console
@@ -51,7 +48,7 @@ CString.hpp defines a class template for C char arrays with C++ operators that d
 void setup () {
     Cstring<15> cs3 = "abc";              // cs3 can hold max 15 characters and is assigned "abc" value after construction
     cs3 += "def";
-    string s;                             // equivalent of Cstring<300>
+    cstring s;                             // equivalent of Cstring<300>
 }
 ```
 
@@ -79,7 +76,6 @@ for (auto e: l)                           // iterate through list elements
 ```
 
 
-
 ### vectors
 
 
@@ -104,11 +100,11 @@ for (auto e: v)                           // iterate through vector elements
 ```
 
 
-
 ### queues
 
 
 Queues have extra flag to keep and report the information about errors that occured during queue operations. Queues reside either on the stack or global memory, heap or in PSRAM (if it is available).
+
 
 ```C++
 // #define VECTOR_QUEUE_MEMORY_TYPE  PSRAM_MEM
@@ -125,7 +121,6 @@ q.pop ();
 for (auto e: q)
     cout << e << endl;
 ```
-
 
 
 ### maps
@@ -151,7 +146,6 @@ for (auto pair: mp)                       // scan all key-value pairs in the map
 ```
 
 
-
 ### algorithms
 
 
@@ -174,7 +168,6 @@ sort (arr, arr + size);                   // sort the array
 for (int i = 0; i < size; i ++)
     cout << arr [i] << endl;
 ```
-
 
 
 ### locale
@@ -208,3 +201,8 @@ sort (sarr, sarr + 3);
 for (int i = 0; i < 3; i++)
     cout << sarr [i] << endl;
 ```
+
+
+## Things to consider when using AVR boards
+
+Memory management for AVR boards is not sophisticated enough to handle many heap deletions. A consequence of frequent deletes updates and inserts may be memory leaks. In such cases it may be better to avoid complex data types such as Strings.
