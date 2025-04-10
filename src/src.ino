@@ -3,291 +3,282 @@
  *
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  November 26, 2024, Bojan Jurca
+ *  March 12, 2025, Bojan Jurca
  */
-
-
-#include "locale.hpp"
-#include "Cstring.hpp"
-#include "list.hpp"
-#include "vector.hpp"
-#include "queue.hpp"
-#include "Map.hpp"
-#include "algorithm.hpp"
-#include "console.hpp"
 
 
 /* place all the internal memory structures into PSRAM if the bord has one
     #define LIST_MEMORY_TYPE          PSRAM_MEM
     #define VECTOR_QUEUE_MEMORY_TYPE  PSRAM_MEM
     #define MAP_MEMORY_TYPE           PSRAM_MEM
-    bool psramInitialized = psramInit ();
+    bool psramused = psramInit ();
 */
+
+
+// #include "locale.hpp"       // include locale.hpp for support of local UTF-8 characters 
+#include "Cstring.hpp"      // C arrays of characters with C++ syntax and error handling
+#include "list.hpp"         // single linked lists with error handling that also works on AVR boards
+#include "vector.hpp"       // vectors with error handling that also works on AVR boards
+#include "queue.hpp"        // queues with error handling that also works on AVR boards
+#include "Map.hpp"          // maps with error handling that also works on AVR boards
+#include "algorithm.hpp"    // find, heap sort for vectors, ... merge sort for lists
+#include "console.hpp"      // cin and cout object to write to/read from Serial in standard C++ style
 
 
 void setup () {
 
-    // Quick start with console
-    cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200, unsigned int waitAfterSerial = 1000
-    
-    cout << endl << "--- console ---" << endl << endl;
-    cout << "Please enter a float ... ";
-    float f;
-    cin >> f;
-    cout << "you entered " << f << ", please note that you can use setlocale function to input/output floating point numbers in your local format" << endl;
-
-    // cout << "Current time is " << time (NULL) << ", please note that you can use setlocale function to input/output time in your local format" << endl;
-
-
-    // Quick start with Cstring (string is, by default, #defined as Cstring<300>)
-    cout << endl << "--- Cstring ---" << endl << endl;
-
-    cstring s;                                                // create a Cstring of max 25 characters on the stack
-    cstring t;                                                // create a Cstring with (default) max 300 characters
-    s = "thirty tree";                                        // initialize the Cstring
-    s = s + ", ...";                                          // calculate with Cstring
-    cout << s << endl;
-
-    if (s.errorFlags ())                                      // check if s is in error state
-        cout << "Cstring error" << endl;                      // you may want to check individual flags: err_overflow or OUT_OF_RANGE
-
-
-    // Quick start with list
-    cout << endl << "----- list -----" << endl << endl;
-
-    list<String> l;                                                 // create a list containing Strings
-    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
-        l = {"banana", "apple", "orange"};                          // initialize the list from brace enclosed initializer list
-    #endif
-    l.push_back ("grapefruit");                                     // add element "grapefruit"
-    l.push_back ("kiwi");
-    l.pop_front ();                                                 // remove the first element
-    l.push_front ("grapes");
-
-    cout << "The first element = " << l.front () << endl;           // the first element in the list
-    cout << "The last element = " << l.back () << endl;             // the last element in the list
-    auto fl = find (l.begin (), l.end (), "grapes");                // find an element in the list
-    if (fl != l.end ())
-        cout << "Found " << *fl << endl;
-
-    cout << "There are " << l.size () << " elements in the list" << endl;
-    for (auto e: l)                                                 // scan all list elements
-        cout << e << endl;
-
-    // cout << l << endl;                                           // display all list elements at once
-
-    signed char e = l.errorFlags ();                                // check if list is in error state
-    if (e) {                                          
-        cout << "list error, flags: " << e << endl; 
-                                                                    
-        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for lists)
-        if (e & err_out_of_range) cout << "err_out_of_range\n";
-
-        l.clearErrorFlags ();   
-    }
-
-    auto ml = max_element (l.begin (), l.end ());                   // finding min, max elements
-    if (ml != l.end ())                                             // if not empty
-        cout << "max element in list = " << *ml << endl;
-
-    cout << "Sorting:\n";
-    sort (l.begin (), l.end ());                                    // sorting
-    for (auto e: l)
-        cout << "    " << e << endl;
+        cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200 (or 9600, distinguishes 32 nd AVR boards), unsigned int waitAfterSerial = 1000
 
 
-
-    // Quick start with vector
-    cout << endl << "----- vector -----" << endl << endl;
+    cout << "\n----- testing console (cin and cout) -----\n";
 
-    vector<int> v;                                                  // create a vector containing integers
-    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
-        v = {2, 1, 3};                                              // initialize the vector from brace enclosed initializer list
-    #endif
-    v.push_back (20);                                               // add element 20
-    v.push_back (10);
-    v.push_back (50);    
-    v.push_back (40);    
-    v.pop_front ();                                                 // remove the first element
-    v.pop_back ();                                                  // remove the last element
-    v.push_back (30);
 
-    cout << "The element at position 2 = " << v [2] << endl;        // access an element by its position in the vector
-    cout << "The first element = " << v.front () << endl;           // the first element in the vector
-    cout << "The last element = " << v.back () << endl;             // the last element in the vector
-    auto fv = find (v.begin (), v.end (), 20);                      // find an element in the vector
-    if (fv != v.end ()) {
-        cout << "Found " << *fv << " ... ";
-        v.erase (fv);                                               // delete it
-        cout << "and deleted" << endl;
-    }
-
-    cout << "There are " << v.size () << " elements in the vector" << endl;
-    for (auto e: v)                                                 // scan all vector elements
-        cout << e << endl;
-
-    // cout << v << endl;                                           // display all vector elements at once
-
-    /* signed char */ e = v.errorFlags ();                          // check if vector is in error state
-    if (e) {                                          
-        cout << "vector error, flags: " << e << endl; 
-                                                                    
-        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for vectors)
-        if (e & err_out_of_range) cout << "err_out_of_range\n";
+        cout << "Please enter a float: ";
+        float f;
+        cin >> f;
+        cout << "you entered " << f << ", please note that you can use setlocale function to input/output floating point numbers in your local format" << endl;
+        // cout << "Current time is " << time (NULL) << ", please note that you can use setlocale function to input/output time in your local format" << endl;
 
-        v.clearErrorFlags ();
-    }
 
-    auto mv = min_element (v.begin (), v.end ());                    // finding min, max elements
-    if (mv != v.end ())                                              // if not empty
-        cout << "min element in vector = " << *mv << endl;
+    cout << "\n----- testing Cstring (C arrays of chars with C++ operators and error handling) -----\n";
 
-    cout << "Sorting:\n";
-    sort (v.begin (), v.end ());                                    // sorting
-    for (auto e: v)
-        cout << "    " << e << endl;
 
+        Cstring<25> s;                                                  // create a Cstring of max 25 characters on the stack
+        cstring t;                                                      // create a Cstring with (default) max 300 characters
+        s = "thirty tree";                                              // initialize the Cstring
+        s = s + ", ...";                                                // calculate with Cstring
+        cout << s << endl;
+        for (int i = 0; i < 100; i ++)
+            s += ", ...";
+        cout << s << endl;    
 
 
-    // Quick start with queue
-    cout << endl << "----- queue -----" << endl << endl;
+        signed char e = s.errorFlags ();
+        if (e) { // check details
+            cout << "Error flags: " << e << endl;
 
-    queue<int> q;                                                   // create a queue of integers
+            if (e & err_overflow)
+                cout << "err_overflow" << endl;
+            if (e & err_out_of_range)
+                cout << "err_out_of_range" << endl;
 
-    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
-        q = {222, 444, 333};                                        // initialize the queue from brace enclosed initializer list
-    #endif
-    q.push (555);                                                   // add some elements
-    q.push (888);
-    q.push (999);
-    q.pop ();                                                       // remove the first element
+            s.clearErrorFlags ();
+        }
 
-    cout << "The element at position 1 = " << q [1] << endl;        // access an element by its position in the queue
-    cout << "The first element = " << q.front () << endl;           // the first element in the queue
-    cout << "The last element = " << q.back () << endl;             // the last element in the queue    
+        // UTF-8 support
+        cstring utf8string = "abc čšž ≈√∫ 🐱😂🚀";
+        for (auto cp: utf8string) {
+            cout << "\"" << *(utf8char *) cp << "\"";   // output utf8 character
 
-    cout << "There are " << q.size () << " elements in the queue" << endl;
-    for (auto e: q)                                                 // scan all queue elements
-        cout << e << endl;
+            if (*(utf8char *) cp == (utf8char *) "😂")  // compare utf8 characters
+                cout << " - face with tears of joy\n";
+            else
+                cout << endl;
+        }
 
-    // cout << q << endl;                                           // display all queue elements at once        
 
-    cout << q << endl;                                              // display all queue elements at once
+    cout << "\n----- quick start with (single linked) lists -----\n";
 
-    /* signed char */ e = q.errorFlags ();                          // check if queue is in error state
-    if (e) {                                          
-        cout << "queue error, flags: " << e << endl; 
-                                                                    
-        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for queues)
-        if (e & err_out_of_range) cout << "err_out_of_range\n";
 
-        v.clearErrorFlags ();
-    }
+        list<int> li ( { -1, -2, -3 } ); // or li = { -1, -2, -3 };
+        li.clear ();
 
-    auto mq = min_element (q.begin (), q.end ());                   // finding min, max elements
-    if (mq != v.end ())                                             // if not empty
-        cout << "min element in queue = " << *mq << endl;
+        list<String> ls ( { String ("banana"), String ("apple"), String ("orange") } );
 
+        ls.push_back ("grapefruit");                                    // add element "grapefruit"
+        ls.push_back ("kiwi");
+        ls.pop_front ();                                                // remove the first element
+        ls.push_front ("grapes");    
 
+        cout << "The first element = " << ls.front () << endl;          // the first element in the list
+        cout << "The last element = " << ls.back () << endl;            // the last element in the list
+        auto fl = find (ls.begin (), ls.end (), "grapes");              // find an element in the list
+        if (fl != ls.end ())
+            cout << "Found " << *fl << endl;    
 
-    // Quick start with Map
-    cout << endl << "----- Map -----" << endl << endl;
+        cout << "There are " << ls.size () << " elements in the list" << endl;
+        for (auto e: ls)                                                // scan all list elements
+            cout << e << endl;
 
-    Map<int, String> mp;                                      // create a map - key-value pairs, where key is and integer and value is string
-    #ifndef ARDUINO_ARCH_AVR // assuming Arduino Mega or Uno
-        mp = { {11, "eleven"}, {12, "twelve"} };              // initialize the map from brace enclosed initializer list
-    #endif
+        cout << ls << endl;                                             // display all list elements at once            
 
-    mp [1] = "one";                                           // assign value of "one" to key 1
-    mp [2] = "two";
-    mp [3] = "tree";
-    cout << mp [1] << endl;                                   // access the value if the key is known
+        e = ls.errorFlags ();                                           // check if list is in error state
+        if (e) {                                          
+            cout << "list error, flags: " << e << endl; 
+                                                                        
+            if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for lists)
+            if (e & err_out_of_range) cout << "err_out_of_range\n";
 
-    mp.insert (4, "four");                                    // another way of inserting a pair
-    mp.insert ( {5, "five"} );                                // another way of inserting a pair
+            ls.clearErrorFlags ();   
+        }
 
+        auto ml = max_element (ls.begin (), ls.end ());                 // finding min, max elements
+        if (ml != ls.end ())                                            // if not empty
+            cout << "max element in list = " << *ml << endl;
 
-    /* signed char */ e = mp.errorFlags ();                          // check if map is in error state
-    if (e) {                                          
-        cout << "map error, flags: " << e << endl; 
-                                                   
-        if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 3 possible types of error flags for maps)
-        if (e & err_out_of_range) cout << "err_out_of_range\n";
-        if (e & err_not_unique) cout << "err_not_unique\n";
+        cout << "Sorting:\n";
+        sort (ls.begin (), ls.end ());                                  // sorting
+        for (auto e: ls)
+            cout << "    " << e << endl;
 
-        mp.clearErrorFlags ();
-    }
+        ls.clear ();
 
-    auto findIterator = mp.find (3);
-    if (findIterator != mp.end ())
-        cout << "Found " << findIterator->first << " with value " << findIterator->second << endl;
 
-    mp.erase (3);                                               // delete it
-    if (mp.errorFlags () & err_not_found)
-        cout << "the pair with key " << 3 << " not found" << endl;
-    else
-        cout << "deleted the pair with key " << 3 << endl;
+    cout << "\n----- quick start with vectors -----\n";
 
-    cout << "There are " << mp.size () << " pairs in the map" << endl;
-    for (auto pair: mp)                                       // scan all key-value pairs in the map
-        cout << pair.first << "-" << pair.second << endl;
 
-    auto minIterator = mp.begin ();
-    auto endIterator = mp.end ();
-    if (minIterator != endIterator) {
-        cout << "min key = " << minIterator->first << endl;
-        -- endIterator;
-        cout << "max key = " << endIterator->first << endl;
-    }
+        vector<int> vi ( { -1, -2, -3 } ); // vi = { -1, -2, -3 };
+        vector<String> vs ( { String ("banana"), String ("apple"), String ("orange") } ); // or (for non AVR boards): vs = { "bananna", "apple", "orange" };
+        vs.clear ();
 
-    cout << mp << endl;                                           // display all map elements at once        
+        vi.push_back (-20);                                              // add element -20
+        vi.pop_front ();                                                 // remove the first element
+        vi.pop_back ();                                                  // remove the last element
+        vi.push_back (-30);
 
+        cout << "The element at position 2 = " << vi [2] << endl;        // access an element by its position in the vector
+        cout << "The first element = " << vi.front () << endl;           // the first element in the vector
+        cout << "The last element = " << vi.back () << endl;             // the last element in the vector
+        auto fv = find (vi.begin (), vi.end (), 20);                     // find an element in the vector
+        if (fv != vi.end ()) {
+            cout << "Found " << *fv << " ... ";
+            vi.erase (fv);                                               // delete it
+            cout << "and deleted" << endl;
+        }
 
-    // Quick start with algorithm (on arrays - other than what has already been demonstrated)
-    cout << endl << "----- algorithm (on arrays) -----" << endl << endl;
+        cout << "There are " << vi.size () << " elements in the vector" << endl;
+        for (auto e: vi)                                                 // scan all vector elements
+            cout << e << endl;
 
-    int arr [10] = { 3, 6, 4, 3, 3, 5, 8, 0, 9, 5 };
-    int size = sizeof (arr) / sizeof (arr [0]);
+        cout << vi << endl;                                              // display all vector elements at once
 
-    int *fa = find (arr, arr + size, 8);                            // find an element in the array
-    if (fa != arr + size)
-         cout << "8 found" << endl;
+        /* signed char */ e = vi.errorFlags ();                          // check if vector is in error state
+        if (e) {                                          
+            cout << "vector error, flags: " << e << endl; 
+                                                                        
+            if (e & err_bad_alloc)    cout << "err_bad_alloc\n";         // you may want to check individual error flags (there are only 2 possible types of error flags for vectors)
+            if (e & err_out_of_range) cout << "err_out_of_range\n";
 
-    cout << "Sorting:\n";
-    sort (arr, arr + size);                                         // sort the array
-    for (int i = 0; i < size; i ++)
-        cout << "    " << arr [i] << endl;
+            vi.clearErrorFlags ();
+        }
 
+        auto mv = min_element (vi.begin (), vi.end ());                  // finding min, max elements
+        if (mv != vi.end ())                                             // if not empty
+            cout << "min element in vector = " << *mv << endl;
 
+        cout << "Sorting:\n";
+        sort (vi.begin (), vi.end ());                                   // sorting
+        for (auto e: vi)
+            cout << "    " << e << endl;
 
-    // Quick start with locale - uncomment the following lines and example code in locale.hpp to make this work 
-    /*
-    setlocale (lc_all, "sl_SI.UTF-8");                             
-    
-    cout << endl << "--- locale ---" << endl << endl;
-    cout << "Please enter a float in local format ... ";
+        vi.clear ();
 
-    cin >> f;
-    cout << "you entered " << f << endl;
-    cout << "this is how π looks like in local format " << 3.14 << endl;
 
-    cout << "Current time in local format is " << time (NULL) << endl;
+    cout << "\n----- quick start with queues -----\n";
 
-    cstring sarr [3] = {"ČDE", "ŠTU", "ABC"};
-    for (int i = 0; i < 3; i++)
-        sarr [i].tolower ();
 
-    sort (sarr, sarr + 3);
-    for (int i = 0; i < 3; i++)
-        cout << sarr [i] << endl;
+        queue<int> q ( {222, 444, 333} ); // or q = {222, 444, 333};
+        q.push (555);                                                   // add some elements
+        q.push (888);
+        q.push (999);
+        q.pop ();                                                       // remove the first element
 
-    cout << (cstring ("abc") > "" ? "OK" : "Not OK") << endl;
-    cout << (cstring ("abc") < "" ? "Not OK" : "OK") << endl;
-    cout << (cstring ("") < cstring ("čšž") ? "OK" : "Not OK") << endl;
-    cout << (cstring ("") > cstring ("čšž") ? "Not OK" : "OK") << endl;
-    */
+        cout << "The element at position 1 = " << q [1] << endl;        // access an element by its position in the queue
+        cout << "The first element = " << q.front () << endl;           // the first element in the queue
+        cout << "The last element = " << q.back () << endl;             // the last element in the queue    
+
+        cout << "There are " << q.size () << " elements in the queue" << endl;
+        for (auto e: q)                                                 // scan all queue elements
+            cout << e << endl;
+
+        cout << q << endl;                                              // display all queue elements at once        
+
+        /* signed char */ e = q.errorFlags ();                          // check if queue is in error state
+        if (e) {                                          
+            cout << "queue error, flags: " << e << endl; 
+                                                                        
+            if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 2 possible types of error flags for queues)
+            if (e & err_out_of_range) cout << "err_out_of_range\n";
+
+            q.clearErrorFlags ();
+        }
+
+        auto mq = min_element (q.begin (), q.end ());                   // finding min, max elements
+        if (mq != q.end ())                                             // if not empty
+            cout << "min element in queue = " << *mq << endl;
+
+        q.clear ();
+
+
+    cout << "\n----- quick start with maps -----\n";
+
+
+        Map<int, String> mp ( { {11, "eleven"}, {12, "twelve"} });  // or (for non AVR boards): mp = { {11, "eleven"}, {12, "twelve"} }
+
+        mp [1] = "one";                                                 // assign value of "one" to key 1
+        mp [2] = "two";
+        mp [3] = "tree";
+        cout << "The value of key 1 is " << mp [1] << endl;             // access the value if the key is known
+
+        mp.insert (4, "four");                                          // another way of inserting a pair
+        mp.insert ( {5, "five"} );                                      // another way of inserting a pair
+
+        auto findIterator = mp.find (3);
+        if (findIterator != mp.end ())
+            cout << "Found " << findIterator->first << " with value " << findIterator->second << endl;
+
+        mp.erase (3);                                                   // delete it
+        if (mp.errorFlags () & err_not_found)
+            cout << "the pair with key " << 3 << " not found" << endl;
+        else
+            cout << "deleted the pair with key " << 3 << endl;
+
+        cout << "There are " << mp.size () << " pairs in the map" << endl;
+        for (auto pair: mp)                                             // scan all key-value pairs in the map
+            cout << pair.first << "-" << pair.second << endl;
+
+        cout << mp << endl;                                             // display all map elements at once        
+
+        /* signed char */ e = mp.errorFlags ();                          // check if map is in error state
+        if (e) {                                          
+            cout << "map error, flags: " << e << endl; 
+                                                    
+            if (e & err_bad_alloc)    cout << "err_bad_alloc\n";        // you may want to check individual error flags (there are only 3 possible types of error flags for maps)
+            if (e & err_out_of_range) cout << "err_out_of_range\n";
+            if (e & err_not_unique) cout << "err_not_unique\n";
+
+            mp.clearErrorFlags ();
+        }
+
+        auto minIterator = mp.begin ();                                 // finding min, max keys
+        auto endIterator = mp.end ();
+        if (minIterator != endIterator) {
+            cout << "min key = " << minIterator->first << endl;
+            -- endIterator;
+            cout << "max key = " << endIterator->first << endl;
+        }
+
+        mp.clear ();
+
+
+    cout << "\n----- quick start with algorithms on arrays -----\n";
+
+
+        int a [10] = { 3, 6, 4, 3, 3, 5, 8, 0, 9, 5 };
+        int size = sizeof (a) / sizeof (a [0]);
+
+        int *fa = find (a, a + size, 8);                                // find an element in the array
+        if (fa != a + size)
+            cout << "8 found" << endl;
+
+        cout << "Sorting:\n";
+        sort (a, a + size);                                             // sort the array
+        for (int i = 0; i < size; i ++)
+            cout << "    " << a [i] << endl;
+
 }
 
 void loop () {
 
 }
+

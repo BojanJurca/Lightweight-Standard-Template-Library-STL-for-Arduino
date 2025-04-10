@@ -5,7 +5,7 @@
  * 
  *  Implementing queue is easy, since everithing is already implemented in vectors. All we have to do is inherit form there.
  *
- *  October 10, 2024, Bojan Jurca
+ *  October 23, 2024, Bojan Jurca
  * 
  */
 
@@ -30,6 +30,9 @@
             #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
                 queue (std::initializer_list<queueType> il) : vector<queueType> (il) {}
             #endif
+
+            template <int N>
+            queue (const queueType (&array) [N]) : vector<queueType> (array) {}
 
             queue (queue& other) : vector<queueType> (other) {} // copy-constructor
 

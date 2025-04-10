@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  October 10, 2024, Bojan Jurca
+ *  March 12, 2025, Bojan Jurca
  *  
  */
 
@@ -126,63 +126,97 @@
 
     };
 
-        #ifndef __LOCALE_HPP__
+    // explicit Cout class specializations for floats and doubles when locale is used
 
-            template<>
-            Cout& Cout::operator << <time_t> (const time_t& value) {
-                struct tm st;
-                localtime_r (&value, &st);
-                char buf [80];
-                strftime (buf, sizeof (buf), "%Y/%m/%d %T", &st);
-                Serial.print (buf);            
-                return *this;
-            }
-
-        #else
-
-            template<>
-            Cout& Cout::operator << <float> (const float& value) {
-                char buf [25];
+    #ifdef __LOCALE_HPP__
+        template<>
+        Cout& Cout::operator << <float> (const float& value) {
+            char buf [32];
+            #ifndef ARDUINO_ARCH_AVR
                 sprintf (buf, "%f", value);
-                // replace decimal and thousand separators with '.' and ','
-                for (int i = 0; buf [i]; i++) {
-                    if (buf [i] == '.')
-                        buf [i] = __locale_decimalSeparator__;
-                    else if (buf [i] == ',')
-                        buf [i] = __locale_thousandSeparator__;
-                }
-                Serial.print (buf);            
-                return *this;
-            }
-
-            template<>
-            Cout& Cout::operator << <double> (const double& value) {
-                char buf [25];
-                sprintf (buf, "%lf", value);
-                // replace decimal and thousand separators with '.' and ','
-                for (int i = 0; buf [i]; i++) {
-                    if (buf [i] == '.')
-                        buf [i] = __locale_decimalSeparator__;
-                    else if (buf [i] == ',')
-                        buf [i] = __locale_thousandSeparator__;
-                }
-                Serial.print (buf);            
-                return *this;
-            }
-
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
-                template<>
-                Cout& Cout::operator << <time_t> (const time_t& value) {
-                    struct tm st;
-                    localtime_r (&value, &st);
-                    char buf [80];
-                    strftime (buf, sizeof (buf), __locale_time__, &st);
-                    Serial.print (buf);            
-                    return *this;
-                }
+            #else
+                dtostrf (value, 1, 6, buf);
             #endif
+            // replace decimal and thousand separators with '.' and ','
+            for (int i = 0; buf [i]; i++) {
+                if (buf [i] == '.')
+                    buf [i] = __locale_decimalSeparator__;
+                else if (buf [i] == ',')
+                    buf [i] = __locale_thousandSeparator__;
+            }
+            Serial.print (buf);            
+            return *this;
+        }
 
-        #endif
+        template<>
+        Cout& Cout::operator << <double> (const double& value) {
+            char buf [32];
+            #ifndef ARDUINO_ARCH_AVR
+                sprintf (buf, "%lf", value);
+            #else
+                dtostrf (value, 1, 6, buf);
+            #endif
+            // replace decimal and thousand separators with '.' and ','
+            for (int i = 0; buf [i]; i++) {
+                if (buf [i] == '.')
+                    buf [i] = __locale_decimalSeparator__;
+                else if (buf [i] == ',')
+                    buf [i] = __locale_thousandSeparator__;
+            }
+            Serial.print (buf);            
+            return *this;
+        }
+    #endif
+
+    // explicit Cout class specialization for time_t and struct tm
+    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+        template<>
+        Cout& Cout::operator << <struct tm> (const struct tm& value) {
+            char buf [80];
+            #ifndef __LOCALE_HPP__
+                strftime (buf, sizeof (buf), "%Y/%m/%d %T", &value);
+            #else
+                strftime (buf, sizeof (buf), __locale_time__, &value);
+            #endif
+            Serial.print (buf);            
+            return *this;
+        }
+
+        template<>
+        Cout& Cout::operator << <time_t> (const time_t& value) {
+            struct tm st;
+            localtime_r (&value, &st);
+            return operator << (st);
+        }
+    #endif
+
+    // explicit Cout class specialization for uth8char
+    template<>
+    Cout& Cout::operator << <utf8char> (const utf8char& value) {
+        utf8char u8 = value;
+
+        char c = u8.__c_str__ [0] = value.__c_str__ [0];
+        if ((c & 0x80) == 0) { // 1-byte character
+            u8.__c_str__ [1] = 0;
+        } else if ((c & 0xE0) == 0xC0) { // 2-byte character
+            u8.__c_str__ [1] = value.__c_str__ [1];
+            u8.__c_str__ [2] = 0;
+        } else if ((c & 0xF0) == 0xE0) { // 3-byte character
+            u8.__c_str__ [1] = value.__c_str__ [1];
+            u8.__c_str__ [2] = value.__c_str__ [2];
+            u8.__c_str__ [3] = 0;
+        } else if ((c & 0xF8) == 0xF0) { // 4-byte character
+            u8.__c_str__ [1] = value.__c_str__ [1];
+            u8.__c_str__ [2] = value.__c_str__ [2];
+            u8.__c_str__ [3] = value.__c_str__ [3];
+            u8.__c_str__ [4] = 0;
+        } else { // invalid UTF-8 character
+            u8.__c_str__ [1] = 0; 
+        }
+
+        Serial.print (u8.__c_str__);
+        return *this;
+    }
 
 
     // Create a working instances

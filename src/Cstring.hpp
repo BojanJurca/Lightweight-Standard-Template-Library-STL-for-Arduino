@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  May 22, 2024, Bojan Jurca
+ *  March 12, 2025, Bojan Jurca
  *  
  */
 
@@ -48,6 +48,37 @@
             }
             return 0; // stings are equal
         }
+
+
+        #ifndef __UTF8CHAR__
+            #define __UTF8CHAR__
+            
+            struct utf8char { 
+                char __c_str__ [5]; // UTF-8 encoding requires max 4 bytes to represent a character
+                inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
+                inline operator char *() __attribute__((always_inline)) { return __c_str__; }
+
+                bool operator == (const utf8char* other) const {
+                    if (other == NULL) return false;
+
+                    char c;
+                    if ((c = __c_str__ [0]) != other->__c_str__ [0])
+                            return false;
+
+                    if ((c & 0x80) == 0) { // 1-byte character
+                        return true;
+                    } else if ((c & 0xE0) == 0xC0) { // 2-byte character
+                        return __c_str__ [1] == other->__c_str__ [1];
+                    } else if ((c & 0xF0) == 0xE0) { // 3-byte character
+                        return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2];
+                    } else if ((c & 0xF8) == 0xF0) { // 4-byte character
+                        return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2] && __c_str__ [3] == other->__c_str__ [3];
+                    } else { // invalid UTF-8 character
+                        return true;
+                    }
+                }        
+            };
+        #endif
 
 
     // ----- TUNNING PARAMETERS -----
@@ -654,6 +685,69 @@
             inline char &operator [] (unsigned long i) __attribute__((always_inline)) { return __c_str__ [i]; }
 
 
+            // UTF-8 enabled iterator
+            class iterator {
+                public:
+
+                    // constructor
+                    iterator (char* str) { 
+                        __str__ = str; 
+                    }
+                    
+                    // * operator
+                    char * operator *() const { return __str__; }
+
+                    // ++ (prefix) increment
+                    iterator& operator ++ () { 
+
+                        char c = *__str__;
+                        if ((c & 0x80) == 0) { // 1-byte character
+                            ++ __str__; 
+                        } else if ((c & 0xE0) == 0xC0) { // 2-byte character
+
+                            if (*(++ __str__)) { // should succeed but check anyway if UTF-8 string is invalid
+                                ++ __str__;
+                            }
+                        } else if ((c & 0xF0) == 0xE0) { // 3-byte character
+                            ++ __str__; 
+                            if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
+                                ++ __str__;
+                                if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
+                                    ++ __str__;
+                                } 
+                            } 
+                        } else if ((c & 0xF8) == 0xF0) { // 4-byte character
+                            ++ __str__; 
+                            if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
+                                ++ __str__;
+                                if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
+                                    ++ __str__;
+                                    if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
+                                        ++ __str__;
+                                    } 
+                                } 
+                            }
+                        } else { // invalid UTF-8 character
+                            ++ __str__; 
+                        }
+
+                        return *this;
+                    }
+
+                
+                    // C++ will stop iterating when != operator returns false, only a argment is used to iterate with, so keep it fast and simple:
+                    friend bool operator != (const iterator& a, const iterator& b) { return *(a.__str__); } 
+
+                private:
+
+                    char* __str__;
+
+            };
+
+            iterator begin () { return iterator ((char *) this); }  // first element
+            iterator end () { return iterator (NULL); }             // past the last element
+
+
             // some std::string-like member functions
             inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
         
@@ -849,6 +943,44 @@
                 size_t l = strlen (__c_str__);
                 while (l < toLength) __c_str__ [l ++] = withChar;
                 __c_str__ [l] = 0;
+            }
+
+            bool isValidUtf8 () { // with the help of Microsoft Copilot
+                size_t i = 0;
+                for (int i = 0; __c_str__ [i]; i ++) {
+                    unsigned char c = __c_str__ [i];
+
+                    if (c <= 0x7F) { 
+                        // ASCII character (1-byte sequence)
+                    } else if ((c & 0xE0) == 0xC0) { 
+                        // 2-byte sequence
+                        i ++;
+                        if (__c_str__ [i] & 0xC0 != 0x80)
+                            return false; // invalid continuation byte
+                    } else if ((c & 0xF0) == 0xE0) { 
+                        // 3-byte sequence
+                        i ++;
+                        if (__c_str__ [i] & 0xC0 != 0x80)
+                            return false; // invalid continuation byte
+                        i ++;
+                        if (__c_str__ [i] & 0xC0 != 0x80)
+                            return false; // invalid continuation bytes
+                    } else if ((c & 0xF8) == 0xF0) { 
+                        // 4-byte sequence
+                        i ++;
+                        if (__c_str__ [i] & 0xC0 != 0x80)
+                            return false; // invalid continuation byte
+                        i ++;
+                        if (__c_str__ [i] & 0xC0 != 0x80)
+                            return false; // invalid continuation byte
+                        i ++;
+                        if (__c_str__ [i] & 0xC0 != 0x80)
+                            return false; // invalid continuation bytes
+                    } else {
+                        return false; // invalid leading byte
+                    }
+                }
+                return true; // all characters are valid UTF-8
             }
 
         private:

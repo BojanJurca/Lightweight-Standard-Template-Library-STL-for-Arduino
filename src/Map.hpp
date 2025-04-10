@@ -7,10 +7,9 @@
  *
  *  Map functions are not thread-safe.
  * 
- *  October 23, 2024, Bojan Jurca
+ *  March 12, 2025, Bojan Jurca
  *  
  */
-
 
 #ifndef __MAP_HPP__
     #define __MAP_HPP__
@@ -49,10 +48,13 @@
             signed char errorFlags () { return __errorFlags__ & 0b01111111; }
             void clearErrorFlags () { __errorFlags__ = 0; }
 
-
             struct Pair {
                 keyType first;          // node key
                 valueType second;       // node value
+
+                // bool operator < (const Pair& other) const { // overload < operator to take into consideration only values (second), this will allow algorithm routines to work on maps as well
+                //     return second < other.second;
+                // }                
             };
 
 
@@ -96,7 +98,45 @@
                             __height__ = h;
                     }
                 }
-          #endif
+          #endif  
+          // #else
+                // constructor accepting the array by reference, since AVR boards do not support initializer lists (thanks for this solution to Microsot Copilot)
+                template <int N>
+                Map (const typename Map<keyType, valueType>::Pair (&array) [N]) {
+                    for (int i = 0; i < N; ++i) {
+                        
+                        if (is_same<keyType, String>::value)     // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                            if (!*(String *) &(array [i]).first) {        // ... check if parameter construction is valid
+                                #ifdef __USE_MAP_EXCEPTIONS__
+                                    throw err_bad_alloc;
+                                #endif
+                                __errorFlags__ |= err_bad_alloc;          // report error if it is not
+                                break;
+                            }
+
+                        if (is_same<valueType, String>::value)   // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                            if (!*(String *) &(array [i]).second) {       // ... check if parameter construction is valid
+                                #ifdef __USE_MAP_EXCEPTIONS__
+                                    throw err_bad_alloc;
+                                #endif
+                                __errorFlags__ |= err_bad_alloc;          // report error if it is not
+                                break;
+                            }
+
+                        if (insert (array [i].first, array [i].second)) // error
+                            break;
+                    }
+                }
+
+                /*
+                // helper function for easier initialization (AVR boards)
+                template <int N>
+                Map<keyType, valueType> initializer_list (const typename Map<keyType, valueType>::Pair (&array) [N]) {
+                    return Map<keyType, valueType> (array);
+                } 
+                */
+
+          // #endif
 
 
            /*
@@ -131,7 +171,10 @@
             *  Clears all the elements from the balanced binary search tree.
             */
 
-            void clear () { __clear__ (&__root__); } 
+            void clear () { 
+                __clear__ (&__root__); 
+                clearErrorFlags ();
+            } 
 
 
            /*
@@ -155,7 +198,7 @@
             }
 
 
-            /*
+           /*
             *  Assignment operator of Map pairs allows the following kinds of assignements: 
             *  
             *     Map<int, String> mpE;
@@ -345,7 +388,7 @@
             }
     
         
-            /*
+           /*
             *   Iterator
             *   
             *   Example:
@@ -512,7 +555,7 @@
             iterator end ()   { return iterator (this, false); }
 
 
-            /*
+           /*
             *  Returns an iterator to the pair with the key, if key is found, end () if it is not. Example:
             *  
             *    auto it = mpB.find (1);
@@ -567,8 +610,7 @@
             signed char __insert__ (__balancedBinarySearchTreeNode__ **p, keyType& key, valueType& value, __balancedBinarySearchTreeNode__ **pInserted) { // returns the height of balanced binary search tree or error
                 // 1. case: a leaf has been reached - add new node here
                 if ((*p) == NULL) {
-                    // log_i ("a leaf has been reached - add new node here");
-                  
+                          
                     // different ways of allocation the memory for a new node
                     #if MAP_MEMORY_TYPE == PSRAM_MEM
                         __balancedBinarySearchTreeNode__ *n = (__balancedBinarySearchTreeNode__ *) ps_malloc (sizeof (__balancedBinarySearchTreeNode__));
@@ -577,7 +619,6 @@
                     #endif
 
                     if (n == NULL) {
-                        // log_e ("BAD_ALLOC");
                         #ifdef __USE_MAP_EXCEPTIONS__
                             throw err_bad_alloc;
                         #endif
@@ -585,8 +626,11 @@
                         return err_bad_alloc;
                     }
 
-                    memset (n, 0, sizeof (__balancedBinarySearchTreeNode__)); // prevent caling String destructor at the following assignments
-                    
+                    memset (n, 0, sizeof (__balancedBinarySearchTreeNode__));
+                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                        new (n) __balancedBinarySearchTreeNode__; 
+                    #endif
+
                     *n = { {key, value}, NULL, NULL, 0, 0 };
                     *pInserted = n;
 
@@ -820,13 +864,8 @@
                 if ((*p) == NULL) return;        // stop recursion at NULL
                 __clear__ (&(*p)->rightSubtree); // recursive delete right subtree  
                 __clear__ (&(*p)->leftSubtree);  // recursive delete left subtree
-                
-                // different wasy of freeing the memory used by the node
-                #ifdef __USE_IRAM__
-                    free (p);
-                #else
-                    delete (*p);
-                #endif
+
+                delete (*p);
 
                 (*p) = NULL;
                 __size__ --;

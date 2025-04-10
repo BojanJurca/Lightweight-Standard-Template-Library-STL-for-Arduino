@@ -5,7 +5,7 @@
  *
  *  This file is more or less just an example. Implement your own locale settings here.
  *
- *  October 31, 2024, Bojan Jurca
+ *  March 12, 2025, Bojan Jurca
  *
  */
 
@@ -30,11 +30,35 @@
 
     // ----- this is the default - ASCII locale -----
 
-    struct utf8char { 
-        char __c_str__ [5]; // UTF-8 encoding requires max 4 bytes to represent a character
-        inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
-        inline operator char *() __attribute__((always_inline)) { return __c_str__; }
-    };
+    #ifndef __UTF8CHAR__
+        #define __UTF8CHAR__
+        
+        struct utf8char { 
+            char __c_str__ [5]; // UTF-8 encoding requires max 4 bytes to represent a character
+            inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
+            inline operator char *() __attribute__((always_inline)) { return __c_str__; }
+
+            bool operator == (const utf8char* other) const {
+                if (other == NULL) return false;
+
+                char c;
+                if ((c = __c_str__ [0]) != other->__c_str__ [0])
+                        return false;
+
+                if ((c & 0x80) == 0) { // 1-byte character
+                    return true;
+                } else if ((c & 0xE0) == 0xC0) { // 2-byte character
+                    return __c_str__ [1] == other->__c_str__ [1];
+                } else if ((c & 0xF0) == 0xE0) { // 3-byte character
+                    return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2];
+                } else if ((c & 0xF8) == 0xF0) { // 4-byte character
+                    return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2] && __c_str__ [3] == other->__c_str__ [3];
+                } else { // invalid UTF-8 character
+                    return true;
+                }
+            }        
+        };
+    #endif
 
     // assing each charcter its own number that will be used for sorting - in case of ASCII character just return its ASCII code and increase the pointer
     int __charOrder_ASCII__ (const char **pc) {
@@ -63,6 +87,7 @@
             return {c, 0};
     }
 
+    const char *__locale_name__ = NULL;
 
     int (*__locale_charOrder__) (const char **) = __charOrder_ASCII__; // by default
 
@@ -224,10 +249,9 @@
     */
 
 
-
-
-
     bool setlocale (localeCategory_t category, const char *locale) {
+
+        __locale_name__ = locale;
 
         if (locale == NULL) {
             __use_utf8__ = false;
