@@ -1,21 +1,25 @@
 # Lightweight C++ Standard Template Library (STL) for Arduino
 
-Lightweight C++ Standard Template Library (STL) for Arduino includes some STL and std functionalities, like console, cstrings (C char arrays with C++ operators) with optional locales, lists, vectors, queues, maps and algorithms.
+The Lightweight C++ STL for Arduino provides selected features from the standard C++ library, including console, cstrings (C-style character arrays with C++ operators) with optional locale support, as well as containers like lists, vectors, queues, maps, basic algorithms and complex numbers.
 
-But why use this library instead of st STL? It could be one of the following reasons:
 
-- If you need to properly detect and handle run-time errors. Std STL would just restart the controller if a run-time error occurs.
-- If you need to properly detect and handle run-time errors in string operations. Arduino Strings would mostly just ignore them.
-- If you are using one of AVR boards (simple data types are supported on AVR boards as well).
-- If you prefer the convenience of using standard C++ cin and cout objects rather than Serial.print.
-- If you need locale UTF-8 string operations.
-- If you want to make use of PSRAM if it is built-in your board.
+## Why use this library instead of the standard STL?
+
+
+Here are a few reasons you might prefer this lightweight version:
+
+- You need to reliably detect and handle run-time errors. Standard STL may simply reset the controller when an error occurs.
+- You want to detect and manage errors in string operations, which Arduino String often ignores.
+- You're using an AVR board (basic data types are supported even on AVR).
+- You prefer the convenience of using standard C++ cin and cout over Serial.print.
+- You need UTF-8 locale-aware string operations.
+- You want to leverage PSRAM if your board has it built in.
 
 
 ### console
 
 
-console.hpp creates two objects: cin and cout, for more standard way of communication with Serial interface, like:
+The console module introduces the familiar C++ cin and cout objects, enabling a more idiomatic and streamlined interface for serial communication. This approach mirrors conventional C++ programming practices, making input and output operations on Arduino more intuitive for experienced C++ developers.
 
 
 ```C++
@@ -39,7 +43,7 @@ void setup () {
 ### strings
 
 
-CString.hpp defines a class template for C char arrays with C++ operators that do not overflow the internal buffer. They have an extra flag to keep and report the information about errors that occured during Cstring operations. Cstrings reside in the global memory area or on the stack, so they do not fragment the heap at all.
+The CString class template provides safe, C-style character arrays augmented with C++ operators. Unlike standard char [], these strings offer built-in error detection and never overflow their internal buffer. They are stored either on the stack or in the global memory segment, which prevents heap fragmentation.
 
 
 ```C++
@@ -48,7 +52,7 @@ CString.hpp defines a class template for C char arrays with C++ operators that d
 void setup () {
     Cstring<15> cs3 = "abc";              // cs3 can hold max 15 characters and is assigned "abc" value after construction
     cs3 += "def";
-    cstring s;                             // equivalent of Cstring<300>
+    cstring s;                            // equivalent of Cstring<300>
 }
 ```
 
@@ -56,7 +60,7 @@ void setup () {
 ### lists
 
 
-Lists are single linked nodes (to preserve memory space) and have extra flag to keep and report the information about errors that occured during list operations. Lists reside either on the heap or in PSRAM (if it is available).
+This implementation provides singly linked lists designed with memory efficiency in mind. Each list maintains an internal flag that tracks and reports errors during list operations. Lists can be allocated on the heap or in PSRAM when available.
 
 
 ```C++
@@ -79,7 +83,7 @@ for (auto e: l)                           // iterate through list elements
 ### vectors
 
 
-Vectors have extra flag to keep and report the information about errors that occured during vector operations. Vectors reside either on the heap or in PSRAM (if it is available).
+Vectors offer dynamic arrays with automatic memory management and enhanced safety features. Like other containers in this library, vectors maintain internal flags to detect and report operation-related errors. They are stored either on the heap or in PSRAM if it exists on the hardware.
 
 
 ```C++
@@ -103,7 +107,7 @@ for (auto e: v)                           // iterate through vector elements
 ### queues
 
 
-Queues have extra flag to keep and report the information about errors that occured during queue operations. Queues reside either on the stack or global memory, heap or in PSRAM (if it is available).
+Queues in this library offer first-in, first-out data structures that can be located in global memory, the stack, heap, or PSRAM. They include robust error handling flags for runtime diagnostics, making them safer for embedded environments.
 
 
 ```C++
@@ -126,7 +130,7 @@ for (auto e: q)
 ### maps
 
 
-Maps of key-value pairs are internally implemented as balanced binary search trees, for good performance. They have an extra flag to keep and report the information about errors that occured during map operations. Maps reside either on the heap or in PSRAM (if it is available).
+Key-value pairs are organized using internally balanced binary search trees to ensure efficient lookup and insertion. Maps report operation errors via dedicated flags and may reside on the heap or in PSRAM. This design provides solid performance while ensuring runtime integrity.
 
 
 ```C++
@@ -149,7 +153,7 @@ for (auto pair: mp)                       // scan all key-value pairs in the map
 ### algorithms
 
 
-Some algorithms functionalities are implemented, like sorting (of arrays, vectors) and finding certain or min, max elements (in arrays, lists, vectors, maps).
+Selected algorithmic functions are included, such as sorting arrays and containers, finding minimum or maximum elements, and searching. These utilities are adapted for the constraints of microcontrollers, making them practical without requiring the full STL overhead.
 
 
 ```C++
@@ -173,7 +177,7 @@ for (int i = 0; i < size; i ++)
 ### locale
 
 
-Only the framework for the locale settings is implemented. If you need your own locale settings you will have to modify the example included so that it works for you.
+Locale support is implemented as a framework with foundational components that can be extended for localization requirements, such as UTF-8 character processing or localized number formatting. Custom locales can be built by modifying the provided examples and configuration.
 
 
 ```C++
@@ -203,6 +207,31 @@ for (int i = 0; i < 3; i++)
 ```
 
 
+### complex numbers
+
+
+A C++ standards-compliant template for complex numbers is included, useful for applications such as digital signal processing (e.g., FFT operations). This module integrates seamlessly with other mathematical functions available in the library.
+
+
+```C++
+#include "std/console.hpp"
+#include "std/complex.hpp"
+
+cinit (true);
+
+// FFT example
+cout << "\nFFT - frequency example\n";
+complex<float> signal [16];
+for (int i = 0; i < 16; i++)
+    signal [i] = { sin (i) + cos (2 * i), 0 };
+complex<float> frequency [16];
+fft (frequency, signal);
+for (int i = 0; i < 16 / 2; i++)
+    cout << "magnitude [" << i << "] = " << abs (frequency [i]) << endl;
+```
+
+
 ## Things to consider when using AVR boards
 
-Memory management for AVR boards is not sophisticated enough to handle many heap deletions. A consequence of frequent deletes updates and inserts may be memory leaks. In such cases it may be better to avoid complex data types such as Strings.
+Memory management on AVR boards is limited and not suitable for frequent dynamic allocations and deletions. This limitation may lead to memory leaks, especially with complex types such as String. For best results, avoid repeated insertion and deletion in dynamic containers on AVR systems.
+
