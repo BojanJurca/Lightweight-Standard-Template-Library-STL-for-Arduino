@@ -1,9 +1,9 @@
 /*
- *  Quick start for C++ package for Arduino (ESP boards)
+ *  Quick start for C++ package for Arduino
  *
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  March 12, 2025, Bojan Jurca
+ *  May 22, 2025, Bojan Jurca
  */
 
 
@@ -15,6 +15,7 @@
 */
 
 
+#include "console.hpp"      // cin and cout object to write to/read from Serial in standard C++ style
 // #include "locale.hpp"       // include locale.hpp for support of local UTF-8 characters 
 #include "Cstring.hpp"      // C arrays of characters with C++ syntax and error handling
 #include "list.hpp"         // single linked lists with error handling that also works on AVR boards
@@ -22,22 +23,27 @@
 #include "queue.hpp"        // queues with error handling that also works on AVR boards
 #include "Map.hpp"          // maps with error handling that also works on AVR boards
 #include "algorithm.hpp"    // find, heap sort for vectors, ... merge sort for lists
-#include "console.hpp"      // cin and cout object to write to/read from Serial in standard C++ style
+#include "complex.hpp"      // complex numbers for Arduino
+#include "fft.h"            // demonstration of the use of complex numbers 
 
 
 void setup () {
 
-        cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200 (or 9600, distinguishes 32 nd AVR boards), unsigned int waitAfterSerial = 1000
+    cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200 (or 9600, distinguishes 32 nd AVR boards), unsigned int waitAfterSerial = 1000
 
 
     cout << "\n----- testing console (cin and cout) -----\n";
+
+
+        #ifdef __LOCALE_HPP__ // if locale. hpp is included
+            setlocale (lc_all, "sl_SI.UTF-8");
+        #endif
 
 
         cout << "Please enter a float: ";
         float f;
         cin >> f;
         cout << "you entered " << f << ", please note that you can use setlocale function to input/output floating point numbers in your local format" << endl;
-        // cout << "Current time is " << time (NULL) << ", please note that you can use setlocale function to input/output time in your local format" << endl;
 
 
     cout << "\n----- testing Cstring (C arrays of chars with C++ operators and error handling) -----\n";
@@ -67,7 +73,7 @@ void setup () {
 
         // UTF-8 support
         cstring utf8string = "abc čšž ≈√∫ 🐱😂🚀";
-        for (auto cp: utf8string) {
+        for (auto cp : utf8string) {
             cout << "\"" << *(utf8char *) cp << "\"";   // output utf8 character
 
             if (*(utf8char *) cp == (utf8char *) "😂")  // compare utf8 characters
@@ -77,10 +83,18 @@ void setup () {
         }
 
 
+    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+
+        cout << "\n----- testing locale -----\n";
+
+        cout << "Current time is " << time (NULL) << ", please note that you can use setlocale function to input/output time in your local format" << endl;
+    #endif
+
+
     cout << "\n----- quick start with (single linked) lists -----\n";
 
 
-        list<int> li ( { -1, -2, -3 } ); // or li = { -1, -2, -3 };
+        list<int> li ( { -1, -2, -3 } );
         li.clear ();
 
         list<String> ls ( { String ("banana"), String ("apple"), String ("orange") } );
@@ -116,7 +130,7 @@ void setup () {
         if (ml != ls.end ())                                            // if not empty
             cout << "max element in list = " << *ml << endl;
 
-        cout << "Sorting:\n";
+        cout << "Sorting, please note that you can use setlocale function to sort in your local format:\n";
         sort (ls.begin (), ls.end ());                                  // sorting
         for (auto e: ls)
             cout << "    " << e << endl;
@@ -127,7 +141,7 @@ void setup () {
     cout << "\n----- quick start with vectors -----\n";
 
 
-        vector<int> vi ( { -1, -2, -3 } ); // vi = { -1, -2, -3 };
+        vector<int> vi ( { -1, -2, -3 } );
         vector<String> vs ( { String ("banana"), String ("apple"), String ("orange") } ); // or (for non AVR boards): vs = { "bananna", "apple", "orange" };
         vs.clear ();
 
@@ -166,7 +180,7 @@ void setup () {
         if (mv != vi.end ())                                             // if not empty
             cout << "min element in vector = " << *mv << endl;
 
-        cout << "Sorting:\n";
+        cout << "Sorting, please note that you can use setlocale function to sort in your local format:\n";
         sort (vi.begin (), vi.end ());                                   // sorting
         for (auto e: vi)
             cout << "    " << e << endl;
@@ -177,7 +191,7 @@ void setup () {
     cout << "\n----- quick start with queues -----\n";
 
 
-        queue<int> q ( {222, 444, 333} ); // or q = {222, 444, 333};
+        queue<int> q ( {222, 444, 333} );
         q.push (555);                                                   // add some elements
         q.push (888);
         q.push (999);
@@ -239,7 +253,7 @@ void setup () {
 
         cout << mp << endl;                                             // display all map elements at once        
 
-        /* signed char */ e = mp.errorFlags ();                          // check if map is in error state
+        /* signed char */ e = mp.errorFlags ();                         // check if map is in error state
         if (e) {                                          
             cout << "map error, flags: " << e << endl; 
                                                     
@@ -271,12 +285,30 @@ void setup () {
         if (fa != a + size)
             cout << "8 found" << endl;
 
-        cout << "Sorting:\n";
+        cout << "Sorting, please note that you can use setlocale function to sort in your local format:\n";
         sort (a, a + size);                                             // sort the array
         for (int i = 0; i < size; i ++)
             cout << "    " << a [i] << endl;
 
+
+    cout << "\n----- quick start with complex numbers -----\n";
+
+        complex<float> z1 = { 1, 2 };
+        complex<float> z2 = { 3, 4 };
+        cout << z1 + z2 << endl;
+
+        // FFT example
+        cout << "\nFFT - frequency example\n";
+        complex<float> signal [16];
+        for (int i = 0; i < 16; i++)
+            signal [i] = { sin (i) + cos (2 * i), 0 };
+        complex<float> frequency [16];
+        fft (frequency, signal);
+        for (int i = 0; i < 16 / 2; i++)
+            cout << "magnitude [" << i << "] = " << abs (frequency [i]) << endl;
+
 }
+
 
 void loop () {
 

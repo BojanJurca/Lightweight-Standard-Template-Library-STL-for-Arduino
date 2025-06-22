@@ -21,7 +21,7 @@
  *                              | __front__           __back__          |
  *                              |<-------------- __capacity__ --------->|  
  *
- *  March 12, 2025, Bojan Jurca
+ *  May 22, 2025, Bojan Jurca
  * 
  */
 
@@ -70,7 +70,7 @@
             */
             
             vector () {}
-/*bbb
+            /*
             vector (const vector& other) {
                 signed char e = this->reserve (other.size ()); // prevent resizing __elements__ for each element beeing pushed back
                 if (e) { // != OK
@@ -85,7 +85,8 @@
                     if (this->push_back (element)) // error
                         break;
             }
-*/
+            */
+
             #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
                    /*
                     *  Constructor of vector from brace enclosed initializer list allows the following kinds of creation of vectors: 
@@ -510,8 +511,8 @@
 
             };
 
-            iterator begin () { return iterator (this, 0); }            // first element
-            iterator end () { return iterator (this, this->size ()); }  // past the last element
+            iterator begin () { return iterator (this, 0); }                        // first element
+            iterator end () { return iterator (this, this->size ()); }              // past the last element
 
 
            /*
@@ -629,6 +630,20 @@
                     __elements__ [e1] = element;        
                     return err_ok;
                 }
+            }
+
+            // print vector to ostream
+            friend ostream& operator << (ostream& os, vector& v) {
+                bool first = true;
+                os << "[";
+                for (auto e : v) {
+                    if (!first)
+                        os << ",";
+                    first = false;
+                    os << e;
+                }
+                os << "]";
+                return os;
             }
 
 
@@ -1223,8 +1238,8 @@
                     
             };      
       
-            iterator begin () { return iterator (this, 0); }  
-            iterator end () { return iterator (this, this->size ()); }
+            iterator begin () { return iterator (this, 0); }                        // first element
+            iterator end () { return iterator (this, this->size ()); }              // past the last element
 
 
            /*
@@ -1350,6 +1365,20 @@
                     __elements__ [e1] = element;        
                     return err_ok;
                 }
+            }
+
+            // print vector to ostream
+            friend ostream& operator << (ostream& os, vector& v) {
+                bool first = true;
+                os << "[";
+                for (auto e : v) {
+                    if (!first)
+                        os << ",";
+                    first = false;
+                    os << e;
+                }
+                os << "]";
+                return os;
             }
 
 

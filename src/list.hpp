@@ -6,7 +6,7 @@
  *  In order to save as much memory as possible, list is implemented with minimal functionality. The elements are single - linked, so same
  *  functions, like pop_back for example can not be efficiently implemented.
  * 
- *  March 12, 2025, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
+ *  May 22, 2025, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
  * 
  */
 
@@ -373,9 +373,8 @@
 
             };
 
-            iterator begin () { return iterator (__front__); }  // first element
-            iterator end () { return iterator (NULL); }         // past the last element
-
+            iterator begin () { return iterator (__front__); }              // first element
+            iterator end () { return iterator (NULL); }                     // past the last element
 
 
            /*
@@ -411,6 +410,15 @@
                 other.__size__ ++;
             }
             */
+
+            // print list to ostream
+            friend ostream& operator << (ostream& os, list& l) {
+                os << "FRONT→";
+                for (auto e : l)
+                    os << e << "→";
+                os << "NULL";
+                return os;
+            }
 
 
       private:
@@ -838,9 +846,8 @@
 
             };
 
-            iterator begin () { return iterator (__front__); }          // first element
-            iterator end () { return iterator (NULL); }                 // past the last element
-
+            iterator begin () { return iterator (__front__); }              // first element
+            iterator end () { return iterator (NULL); }                     // past the last element
 
 
            /*
@@ -876,6 +883,15 @@
                 other.__size__ ++;
             }
             */
+
+            // print list to ostream
+            friend ostream& operator << (ostream& os, list& l) {
+                os << "FRONT→";
+                for (auto e : l)
+                    os << e << "→";
+                os << "NULL";
+                return os;
+            }
 
       private:
 

@@ -1,9 +1,9 @@
 /*
- *  Cstring.hpp for Arduino (ESP boards)
+ *  Cstring.hpp for Arduino
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  March 12, 2025, Bojan Jurca
+ *  May 22, 2025, Bojan Jurca
  *  
  */
 
@@ -77,6 +77,12 @@
                         return true;
                     }
                 }        
+
+                // print utf8char to ostream
+                friend ostream& operator << (ostream& os, utf8char& u) {
+                    os << u.__c_str__;
+                    return os;
+                }
             };
         #endif
 
@@ -1031,6 +1037,13 @@
                 }
 
             #endif
+
+
+        // print Cstring to ostream
+        friend ostream& operator << (ostream& os, Cstring& s) {
+            os << s.c_str ();
+            return os;
+        }
 
     };
 

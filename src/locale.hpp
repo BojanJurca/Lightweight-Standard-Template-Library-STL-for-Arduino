@@ -57,6 +57,12 @@
                     return true;
                 }
             }        
+
+            // print utf8char to ostream
+            friend ostream& operator << (ostream& os, utf8char& u) {
+                os << u.__c_str__;
+                return os;
+            }
         };
     #endif
 
@@ -103,7 +109,7 @@
 
 
     // ----- example for locale "sl_SI.UTF-8", you may freely delete this part if not needed -----
-    /*
+    /**/
 
                 //  Slovenian alphabet, extended with some frequently used foreign letters:
                 //  A B C Č (Ć) D (Đ) E F G H I J K L M N O P (Q) R S Š T U V (W) (X) (Y) Z Ž
@@ -246,12 +252,10 @@
     
                     return __tolower_ASCII__ (pc);
                 }
-    */
+    /**/
 
 
     bool setlocale (localeCategory_t category, const char *locale) {
-
-        __locale_name__ = locale;
 
         if (locale == NULL) {
             __use_utf8__ = false;
@@ -273,6 +277,8 @@
             if (category & lc_time) {
                 __locale_time__ = "%Y/%m/%d %T";
             }
+
+            __locale_name__ = NULL;
 
             return true;
         }
@@ -298,6 +304,8 @@
             if (category & lc_time) {
                 __locale_time__ = "%d.%m.%Y %H:%M:%S";
             }
+
+            __locale_name__ = locale;
 
             return true;
         }

@@ -7,12 +7,14 @@
  *
  *  Map functions are not thread-safe.
  * 
- *  March 12, 2025, Bojan Jurca
+ *  May 22, 2025, Bojan Jurca
  *  
  */
 
+
 #ifndef __MAP_HPP__
     #define __MAP_HPP__
+
 
     // ----- TUNNING PARAMETERS -----
 
@@ -578,6 +580,20 @@
                     }
 
                 return iterator (key, this);
+            }
+
+            // print map to ostream
+            friend ostream& operator << (ostream& os, Map& m) {
+                bool first = true;
+                os << "[";
+                for (const auto e : m) {
+                    if (!first)
+                        os << ",";
+                    first = false;
+                    os << e.first << "→" << e.second;
+                }
+                os << "]";
+                return os;
             }
 
 

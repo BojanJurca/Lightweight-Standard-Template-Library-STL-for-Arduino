@@ -1,9 +1,9 @@
 /*
- *  console.hpp for Arduino (ESP boards)
+ *  console.hpp for Arduino
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  March 12, 2025, Bojan Jurca
+ *  May 22, 2025, Bojan Jurca
  *  
  */
 
@@ -40,97 +40,26 @@
     #endif
 
 
-    // cout
+    // ostream
     #define endl "\r\n"
 
-    class Cout {
+    class ostream {
 
       public:
 
         template<typename T>
-        Cout& operator << (const T& value) {
+        ostream& operator << (const T& value) {
             Serial.print (value);            
             return *this;
         }
 
-        #ifdef __CSTRING_HPP__
-            template<size_t N>
-            Cout& operator << (const Cstring<N>& value) {
-                Serial.print ((char *) &value);
-                return *this;
-            }
-        #endif
-
-        #ifdef __LIST_HPP__
-            template<typename T>
-            Cout& operator << (list<T>& value) {
-                Serial.print ("FRONT→");
-                for (auto e: value) {
-                    this->operator<<(e);
-                    Serial.print ("→");
-                }
-                Serial.print ("NULL");
-                return *this;
-            }
-        #endif
-
-        #ifdef __VECTOR_HPP__
-            template<typename T>
-            Cout& operator << (vector<T>& value) {
-                bool first = true;
-                Serial.print ("[");
-                for (auto e: value) {
-                    if (!first)
-                        Serial.print (",");
-                    first = false;
-                    this->operator<<(e);
-                }
-                Serial.print ("]");
-                return *this;
-            }
-        #endif
-
-        #ifdef __QUEUE_HPP__
-            template<typename T>
-            Cout& operator << (queue<T>& value) {
-                bool first = true;
-                Serial.print ("[");
-                for (auto e: value) {
-                    if (!first)
-                        Serial.print (",");
-                    first = false;
-                    this->operator<<(e);
-                }
-                Serial.print ("]");
-                return *this;
-            }
-        #endif
-
-        #ifdef __MAP_HPP__
-            template<typename K, typename V>
-            Cout& operator << (Map<K, V>& value) {
-                bool first = true;
-                Serial.print ("[");
-                for (auto e: value) {
-                    if (!first)
-                        Serial.print (",");
-                    first = false;
-                    this->operator<<(e.first); 
-                    Serial.print ("→");
-                    this->operator<<(e.second);
-                }
-                Serial.print ("]");
-                return *this;
-            }
-        #endif
-
     };
 
-    // explicit Cout class specializations for floats and doubles when locale is used
+    // explicit ostream class specializations for floats and doubles when locale is used
 
     #ifdef __LOCALE_HPP__
         template<>
-        Cout& Cout::operator << <float> (const float& value) {
+        ostream& ostream::operator << <float> (const float& value) {
             char buf [32];
             #ifndef ARDUINO_ARCH_AVR
                 sprintf (buf, "%f", value);
@@ -149,7 +78,7 @@
         }
 
         template<>
-        Cout& Cout::operator << <double> (const double& value) {
+        ostream& ostream::operator << <double> (const double& value) {
             char buf [32];
             #ifndef ARDUINO_ARCH_AVR
                 sprintf (buf, "%lf", value);
@@ -168,10 +97,10 @@
         }
     #endif
 
-    // explicit Cout class specialization for time_t and struct tm
+    // explicit ostream class specialization for time_t and struct tm
     #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
         template<>
-        Cout& Cout::operator << <struct tm> (const struct tm& value) {
+        ostream& ostream::operator << <struct tm> (const struct tm& value) {
             char buf [80];
             #ifndef __LOCALE_HPP__
                 strftime (buf, sizeof (buf), "%Y/%m/%d %T", &value);
@@ -183,48 +112,50 @@
         }
 
         template<>
-        Cout& Cout::operator << <time_t> (const time_t& value) {
+        ostream& ostream::operator << <time_t> (const time_t& value) {
             struct tm st;
             localtime_r (&value, &st);
             return operator << (st);
         }
     #endif
 
-    // explicit Cout class specialization for uth8char
-    template<>
-    Cout& Cout::operator << <utf8char> (const utf8char& value) {
-        utf8char u8 = value;
+    // explicit ostream class specialization for uth8char
+    #ifdef __UTF8CHAR__
+        template<>
+        ostream& ostream::operator << <utf8char> (const utf8char& value) {
+            utf8char u8 = value;
 
-        char c = u8.__c_str__ [0] = value.__c_str__ [0];
-        if ((c & 0x80) == 0) { // 1-byte character
-            u8.__c_str__ [1] = 0;
-        } else if ((c & 0xE0) == 0xC0) { // 2-byte character
-            u8.__c_str__ [1] = value.__c_str__ [1];
-            u8.__c_str__ [2] = 0;
-        } else if ((c & 0xF0) == 0xE0) { // 3-byte character
-            u8.__c_str__ [1] = value.__c_str__ [1];
-            u8.__c_str__ [2] = value.__c_str__ [2];
-            u8.__c_str__ [3] = 0;
-        } else if ((c & 0xF8) == 0xF0) { // 4-byte character
-            u8.__c_str__ [1] = value.__c_str__ [1];
-            u8.__c_str__ [2] = value.__c_str__ [2];
-            u8.__c_str__ [3] = value.__c_str__ [3];
-            u8.__c_str__ [4] = 0;
-        } else { // invalid UTF-8 character
-            u8.__c_str__ [1] = 0; 
+            char c = u8.__c_str__ [0] = value.__c_str__ [0];
+            if ((c & 0x80) == 0) { // 1-byte character
+                u8.__c_str__ [1] = 0;
+            } else if ((c & 0xE0) == 0xC0) { // 2-byte character
+                u8.__c_str__ [1] = value.__c_str__ [1];
+                u8.__c_str__ [2] = 0;
+            } else if ((c & 0xF0) == 0xE0) { // 3-byte character
+                u8.__c_str__ [1] = value.__c_str__ [1];
+                u8.__c_str__ [2] = value.__c_str__ [2];
+                u8.__c_str__ [3] = 0;
+            } else if ((c & 0xF8) == 0xF0) { // 4-byte character
+                u8.__c_str__ [1] = value.__c_str__ [1];
+                u8.__c_str__ [2] = value.__c_str__ [2];
+                u8.__c_str__ [3] = value.__c_str__ [3];
+                u8.__c_str__ [4] = 0;
+            } else { // invalid UTF-8 character
+                u8.__c_str__ [1] = 0; 
+            }
+
+            Serial.print (u8.__c_str__);
+            return *this;
         }
-
-        Serial.print (u8.__c_str__);
-        return *this;
-    }
+    #endif
 
 
     // Create a working instances
-    Cout cout;
+    ostream cout;
 
 
-    // cin
-    class Cin {
+    // istream
+    class istream {
 
       private:
 
@@ -232,15 +163,15 @@
 
       public:
 
-        // Cin >> char
-        Cin& operator >> (char& value) {
+        // istream >> char
+        istream& operator >> (char& value) {
             while (!Serial.available ()) delay (10);
             value = Serial.read ();            
             return *this;
         }        
 
-        // Cin >> int
-        Cin& operator >> (int& value) {
+        // istream >> int
+        istream& operator >> (int& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -257,8 +188,8 @@
             return *this;
         } 
 
-        // Cin >> float
-        Cin& operator >> (float& value) {
+        // istream >> float
+        istream& operator >> (float& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -284,8 +215,8 @@
             return *this;
         } 
 
-        // Cin >> double
-        Cin& operator >> (double& value) {
+        // istream >> double
+        istream& operator >> (double& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -311,8 +242,10 @@
             return *this;
         } 
 
-        // Cin >> char * // warning, it doesn't chech buffer overflow
-        Cin& operator >> (char *value) {
+/*
+
+        // istream >> char * // warning, it doesn't chech buffer overflow
+        istream& operator >> (char *value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -329,8 +262,8 @@
             return *this;
         }
 
-        // Cin >> String
-        Cin& operator >> (String& value) {
+        // istream >> String
+        istream& operator >> (String& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -347,10 +280,11 @@
             return *this;
         }
 
+*/
 
-        // Cin >> any other class that has a constructor of type T (char *)
+        // istream >> any other class that has a constructor of type T (char *)
         template<typename T>
-        Cin& operator >> (T& value) {
+        istream& operator >> (T& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -370,6 +304,6 @@
     };
 
     // Create a working instnces
-    Cin cin;
+    istream cin;
 
 #endif
