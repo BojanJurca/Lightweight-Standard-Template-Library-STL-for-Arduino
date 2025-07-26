@@ -79,10 +79,12 @@
                 }        
 
                 // print utf8char to ostream
+                /*
                 friend ostream& operator << (ostream& os, utf8char& u) {
                     os << u.__c_str__;
                     return os;
                 }
+                */
             };
         #endif
 
@@ -989,6 +991,14 @@
                 return true; // all characters are valid UTF-8
             }
 
+
+            // print Cstring to ostream
+            friend ostream& operator << (ostream& os, Cstring& s) {
+                os << s.c_str ();
+                return os;
+            }
+
+
         private:
 
             #ifdef __LOCALE_HPP__
@@ -1037,13 +1047,6 @@
                 }
 
             #endif
-
-
-        // print Cstring to ostream
-        friend ostream& operator << (ostream& os, Cstring& s) {
-            os << s.c_str ();
-            return os;
-        }
 
     };
 

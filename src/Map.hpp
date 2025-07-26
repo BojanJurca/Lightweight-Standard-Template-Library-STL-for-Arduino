@@ -7,7 +7,7 @@
  *
  *  Map functions are not thread-safe.
  * 
- *  May 22, 2025, Bojan Jurca
+ *  Aug 12, 2025, Bojan Jurca
  *  
  */
 
@@ -582,19 +582,21 @@
                 return iterator (key, this);
             }
 
-            // print map to ostream
-            friend ostream& operator << (ostream& os, Map& m) {
-                bool first = true;
-                os << "[";
-                for (const auto e : m) {
-                    if (!first)
-                        os << ",";
-                    first = false;
-                    os << e.first << "→" << e.second;
+            #ifdef __CONSOLE_HPP__
+                // print map to ostream
+                friend ostream& operator << (ostream& os, Map& m) {
+                    bool first = true;
+                    os << "[";
+                    for (const auto e : m) {
+                        if (!first)
+                            os << ",";
+                        first = false;
+                        os << e.first << "→" << e.second;
+                    }
+                    os << "]";
+                    return os;
                 }
-                os << "]";
-                return os;
-            }
+            #endif
 
 
         private:

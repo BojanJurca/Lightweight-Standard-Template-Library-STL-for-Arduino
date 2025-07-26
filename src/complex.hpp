@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  *
- *  May 22, 2025, Bojan Jurca
+ *  Aug 12, 2025, Bojan Jurca
  * 
  */
 
@@ -92,11 +92,13 @@
                     // conjugate function
                     constexpr complex conj () const { return {real (), -imag ()}; }
                 
-                    // print complex number to ostream
-                    friend ostream& operator << (ostream& os, const complex& c) {
-                        os << c.real () << '+' << c.imag () << 'i';
-                        return os;
-                    }
+                    #ifdef __CONSOLE_HPP__
+                        // print complex number to ostream
+                        friend ostream& operator << (ostream& os, const complex& c) {
+                            os << c.real () << '+' << c.imag () << 'i';
+                            return os;
+                        }
+                    #endif
             };
 
             // float exp (float x) { return expf (x); }

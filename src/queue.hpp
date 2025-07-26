@@ -5,7 +5,7 @@
  * 
  *  Implementing queue is easy, since everithing is already implemented in vectors. All we have to do is inherit form there.
  *
- *  May 22, 2025, Bojan Jurca
+ *  Aug 12, 2025, Bojan Jurca
  * 
  */
 
@@ -49,19 +49,21 @@
                 return vector<queueType>::pop_front ();
             }
 
-            // print queue (underlying vector) to ostream
-            friend ostream& operator << (ostream& os, queue& q) {
-                bool first = true;
-                os << "[";
-                for (const auto e: q) {
-                    if (!first)
-                        os << ",";
-                    first = false;
-                    os << e;
+            #ifdef __CONSOLE_HPP__
+                // print queue (underlying vector) to ostream
+                friend ostream& operator << (ostream& os, queue& q) {
+                    bool first = true;
+                    os << "[";
+                    for (const auto e: q) {
+                        if (!first)
+                            os << ",";
+                        first = false;
+                        os << e;
+                    }
+                    os << "]";
+                    return os;
                 }
-                os << "]";
-                return os;
-            }
+            #endif
 
     };
 

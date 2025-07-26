@@ -5,7 +5,7 @@
  *
  *  This file is more or less just an example. Implement your own locale settings here.
  *
- *  March 12, 2025, Bojan Jurca
+ *  Aug 12, 2025, Bojan Jurca
  *
  */
 
@@ -58,11 +58,6 @@
                 }
             }        
 
-            // print utf8char to ostream
-            friend ostream& operator << (ostream& os, utf8char& u) {
-                os << u.__c_str__;
-                return os;
-            }
         };
     #endif
 
@@ -108,8 +103,17 @@
     bool __use_utf8__ = false;
 
 
+    // ----- example for locale "en_150.UTF-8", English (ASCII) with EU settings, you may freely delete this part if not needed -----
+
+        /*
+        
+            Don't have to imeplement anything (like charOrder, toupper, tolower), just use ASCII functions
+
+        */
+
+
     // ----- example for locale "sl_SI.UTF-8", you may freely delete this part if not needed -----
-    /**/
+    /*
 
                 //  Slovenian alphabet, extended with some frequently used foreign letters:
                 //  A B C Č (Ć) D (Đ) E F G H I J K L M N O P (Q) R S Š T U V (W) (X) (Y) Z Ž
@@ -252,7 +256,7 @@
     
                     return __tolower_ASCII__ (pc);
                 }
-    /**/
+    */
 
 
     bool setlocale (localeCategory_t category, const char *locale) {
@@ -260,9 +264,8 @@
         if (locale == NULL) {
             __use_utf8__ = false;
 
-            if (category & lc_collate) {
+            if (category & lc_collate)
                 __locale_charOrder__ = __charOrder_ASCII__;
-            }
 
             if (category & lc_ctype) {
                 __locale_toupper__ = __toupper_ASCII__;
@@ -274,17 +277,43 @@
                 __locale_thousandSeparator__ = ',';
             }
 
-            if (category & lc_time) {
+            if (category & lc_time)
                 __locale_time__ = "%Y/%m/%d %T";
-            }
 
             __locale_name__ = NULL;
+            Serial.println ("locale set to ASCII");
+
+            return true;
+        }
+
+        /* ----- example for locale "en_150.UTF-8" ----- */
+        else if (!strcmp (locale, "en_150.UTF-8")) {
+            __use_utf8__ = true;
+
+            if (category & lc_collate)
+                __locale_charOrder__ = __charOrder_ASCII__;
+
+            if (category & lc_ctype) {
+                __locale_toupper__ = __toupper_ASCII__;
+                __locale_tolower__ = __tolower_ASCII__;
+            }
+
+            if (category & lc_numeric) {
+                __locale_decimalSeparator__ = ',';
+                __locale_thousandSeparator__ = '.';
+            }
+
+            if (category & lc_time)
+                __locale_time__ = "%d/%m/%Y %H:%M:%S";
+
+            __locale_name__ = locale;
+            Serial.print ("locale set to "); Serial.println (locale);
 
             return true;
         }
 
         /* ----- example for locale "sl_SI.UTF-8" -----
-        if (!strcmp (locale, "sl_SI.UTF-8")) {
+        else if (!strcmp (locale, "sl_SI.UTF-8")) {
             __use_utf8__ = true;
 
             if (category & lc_collate) {
@@ -301,11 +330,11 @@
                 __locale_thousandSeparator__ = '.';
             }
 
-            if (category & lc_time) {
+            if (category & lc_time)
                 __locale_time__ = "%d.%m.%Y %H:%M:%S";
-            }
 
             __locale_name__ = locale;
+            Serial.print ("locale set to "); Serial.println (locale);
 
             return true;
         }

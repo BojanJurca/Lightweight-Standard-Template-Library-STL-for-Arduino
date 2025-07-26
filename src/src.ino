@@ -3,7 +3,7 @@
  *
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  May 22, 2025, Bojan Jurca
+ *  Aug 12, 2025, Bojan Jurca
  */
 
 
@@ -15,8 +15,8 @@
 */
 
 
+#include "locale.hpp"       // include locale.hpp for support of local UTF-8 characters 
 #include "console.hpp"      // cin and cout object to write to/read from Serial in standard C++ style
-// #include "locale.hpp"       // include locale.hpp for support of local UTF-8 characters 
 #include "Cstring.hpp"      // C arrays of characters with C++ syntax and error handling
 #include "list.hpp"         // single linked lists with error handling that also works on AVR boards
 #include "vector.hpp"       // vectors with error handling that also works on AVR boards
@@ -30,24 +30,26 @@
 void setup () {
 
     cinit (true);                                             // 3 optional arguments: bool waitForSerial = false, unsigned int serialSpeed = 115200 (or 9600, distinguishes 32 nd AVR boards), unsigned int waitAfterSerial = 1000
-
+    #ifdef __LOCALE_HPP__ // if locale.hpp is included
+        // setlocale (lc_all, NULL);            // this is already by default and doesn't have to be set, ASCII with American dates and numbers
+        setlocale (lc_all, "en_150.UTF-8");     // English with EU dates and numbers
+        // setlocale (lc_all, "sl_SI.UTF-8");   // other locales have to be developed first in locale.hpp
+    #endif
 
     cout << "\n----- testing console (cin and cout) -----\n";
-
-
-        #ifdef __LOCALE_HPP__ // if locale. hpp is included
-            setlocale (lc_all, "sl_SI.UTF-8");
-        #endif
-
 
         cout << "Please enter a float: ";
         float f;
         cin >> f;
         cout << "you entered " << f << ", please note that you can use setlocale function to input/output floating point numbers in your local format" << endl;
 
+        cout << showpoint;
+        cout << fixed;
+        cout << setprecision (3);
+
+        cout << "and this is the same number with showpoint, fixed and setprecision manipulators " << f << endl;
 
     cout << "\n----- testing Cstring (C arrays of chars with C++ operators and error handling) -----\n";
-
 
         Cstring<25> s;                                                  // create a Cstring of max 25 characters on the stack
         cstring t;                                                      // create a Cstring with (default) max 300 characters
@@ -70,6 +72,8 @@ void setup () {
 
             s.clearErrorFlags ();
         }
+
+    cout << "\n----- UTF-8 character handling -----\n";        
 
         // UTF-8 support
         cstring utf8string = "abc čšž ≈√∫ 🐱😂🚀";
@@ -309,8 +313,6 @@ void setup () {
 
 }
 
-
 void loop () {
 
 }
-

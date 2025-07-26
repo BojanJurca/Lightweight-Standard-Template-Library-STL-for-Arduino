@@ -6,7 +6,7 @@
  *  In order to save as much memory as possible, list is implemented with minimal functionality. The elements are single - linked, so same
  *  functions, like pop_back for example can not be efficiently implemented.
  * 
- *  May 22, 2025, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
+ *  Aug 12, 2025, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
  * 
  */
 
@@ -411,14 +411,16 @@
             }
             */
 
-            // print list to ostream
-            friend ostream& operator << (ostream& os, list& l) {
-                os << "FRONT→";
-                for (auto e : l)
-                    os << e << "→";
-                os << "NULL";
-                return os;
-            }
+            #ifdef __CONSOLE_HPP__
+                // print list to ostream
+                friend ostream& operator << (ostream& os, list& l) {
+                    os << "FRONT→";
+                    for (auto e : l)
+                        os << e << "→";
+                    os << "NULL";
+                    return os;
+                }
+            #endif
 
 
       private:

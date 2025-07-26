@@ -21,7 +21,7 @@
  *                              | __front__           __back__          |
  *                              |<-------------- __capacity__ --------->|  
  *
- *  May 22, 2025, Bojan Jurca
+ *  Aug 12, 2025, Bojan Jurca
  * 
  */
 
@@ -632,20 +632,21 @@
                 }
             }
 
-            // print vector to ostream
-            friend ostream& operator << (ostream& os, vector& v) {
-                bool first = true;
-                os << "[";
-                for (auto e : v) {
-                    if (!first)
-                        os << ",";
-                    first = false;
-                    os << e;
+            #ifdef __CONSOLE_HPP__
+                // print vector to ostream
+                friend ostream& operator << (ostream& os, vector& v) {
+                    bool first = true;
+                    os << "[";
+                    for (auto e : v) {
+                        if (!first)
+                            os << ",";
+                        first = false;
+                        os << e;
+                    }
+                    os << "]";
+                    return os;
                 }
-                os << "]";
-                return os;
-            }
-
+            #endif
 
       private:
 
@@ -1367,19 +1368,21 @@
                 }
             }
 
-            // print vector to ostream
-            friend ostream& operator << (ostream& os, vector& v) {
-                bool first = true;
-                os << "[";
-                for (auto e : v) {
-                    if (!first)
-                        os << ",";
-                    first = false;
-                    os << e;
+            #ifdef __CONSOLE_HPP__
+                // print vector to ostream
+                friend ostream& operator << (ostream& os, vector& v) {
+                    bool first = true;
+                    os << "[";
+                    for (auto e : v) {
+                        if (!first)
+                            os << ",";
+                        first = false;
+                        os << e;
+                    }
+                    os << "]";
+                    return os;
                 }
-                os << "]";
-                return os;
-            }
+            #endif
 
 
       private:
