@@ -16,6 +16,14 @@ Here are a few reasons you might prefer this lightweight version:
 - You want to leverage PSRAM if your board has it built in.
 
 
+## The latest changes
+
+
+**August 12, 2025**: 
+   - support for ostream manipulators showpoint, noshowpoint, fixed, defaultfloat, setprecision,
+   - locale en_150.UTF-8 is already supported, other locales need some programming 
+
+
 ### console
 
 
