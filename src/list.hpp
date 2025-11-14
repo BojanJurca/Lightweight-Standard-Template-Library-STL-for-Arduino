@@ -6,7 +6,7 @@
  *  In order to save as much memory as possible, list is implemented with minimal functionality. The elements are single - linked, so same
  *  functions, like pop_back for example can not be efficiently implemented.
  * 
- *  Aug 12, 2025, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
+ *  Oct 23, 2025, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
  * 
  */
 
@@ -17,7 +17,7 @@
 
     // ----- TUNNING PARAMETERS -----
 
-    // #define __THROW_LIST_EXCEPTIONS__  // uncomment this line if you want list to throw exceptions
+    // #define THROW_LIST_EXCEPTIONS  // uncomment this line if you want list to throw exceptions
 
 
     // error flags: there is only one type of error flags that can be set: err_bad_alloc - please note that all errors are negative (char) numbers
@@ -66,7 +66,7 @@
             list () {}
 
 
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+            #ifndef ARDUINO_ARCH_AVR 
                    /*
                     *  Constructor of list from brace enclosed initializer list allows the following kinds of creation of list: 
                     *  
@@ -128,13 +128,12 @@
             * Clears all the elements from the list.
             */
 
-
             void clear () { 
                 node_t *p = __front__;
                 while (p) {
                     node_t *q = p->next;
 
-                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    #ifndef ARDUINO_ARCH_AVR 
                         p->~node_t ();
                     #endif
                     free (p);
@@ -202,7 +201,7 @@
                     node_t *newNode = (node_t *) malloc (sizeof (node_t));
                 #endif
                 if (newNode == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;
@@ -210,7 +209,7 @@
                 }
 
                 memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR 
                     new (newNode) node_t; 
                 #endif
 
@@ -245,7 +244,7 @@
                     node_t *newNode = (node_t *) malloc (sizeof (node_t));
                 #endif
                 if (newNode == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;
@@ -253,7 +252,7 @@
                 }
 
                 memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR 
                     new (newNode) node_t; 
                 #endif
 
@@ -275,7 +274,7 @@
         
             signed char pop_front () {
                 if (__front__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -288,7 +287,7 @@
                 __size__ --;
         
                 // free the space occupied by the deleted element
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR 
                     tmp->~node_t ();
                 #endif
                 free (tmp);
@@ -302,7 +301,7 @@
         
             listType& front () {
                 if (__front__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -319,7 +318,7 @@
         
             listType& back () {
                 if (__back__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -377,47 +376,13 @@
             iterator end () { return iterator (NULL); }                     // past the last element
 
 
-           /*
-            *  Define operator (pop_front - push_back) that will be used for (merge) sorting
-            *     Since we are only switching the pointers no error can occur 
-            */
-
-            /*
-            void operator >> (list& other) {
-
-                if (this->__front__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
-                        throw err_out_of_range;
-                    #endif          
-                    this->__errorFlags__ |= err_out_of_range;
-                    other.__errorFlags__ |= err_out_of_range;
-                    return;
-                }
-
-                // remove the first element from "this"
-                node_t *tmp = this->__front__;
-                this->__front__ = this->__front__->next;
-                this->__size__ --;
-
-                // add it as the last element to "other"
-                tmp->next = NULL;
-                if (other.__front__ == NULL)
-                    other.__front__ = tmp;
-                if (other.__back__ != NULL)
-                    other.__back__->next = tmp;
-                other.__back__ = tmp;
-                
-                other.__size__ ++;
-            }
-            */
-
-            #ifdef __CONSOLE_HPP__
+            #ifdef __OSTREAM_HPP__
                 // print list to ostream
                 friend ostream& operator << (ostream& os, list& l) {
-                    os << "FRONT→";
+                    os << "(front)🡒";
                     for (auto e : l)
-                        os << e << "→";
-                    os << "NULL";
+                        os << e << "🡒";
+                    os << "(null)";
                     return os;
                 }
             #endif
@@ -489,7 +454,7 @@
             list () {}
 
 
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+            #ifndef ARDUINO_ARCH_AVR 
                    /*
                     *  Constructor of list from brace enclosed initializer list allows the following kinds of creation of list: 
                     *  
@@ -500,7 +465,7 @@
                     list (std::initializer_list<String> il) {
                         for (String element: il) {
                             if (!element) {                             // ... check if parameter construction is valid
-                                #ifdef __THROW_LIST_EXCEPTIONS__
+                                #ifdef THROW_LIST_EXCEPTIONS
                                     throw err_bad_alloc;
                                 #endif
                                 __errorFlags__ |= err_bad_alloc;       // report error if it is not
@@ -517,7 +482,7 @@
                 list (const String (&array) [N]) {
                     for (int i = 0; i < N; ++i) {
                         if (!array [i]) {                             // ... check if parameter construction is valid
-                            #ifdef __THROW_LIST_EXCEPTIONS__
+                            #ifdef THROW_LIST_EXCEPTIONS
                                 throw err_bad_alloc;
                             #endif
                             __errorFlags__ |= err_bad_alloc;
@@ -573,7 +538,7 @@
                     node_t *q = p->next;
 
                     /*
-                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    #ifndef ARDUINO_ARCH_AVR 
                         p->~node_t ();
                     #endif
                     free (p);
@@ -603,7 +568,7 @@
                 // copy other's elements
                 for (String element: other) {
                     if (!element) {                             // ... check if parameter construction is valid
-                        #ifdef __THROW_LIST_EXCEPTIONS__
+                        #ifdef THROW_LIST_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;       // report error if it is not
@@ -630,7 +595,7 @@
                 // copy other's elements
                 for (String element: other) {
                     if (!element) {                             // ... check if parameter construction is valid
-                        #ifdef __THROW_LIST_EXCEPTIONS__
+                        #ifdef THROW_LIST_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;       // report error if it is not
@@ -654,7 +619,7 @@
     
             signed char push_back (String element) {
                 if (!element) {                             // ... check if parameter construction is valid
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;       // report error if it is not
@@ -668,7 +633,7 @@
                     node_t *newNode = (node_t *) malloc (sizeof (node_t));
                 #endif
                 if (newNode == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;
@@ -676,7 +641,7 @@
                 }
 
                 memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR 
                     new (newNode) node_t; 
                 #endif
 
@@ -705,7 +670,7 @@
               
             signed char push_front (String element) {
                 if (!element) {                             // ... check if parameter construction is valid
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;       // report error if it is not
@@ -719,7 +684,7 @@
                     node_t *newNode = (node_t *) malloc (sizeof (node_t));
                 #endif
                 if (newNode == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;
@@ -727,7 +692,7 @@
                 }
 
                 memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR 
                     new (newNode) node_t; 
                 #endif
 
@@ -749,7 +714,7 @@
         
             signed char pop_front () {
                 if (__front__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -763,7 +728,7 @@
         
                 // free the space occupied by the deleted element
                 /*
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR 
                     tmp->~node_t ();
                 #endif
                 free (tmp);
@@ -780,7 +745,7 @@
         
             String& front () {
                 if (__front__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -797,7 +762,7 @@
         
             String& back () {
                 if (__back__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
+                    #ifdef THROW_LIST_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -852,48 +817,16 @@
             iterator end () { return iterator (NULL); }                     // past the last element
 
 
-           /*
-            *  Define operator (pop_front - push_back) that will be used for (merge) sorting
-            *     Since we are only switching the pointers no error can occur 
-            */
-
-            /*
-            void operator >> (list& other) {
-
-                if (this->__front__ == NULL) {
-                    #ifdef __THROW_LIST_EXCEPTIONS__
-                        throw err_out_of_range;
-                    #endif          
-                    this->__errorFlags__ |= err_out_of_range;
-                    other.__errorFlags__ |= err_out_of_range;
-                    return;
+            #ifdef __OSTREAM_HPP__
+                // print list to ostream
+                friend ostream& operator << (ostream& os, list& l) {
+                    os << "(front)🡒";
+                    for (auto e : l)
+                        os << e << "🡒";
+                    os << "(null)";
+                    return os;
                 }
-
-                // remove the first element from "this"
-                node_t *tmp = this->__front__;
-                this->__front__ = this->__front__->next;
-                this->__size__ --;
-
-                // add it as the last element to "other"
-                tmp->next = NULL;
-                if (other.__front__ == NULL)
-                    other.__front__ = tmp;
-                if (other.__back__ != NULL)
-                    other.__back__->next = tmp;
-                other.__back__ = tmp;
-                
-                other.__size__ ++;
-            }
-            */
-
-            // print list to ostream
-            friend ostream& operator << (ostream& os, list& l) {
-                os << "FRONT→";
-                for (auto e : l)
-                    os << e << "→";
-                os << "NULL";
-                return os;
-            }
+            #endif
 
       private:
 
@@ -910,16 +843,5 @@
             }
 
     };
-
-
-    /*
-    #ifdef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
-        // Helper function to create aray from an initializer list
-        template<typename T, size_t N>
-        list<T> initializer_list (const T (&arr) [N]) {
-            return list<T> (arr);
-        }
-    #endif
-    */
 
 #endif

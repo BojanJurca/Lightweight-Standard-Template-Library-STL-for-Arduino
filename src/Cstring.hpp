@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  May 22, 2025, Bojan Jurca
+ *  Nov 26, 2025 Bojan Jurca
  *  
  */
 
@@ -12,89 +12,9 @@
     #define __CSTRING_HPP__
 
 
-        // missing (Windows) C functions in Arduino
-
-        char *stristr (const char *haystack, const char *needle) { 
-            if (!haystack || !needle) return NULL; // nonsense
-            int n = strlen (haystack) - strlen (needle) + 1;
-            for (int i = 0; i < n; i++) {
-                int j = i;
-                int k = 0;
-                char hChar, nChar;
-                bool match = true;
-                while (*(needle + k)) {
-                    hChar = *(haystack + j); if (hChar >= 'a' && hChar <= 'z') hChar -= 32; // convert to upper case
-                    nChar = *(needle + k); if (nChar >= 'a' && nChar <= 'z') nChar -= 32; // convert to upper case
-                    if (hChar != nChar && nChar) {
-                        match = false;
-                        break;
-                    }
-                    j ++;
-                    k ++;
-                }
-                if (match) return (char *) haystack + i; // match!
-            }
-            return NULL; // no match
-        }
-
-        int stricmp (const char *str1, const char *str2) { 
-            while (*str1 && *str2) {
-                char chr1 = *str1; if (chr1 >= 'a' && chr1 <= 'z') chr1 -= 32; // convert to upper case
-                char chr2 = *str2; if (chr2 >= 'a' && chr2 <= 'z') chr2 -= 32; // convert to upper case
-                if (chr1 < chr2) return -1;
-                if (chr1 > chr2) return 1;
-                str1 ++;
-                str2 ++;
-            }
-            return 0; // stings are equal
-        }
-
-
-        #ifndef __UTF8CHAR__
-            #define __UTF8CHAR__
-            
-            struct utf8char { 
-                char __c_str__ [5]; // UTF-8 encoding requires max 4 bytes to represent a character
-                inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
-                inline operator char *() __attribute__((always_inline)) { return __c_str__; }
-
-                bool operator == (const utf8char* other) const {
-                    if (other == NULL) return false;
-
-                    char c;
-                    if ((c = __c_str__ [0]) != other->__c_str__ [0])
-                            return false;
-
-                    if ((c & 0x80) == 0) { // 1-byte character
-                        return true;
-                    } else if ((c & 0xE0) == 0xC0) { // 2-byte character
-                        return __c_str__ [1] == other->__c_str__ [1];
-                    } else if ((c & 0xF0) == 0xE0) { // 3-byte character
-                        return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2];
-                    } else if ((c & 0xF8) == 0xF0) { // 4-byte character
-                        return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2] && __c_str__ [3] == other->__c_str__ [3];
-                    } else { // invalid UTF-8 character
-                        return true;
-                    }
-                }        
-
-                // print utf8char to ostream
-                /*
-                friend ostream& operator << (ostream& os, utf8char& u) {
-                    os << u.__c_str__;
-                    return os;
-                }
-                */
-            };
-        #endif
-
-
     // ----- TUNNING PARAMETERS -----
 
-    #ifndef string
-        #ifdef SHOW_COMPILE_TIME_INFORMATION
-            #pragma message "Cstring with default Cstring size was not defined previously, #defining the default string as Cstring<300> in Cstring.hpp" 
-        #endif
+    #ifndef cstring
         #define cstring Cstring<300>
     #endif
 
@@ -103,6 +23,8 @@
     #define err_ok           ((signed char) 0b00000000) //    0 - no error    
     #define err_overflow     ((signed char) 0b10000001) // -127 - buffer overflow
     #define err_out_of_range ((signed char) 0b10000010) // -126 - invalid index
+
+    static const size_t npos = (size_t) 0xFFFFFFFFFFFFFFFF;
 
 
     // fixed size string, actually C char arrays with additional functions and operators
@@ -129,10 +51,7 @@
                     if (this->__c_str__ [N]) {
                          __errorFlags__ = err_overflow;                       // err_overflow
                         this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
-                        #ifdef __LOCALE_HPP__
-                            if (__use_utf8__)
-                                this->__rTrimUnfinishedUtf8Character__ ();
-                        #endif
+                        this->__rTrimUnfinishedUtf8Character__ ();
                     }
                 }
             }
@@ -143,17 +62,46 @@
             }
         
             Cstring (const char& other) {                      // for declarations with initialization, like Cstring<15> d ('c'); (convert char to Cstring)
-                this->__c_str__ [0] = other;
-                if (this->__c_str__ [N]) {
-                    __errorFlags__ = err_overflow;                            // err_overflow
-                    this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
-                    #ifdef __LOCALE_HPP__
-                        if (__use_utf8__)
-                            this->__rTrimUnfinishedUtf8Character__ ();
-                    #endif
-                }
+                #if N > 0
+                    this->__c_str__ [0] = other;
+                    this->__c_str__ [1] = 0;
+                    if (this->__c_str__ [N]) {
+                        __errorFlags__ = err_overflow;                            // err_overflow
+                        this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                    }
+                #else
+                    this->__c_str__ [0] = 0;
+                    __errorFlags__ = err_overflow;                                // err_overflow
+                #endif
             }
 
+            #ifdef __LOCALE_HPP__
+                Cstring (const utf8char& other) {               // for declarations with initialization, like Cstring<15> d (utf8char ("🌎")); (convert utf8charchar to Cstring)
+                    if ((other.c_str [0] & 0x80) == 0 && N > 0) {             // 0xxxxxxx = 1 byte character
+                        this->__c_str__ [0] = other.c_str [0];          
+                        this->__c_str__ [1] = 0; 
+                    } else if ((other.c_str [0] & 0xE0) == 0xC0 && N > 1) {   // 110xxxxx = 2 byte character
+                        this->__c_str__ [0] = other.c_str [0];          
+                        this->__c_str__ [1] = other.c_str [1];
+                        this->__c_str__ [2] = 0; 
+                    } else if ((other.c_str [0] & 0xF0) == 0xE0 && N > 2) {   // 1110xxxx = 3 byte character
+                        this->__c_str__ [0] = other.c_str [0];
+                        this->__c_str__ [1] = other.c_str [1];
+                        this->__c_str__ [2] = other.c_str [2];
+                        this->__c_str__ [3] = 0; 
+                    } else if ((other.c_str [0] & 0xF8) == 0xF0 && N > 3) {   // 11110xxx = 4 byte character
+                        this->__c_str__ [0] = other.c_str [0];
+                        this->__c_str__ [1] = other.c_str [1];
+                        this->__c_str__ [2] = other.c_str [2];
+                        this->__c_str__ [3] = other.c_str [3];
+                        this->__c_str__ [4] = 0; 
+                    } else {                                            // overflow
+                        this->__c_str__ [0] = 0;
+                        __errorFlags__ = err_overflow;                       // err_overflow
+                    }
+                }
+            #endif
+            
             Cstring (int number) {                             // for declarations with initialization, like Cstring<15> e (3); (convert int to Cstring)
                 snprintf (this->__c_str__, N + 2, "%i", number);
                 if (this->__c_str__ [N]) {
@@ -171,7 +119,7 @@
             }
 
             Cstring (long number) {                            // for declarations with initialization, like Cstring<15> e (3); (convert long to Cstring)
-                snprintf (this->__c_str__, N + 2, "%l", number);
+                snprintf (this->__c_str__, N + 2, "%ld", number);
                 if (this->__c_str__ [N]) {
                     __errorFlags__ = err_overflow;                            // err_overflow
                     this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
@@ -186,15 +134,38 @@
                 }
             }
 
+            // this doesn't work on AVR boards
+            #ifndef ARDUINO_ARCH_AVR
+                Cstring (long long number) {                       // for declarations with initialization, like Cstring<15> e (3); (convert long to Cstring)
+                    snprintf (this->__c_str__, N + 2, "%lld", number);
+                    if (this->__c_str__ [N]) {
+                        __errorFlags__ = err_overflow;                            // err_overflow
+                        this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                    }
+                }
+
+                Cstring (unsigned long long number) {              // for declarations with initialization, like Cstring<15> e (3); (convert unsigned long to Cstring)
+                    snprintf (this->__c_str__, N + 2, "%llu", number);
+                    if (this->__c_str__ [N]) {
+                        __errorFlags__ = err_overflow;                            // err_overflow
+                        this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                    }
+                }
+            #endif
+
             Cstring (float number) {                           // for declarations with initialization, like Cstring<15> e (3.1); (convert float to Cstring)
-                snprintf (this->__c_str__, N + 2, "%f", number);
+                #ifdef ARDUINO_ARCH_AVR
+                    dtostrf (number, -(N + 1), 2, this->__c_str__);
+                #else
+                    snprintf (this->__c_str__, N + 2, "%f", number);
+                #endif
                 #ifdef __LOCALE_HPP__
-                    // replace decimal and thousand separators with '.' and ','
+                    // replace decimal and thousand separators with locale settings
                     for (int i = 0; this->__c_str__ [i]; i++) {
-                        if (this->__c_str__ [i] == __locale_decimalSeparator__)
-                            this->__c_str__ [i] = '.';
-                        else if (this->__c_str__ [i] == __locale_thousandSeparator__)
-                            this->__c_str__ [i] = ',';
+                        if (this->__c_str__ [i] == '.')
+                            this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                        else if (this->__c_str__ [i] == ',')
+                            this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
                     }
                 #endif                
                 if (this->__c_str__ [N]) {
@@ -204,14 +175,18 @@
             }
 
             Cstring (double number) {                          // for declarations with initialization, like Cstring<15> e (3.1); (convert float to Cstring)
-                snprintf (this->__c_str__, N + 2, "%lf", number);
+                #ifdef ARDUINO_ARCH_AVR
+                    dtostrf (number, -(N + 1), 2, this->__c_str__);
+                #else
+                    snprintf (this->__c_str__, N + 2, "%lf", number);
+                #endif
                 #ifdef __LOCALE_HPP__
-                    // replace decimal and thousand separators with '.' and ','
+                    // replace decimal and thousand separators with locale settings
                     for (int i = 0; this->__c_str__ [i]; i++) {
-                        if (this->__c_str__ [i] == __locale_decimalSeparator__)
-                            this->__c_str__ [i] = '.';
-                        else if (this->__c_str__ [i] == __locale_thousandSeparator__)
-                            this->__c_str__ [i] = ',';
+                        if (this->__c_str__ [i] == '.')
+                            this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                        else if (this->__c_str__ [i] == ',')
+                            this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
                     }
                 #endif                
                 if (this->__c_str__ [N]) {
@@ -220,13 +195,32 @@
                 }
             }
 
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
-                Cstring (time_t t) {                                // for declarations with initialization, like Cstring<15> t (time (NULL)); (convert time_t to Cstring)
-                    struct tm st;
-                    localtime_r (&t, &st);
+            Cstring (long double number) {                     // for declarations with initialization, like Cstring<15> e (3.1); (convert float to Cstring)
+                #ifdef ARDUINO_ARCH_AVR
+                    dtostrf (number, -(N + 1), 2, this->__c_str__);
+                #else
+                    snprintf (this->__c_str__, N + 2, "%llf", number);
+                #endif
+                #ifdef __LOCALE_HPP__
+                    // replace decimal and thousand separators with locale settings
+                    for (int i = 0; this->__c_str__ [i]; i++) {
+                        if (this->__c_str__ [i] == '.')
+                            this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                        else if (this->__c_str__ [i] == ',')
+                            this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
+                    }
+                #endif                
+                if (this->__c_str__ [N]) {
+                    __errorFlags__ = err_overflow;                            // err_overflow
+                    this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                }
+            }
+
+            #ifndef ARDUINO_ARCH_AVR 
+                Cstring (struct tm st) {                                // for declarations with initialization, like Cstring<15> t (st); (convert struct tm to Cstring)
                     char buf [80];
                     #ifdef __LOCALE_HPP__
-                        strftime (buf, sizeof (buf), __locale_time__, &st);
+                        strftime (buf, sizeof (buf), lc_time_locale->getTimeFormat (), &st);
                     #else
                         strftime (buf, sizeof (buf), "%Y/%m/%d %T", &st);
                     #endif
@@ -241,23 +235,19 @@
 
 
             // char *() operator so that Cstring can be used the same way as C char arrays, like; Cstring<5> a = "123"; Serial.printf ("%s\n", a);
-            inline operator char *() __attribute__((always_inline)) { return __c_str__; }
-            inline operator const char *() __attribute__((always_inline)) { return (const char *) __c_str__; }
+            inline operator char *() const __attribute__((always_inline)) { return (char *) __c_str__; }
+            inline operator const char *() const __attribute__((always_inline)) { return (const char *) __c_str__; }
             
 
             // = operator
             Cstring operator = (const char *other) {           // for assigning C char array to Cstring, like: a = "abc";
-                if (other) {                                                  // check if NULL char * pointer to overcome from possible programmers' errors
+                if (other) {                                                // check if NULL char * pointer to overcome from possible programmers' errors
+                    this->__errorFlags__ = 0;                               // clear error flags
                     strncpy (this->__c_str__, other, N + 1);
                     if (this->__c_str__ [N]) {
-                        this->__errorFlags__ = err_overflow;                  // err_overflow
-                        this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
-                        #ifdef __LOCALE_HPP__
-                            if (__use_utf8__)
-                                this->__rTrimUnfinishedUtf8Character__ ();
-                        #endif
-                    } else {
-                        this->__errorFlags__ = 0;                             // clear error after new assignment
+                        this->__errorFlags__ = err_overflow;                // err_overflow
+                        this->__c_str__ [N] = 0;                            // mark the end of the string regardles OVERFLOW
+                        this->__rTrimUnfinishedUtf8Character__ ();
                     }
                 }
                 return *this;
@@ -265,8 +255,9 @@
     
             Cstring operator = (const Cstring& other) {       // for assigning other Cstring to Cstring, like: a = b;
                 if (this != &other) {
+                    this->__errorFlags__ = 0;                               // clear error flags
                     strncpy (this->__c_str__, other.__c_str__, N + 1);
-                    this->__errorFlags__ = other.__errorFlags__;              // inherit all errors from original string
+                    this->__errorFlags__ = other.__errorFlags__;            // inherit all errors from original string
                 }
                 return *this;
             }
@@ -274,36 +265,54 @@
             template<size_t M>
             Cstring operator = (Cstring<M>& other) {    // for assigning other Cstring to Cstring of different size, like: a = b;
                 strncpy (this->__c_str__, other.c_str (), N + 1);
-                this->__errorFlags__ = other.errorFlags ();                   // inherit all errors from original string
+                this->__errorFlags__ = other.errorFlags ();                 // inherit all errors from original string
                 if (this->__c_str__ [N]) {
-                    this->__errorFlags__ = err_overflow;                      // err_overflow
-                    this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
-                    #ifdef __LOCALE_HPP__
-                        if (__use_utf8__)
-                            this->__rTrimUnfinishedUtf8Character__ ();
-                    #endif
+                    this->__errorFlags__ = err_overflow;                    // err_overflow
+                    this->__c_str__ [N] = 0;                                // mark the end of the string regardles OVERFLOW
+                    this->__rTrimUnfinishedUtf8Character__ ();
                 }
                 return *this;
             }
 
             Cstring operator = (const char& other) {           // for assigning character to Cstring, like: a = 'b';
-                this->__c_str__ [0] = other; 
-                if (this->__c_str__ [N]) {
-                    this->__errorFlags__ = err_overflow;                      // err_overflow
-                    #ifdef __LOCALE_HPP__
-                        if (__use_utf8__)
-                            this->__rTrimUnfinishedUtf8Character__ ();
-                    #endif
-                } else {
-                    this->__errorFlags__ = 0;                                 // clear error after new assignment
-                }
+                this->__errorFlags__ = 0;                                   // clear error flags
                 #if N > 0
-                    this->__c_str__ [1] = 0;                                  // mark the end of the string
+                    this->__c_str__ [0] = other; 
+                    this->__c_str__ [1] = 0;                                // mark the end of the string
                 #else
-                    this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                    this->__c_str__ [0] = 0; 
+                    this->__errorFlags__ = err_overflow;                    // err_overflow
                 #endif
                 return *this;
-            }   
+            }
+
+            #ifdef __LOCALE_HPP__
+                 Cstring operator = (const utf8char& other) {  // for assigning character to Cstring, like Cstring<15> d  = utf8char ("🌎"));
+                    if ((other.c_str [0] & 0x80) == 0 && N > 0) {             // 0xxxxxxx = 1 byte character
+                        this->__c_str__ [0] = other.c_str [0];          
+                        this->__c_str__ [1] = 0;
+                    } else if ((other.c_str [0] & 0xE0) == 0xC0 && N > 1) {   // 110xxxxx = 2 byte character
+                        this->__c_str__ [0] = other.c_str [0];          
+                        this->__c_str__ [1] = other.c_str [1];
+                        this->__c_str__ [2] = 0;
+                    } else if ((other.c_str [0] & 0xF0) == 0xE0 && N > 2) {   // 1110xxxx = 3 byte character
+                        this->__c_str__ [0] = other.c_str [0];
+                        this->__c_str__ [1] = other.c_str [1];
+                        this->__c_str__ [2] = other.c_str [2];
+                        this->__c_str__ [3] = 0;
+                    } else if ((other.c_str [0] & 0xF8) == 0xF0 && N > 3) {   // 11110xxx = 4 byte character
+                        this->__c_str__ [0] = other.c_str [0];
+                        this->__c_str__ [1] = other.c_str [1];
+                        this->__c_str__ [2] = other.c_str [2];
+                        this->__c_str__ [3] = other.c_str [3];
+                        this->__c_str__ [4] = 0;
+                    } else {                                            // overflow
+                        this->__c_str__ [0] = 0;
+                        __errorFlags__ = err_overflow;                       // err_overflow
+                    }
+                    return *this;
+                }
+            #endif
 
             Cstring operator = (int number) {                   // for assigning int to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%i", number);
@@ -328,7 +337,7 @@
             }
 
             Cstring operator = (long number) {                   // for assigning long to Cstring, like: a = 1234;
-                snprintf (this->__c_str__, N + 2, "%l", number);
+                snprintf (this->__c_str__, N + 2, "%ld", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
                     this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
@@ -349,15 +358,44 @@
                 return *this;
             }
 
+            // this doesn't work on AVR boards
+            #ifndef ARDUINO_ARCH_AVR
+                Cstring operator = (long long number) {              // for assigning long to Cstring, like: a = 1234;
+                    snprintf (this->__c_str__, N + 2, "%lld", number);
+                    if (this->__c_str__ [N]) {
+                        this->__errorFlags__ = err_overflow;                      // err_overflow
+                        this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                    } else {
+                        this->__errorFlags__ = 0;                                 // clear error after new assignment
+                    }
+                    return *this;
+                }
+
+                Cstring operator = (unsigned long long number) {     // for assigning unsigned long to Cstring, like: a = 1234;
+                    snprintf (this->__c_str__, N + 2, "%lu", number);
+                    if (this->__c_str__ [N]) {
+                        this->__errorFlags__ = err_overflow;                      // err_overflow
+                        this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                    } else {
+                        this->__errorFlags__ = 0;                                 // clear error after new assignment
+                    }
+                    return *this;
+                }
+            #endif
+
             Cstring operator = (float number) {                  // for assigning float to Cstring, like: a = 1234.5;
-                snprintf (this->__c_str__, N + 2, "%f", number);
+                #ifdef ARDUINO_ARCH_AVR
+                    dtostrf (number, -(N + 1), 2, this->__c_str__);
+                #else
+                    snprintf (this->__c_str__, N + 2, "%f", number);
+                #endif
                 #ifdef __LOCALE_HPP__
-                    // replace decimal and thousand separators with '.' and ','
+                    // replace decimal and thousand separators with locale settings
                     for (int i = 0; this->__c_str__ [i]; i++) {
-                        if (this->__c_str__ [i] == __locale_decimalSeparator__)
-                            this->__c_str__ [i] = '.';
-                        else if (this->__c_str__ [i] == __locale_thousandSeparator__)
-                            this->__c_str__ [i] = ',';
+                        if (this->__c_str__ [i] == '.')
+                            this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                        else if (this->__c_str__ [i] == ',')
+                            this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
                     }
                 #endif                
                 if (this->__c_str__ [N]) {
@@ -370,14 +408,18 @@
             }
 
             Cstring operator = (double number) {                 // for assigning double to Cstring, like: a = 1234.5;
-                snprintf (this->__c_str__, N + 2, "%lf", number);
+                #ifdef ARDUINO_ARCH_AVR
+                    dtostrf (number, -(N + 1), 2, this->__c_str__);
+                #else
+                    snprintf (this->__c_str__, N + 2, "%llf", number);
+                #endif
                 #ifdef __LOCALE_HPP__
-                    // replace decimal and thousand separators with '.' and ','
+                    // replace decimal and thousand separators with locale settings
                     for (int i = 0; this->__c_str__ [i]; i++) {
-                        if (this->__c_str__ [i] == __locale_decimalSeparator__)
-                            this->__c_str__ [i] = '.';
-                        else if (this->__c_str__ [i] == __locale_thousandSeparator__)
-                            this->__c_str__ [i] = ',';
+                        if (this->__c_str__ [i] == '.')
+                            this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                        else if (this->__c_str__ [i] == ',')
+                            this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
                     }
                 #endif                
                 if (this->__c_str__ [N]) {
@@ -389,13 +431,35 @@
                 return *this;
             }
 
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
-                Cstring operator = (time_t t) {                       // for assigning double to Cstring, like: a = time (NULL);
-                    struct tm st;
-                    localtime_r (&t, &st);
+            Cstring operator = (long double number) {            // for assigning double to Cstring, like: a = 1234.5;
+                #ifdef ARDUINO_ARCH_AVR
+                    dtostrf (number, -(N + 1), 2, this->__c_str__);
+                #else
+                    snprintf (this->__c_str__, N + 2, "%llf", number);
+                #endif
+                #ifdef __LOCALE_HPP__
+                    // replace decimal and thousand separators with locale settings
+                    for (int i = 0; this->__c_str__ [i]; i++) {
+                        if (this->__c_str__ [i] == '.')
+                            this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                        else if (this->__c_str__ [i] == ',')
+                            this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
+                    }
+                #endif                
+                if (this->__c_str__ [N]) {
+                    this->__errorFlags__ = err_overflow;                      // err_overflow
+                    this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
+                } else {
+                    this->__errorFlags__ = 0;                                 // clear error after new assignment
+                }
+                return *this;
+            }
+
+            #ifndef ARDUINO_ARCH_AVR
+                Cstring operator = (struct tm st) {                       // for assigning struct tm to Cstring, like: a = st;
                     char buf [80];
                     #ifdef __LOCALE_HPP__
-                        strftime (buf, sizeof (buf), __locale_time__, &st);
+                        strftime (buf, sizeof (buf), lc_time_locale->getTimeFormat (), &st);
                     #else
                         strftime (buf, sizeof (buf), "%Y/%m/%d %T", &st);
                     #endif
@@ -424,10 +488,7 @@
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
                         this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
-                        #ifdef __LOCALE_HPP__
-                            if (__use_utf8__)
-                                this->__rTrimUnfinishedUtf8Character__ ();
-                        #endif
+                        this->__rTrimUnfinishedUtf8Character__ ();
                     } 
                 }
                 return *this;
@@ -440,10 +501,7 @@
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
                         this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
-                        #ifdef __LOCALE_HPP__
-                            if (__use_utf8__)
-                                this->__rTrimUnfinishedUtf8Character__ ();
-                        #endif
+                        this->__rTrimUnfinishedUtf8Character__ ();
                     } 
                 }
                 return *this;
@@ -457,12 +515,9 @@
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
                         this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
-                        #ifdef __LOCALE_HPP__
-                            if (__use_utf8__)
-                                this->__rTrimUnfinishedUtf8Character__ ();
-                        #endif
+                        this->__rTrimUnfinishedUtf8Character__ ();
                     }
-                } 
+                }
                 return *this;
             }
 
@@ -474,14 +529,40 @@
                         this->__c_str__ [l + 1] = 0; 
                     } else {
                         __errorFlags__ |= err_overflow;                           // add err_overflow flag to possibe already existing error flags
-                        #ifdef __LOCALE_HPP__
-                            if (__use_utf8__)
-                                this->__rTrimUnfinishedUtf8Character__ ();
-                        #endif
                     }
                 }
                 return *this;
-            }   
+            }
+
+            #ifdef __LOCALE_HPP__ tole še ni
+                 Cstring operator += (const utf8char& other) { // concatenate a charactr to Cstring, like d += utf8char ("🌎");
+                    if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
+                        size_t l = strlen (this->__c_str__);
+                        if ((other.c_str [l] & 0x80) == 0 && N > l) {             // 0xxxxxxx = 1 byte character
+                            this->__c_str__ [l] = other.c_str [0];          
+                            this->__c_str__ [l + 1] = 0; 
+                        } else if ((other.c_str [0] & 0xE0) == 0xC0 && N > l + 1) {   // 110xxxxx = 2 byte character
+                            this->__c_str__ [l] = other.c_str [0];          
+                            this->__c_str__ [l + 1] = other.c_str [1];
+                            this->__c_str__ [l + 2] = 0; 
+                        } else if ((other.c_str [0] & 0xF0) == 0xE0 && N > l + 2) {   // 1110xxxx = 3 byte character
+                            this->__c_str__ [l] = other.c_str [0];
+                            this->__c_str__ [l + 1] = other.c_str [1];
+                            this->__c_str__ [l + 2] = other.c_str [2];
+                            this->__c_str__ [l + 3] = 0; 
+                        } else if ((other.c_str [0] & 0xF8) == 0xF0 && N > l + 3) {   // 11110xxx = 4 byte character
+                            this->__c_str__ [l] = other.c_str [0];
+                            this->__c_str__ [l + 1] = other.c_str [1];
+                            this->__c_str__ [l + 2] = other.c_str [2];
+                            this->__c_str__ [l + 3] = other.c_str [3];
+                            this->__c_str__ [l + 4] = 0; 
+                        } else {                                            // overflow
+                            __errorFlags__ |= err_overflow;                      // err_overflow
+                        }
+                    }
+                    return *this;
+                }
+            #endif
 
             Cstring operator += (int number) {                 // concatenate an int to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
@@ -510,7 +591,7 @@
             Cstring operator += (long number) {                // concatenate a long to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
-                    snprintf (this->__c_str__ + l, N + 2 - l, "%l", number);
+                    snprintf (this->__c_str__ + l, N + 2 - l, "%ld", number);
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
                         this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
@@ -531,17 +612,49 @@
                 return *this;
             }   
 
+            // this doesn't work on AVR boards
+            #ifndef ARDUINO_ARCH_AVR
+                Cstring operator += (long long number) {           // concatenate a long to Cstring, like: a += 12;
+                    if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
+                        size_t l = strlen (this->__c_str__);
+                        snprintf (this->__c_str__ + l, N + 2 - l, "%lld", number);
+                        if (this->__c_str__ [N]) {
+                            this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
+                            this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
+                        }
+                    } 
+                    return *this;
+                }   
+
+                Cstring operator += (unsigned long long number) {   // concatenate an unsigned long to Cstring, like: a += 12;
+                    if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
+                        size_t l = strlen (this->__c_str__);
+                        snprintf (this->__c_str__ + l, N + 2 - l, "%llu", number);
+                        if (this->__c_str__ [N]) {
+                            this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
+                            this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
+                        }
+                    } 
+                    return *this;
+                }   
+            #endif
+
             Cstring operator += (float number) {                // concatenate a flaot to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
-                    snprintf (this->__c_str__ + l, N + 2 - l, "%f", number);
+
+                    #ifdef ARDUINO_ARCH_AVR
+                        dtostrf (number, -(N + 1 - l), 2, this->__c_str__ + l);
+                    #else
+                        snprintf (this->__c_str__ + l, N + 2 - l, "%f", number);
+                    #endif
                     #ifdef __LOCALE_HPP__
-                        // replace decimal and thousand separators with '.' and ','
-                        for (int i = l; this->__c_str__ [i]; i++) {
-                            if (this->__c_str__ [i] == __locale_decimalSeparator__)
-                                this->__c_str__ [i] = '.';
-                            else if (this->__c_str__ [i] == __locale_thousandSeparator__)
-                                this->__c_str__ [i] = ',';
+                        // replace decimal and thousand separators with locale settings
+                        for (int i = 0; this->__c_str__ [i]; i++) {
+                            if (this->__c_str__ [i] == '.')
+                                this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                            else if (this->__c_str__ [i] == ',')
+                                this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
                         }
                     #endif                
                     if (this->__c_str__ [N]) {
@@ -555,14 +668,19 @@
             Cstring operator += (double number) {                // concatenate a double to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
-                    snprintf (this->__c_str__ + l, N + 2 - l, "%lf", number);
+
+                    #ifdef ARDUINO_ARCH_AVR
+                        dtostrf (number, -(N + 1 - l), 2, this->__c_str__ + l);
+                    #else
+                        snprintf (this->__c_str__ + l, N + 2 - l, "%lf", number);
+                    #endif
                     #ifdef __LOCALE_HPP__
-                        // replace decimal and thousand separators with '.' and ','
-                        for (int i = l; this->__c_str__ [i]; i++) {
-                            if (this->__c_str__ [i] == __locale_decimalSeparator__)
-                                this->__c_str__ [i] = '.';
-                            else if (this->__c_str__ [i] == __locale_thousandSeparator__)
-                                this->__c_str__ [i] = ',';
+                        // replace decimal and thousand separators with locale settings
+                        for (int i = 0; this->__c_str__ [i]; i++) {
+                            if (this->__c_str__ [i] == '.')
+                                this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                            else if (this->__c_str__ [i] == ',')
+                                this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
                         }
                     #endif                
                     if (this->__c_str__ [N]) {
@@ -573,15 +691,40 @@
                 return *this;
             }   
 
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
-                Cstring operator += (time_t t) {                    // concatenate a double to Cstring, like: a += time (NULL);
+
+            Cstring operator += (long double number) {           // concatenate a double to Cstring, like: a += 12;
+                if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
+                    size_t l = strlen (this->__c_str__);
+
+                    #ifdef ARDUINO_ARCH_AVR
+                        dtostrf (number, -(N + 1 - l), 2, this->__c_str__ + l);
+                    #else
+                        snprintf (this->__c_str__ + l, N + 2 - l, "%llf", number);
+                    #endif
+                    #ifdef __LOCALE_HPP__
+                        // replace decimal and thousand separators with locale settings
+                        for (int i = 0; this->__c_str__ [i]; i++) {
+                            if (this->__c_str__ [i] == '.')
+                                this->__c_str__ [i] = lc_numeric_locale->getDecimalSeparator ();
+                            else if (this->__c_str__ [i] == ',')
+                                this->__c_str__ [i] = lc_numeric_locale->getThousandsSeparator ();
+                        }
+                    #endif                
+                    if (this->__c_str__ [N]) {
+                        this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
+                        this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
+                    }
+                } 
+                return *this;
+            }   
+
+            #ifndef ARDUINO_ARCH_AVR
+                Cstring operator += (struct tm st) {                    // concatenate a struct tm to Cstring, like: a += st;
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
-                        struct tm st;
-                        localtime_r (&t, &st);
                         char buf [80];
                         #ifdef __LOCALE_HPP__
-                            strftime (buf, sizeof (buf), __locale_time__, &st);
+                            strftime (buf, sizeof (buf), lc_time_locale->getTimeFormat (), &st);
                         #else
                             strftime (buf, sizeof (buf), "%Y/%m/%d %T", &st);
                         #endif
@@ -590,10 +733,7 @@
                         if (this->__c_str__ [N]) {
                             this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
                             this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
-                            #ifdef __LOCALE_HPP__
-                                if (__use_utf8__)
-                                    this->__rTrimUnfinishedUtf8Character__ ();
-                            #endif
+                            this->__rTrimUnfinishedUtf8Character__ ();
                         } 
                     } 
                     return *this;
@@ -663,25 +803,25 @@
                 inline bool operator >= (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
                 inline bool operator >= (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
             #else
-                inline bool operator <  (const char *other) __attribute__((always_inline))        { return __strUtf8cmp__ (this->__c_str__, other) < 0; }           // Cstring : C string
-                inline bool operator <  (char *other) __attribute__((always_inline))              { return __strUtf8cmp__ (this->__c_str__, other) < 0; }           // Cstring : C string
-                inline bool operator <  (const Cstring& other) __attribute__((always_inline))     { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
-                inline bool operator <  (Cstring& other) __attribute__((always_inline))           { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
+                inline bool operator <  (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) < 0; }           // Cstring : C string
+                inline bool operator <  (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) < 0; }           // Cstring : C string
+                inline bool operator <  (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
+                inline bool operator <  (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
 
-                inline bool operator <= (const char *other) __attribute__((always_inline))        { return __strUtf8cmp__ (this->__c_str__, other) <= 0; }          // Cstring : C string
-                inline bool operator <= (char *other) __attribute__((always_inline))              { return __strUtf8cmp__ (this->__c_str__, other) <= 0; }          // Cstring : C string
-                inline bool operator <= (const Cstring& other) __attribute__((always_inline))     { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
-                inline bool operator <= (Cstring& other) __attribute__((always_inline))           { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
+                inline bool operator <= (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) <= 0; }          // Cstring : C string
+                inline bool operator <= (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) <= 0; }          // Cstring : C string
+                inline bool operator <= (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
+                inline bool operator <= (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
 
-                inline bool operator >  (const char *other) __attribute__((always_inline))        { return __strUtf8cmp__ (this->__c_str__, other) > 0; }           // Cstring : C string    
-                inline bool operator >  (char *other) __attribute__((always_inline))              { return __strUtf8cmp__ (this->__c_str__, other) > 0; }           // Cstring : C string    
-                inline bool operator >  (const Cstring& other) __attribute__((always_inline))     { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
-                inline bool operator >  (Cstring& other) __attribute__((always_inline))           { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
+                inline bool operator >  (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) > 0; }           // Cstring : C string    
+                inline bool operator >  (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) > 0; }           // Cstring : C string    
+                inline bool operator >  (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
+                inline bool operator >  (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
 
-                inline bool operator >= (const char *other) __attribute__((always_inline))        { return __strUtf8cmp__ (this->__c_str__, other) >= 0; }          // Cstring : C string    
-                inline bool operator >= (char *other) __attribute__((always_inline))              { return __strUtf8cmp__ (this->__c_str__, other) >= 0; }          // Cstring : C string    
-                inline bool operator >= (const Cstring& other) __attribute__((always_inline))     { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
-                inline bool operator >= (Cstring& other) __attribute__((always_inline))           { return __strUtf8cmp__ (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
+                inline bool operator >= (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) >= 0; }          // Cstring : C string    
+                inline bool operator >= (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) >= 0; }          // Cstring : C string    
+                inline bool operator >= (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
+                inline bool operator >= (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
             #endif
 
 
@@ -693,100 +833,30 @@
             inline char &operator [] (unsigned long i) __attribute__((always_inline)) { return __c_str__ [i]; }
 
 
-            // UTF-8 enabled iterator
-            class iterator {
-                public:
-
-                    // constructor
-                    iterator (char* str) { 
-                        __str__ = str; 
-                    }
-                    
-                    // * operator
-                    char * operator *() const { return __str__; }
-
-                    // ++ (prefix) increment
-                    iterator& operator ++ () { 
-
-                        char c = *__str__;
-                        if ((c & 0x80) == 0) { // 1-byte character
-                            ++ __str__; 
-                        } else if ((c & 0xE0) == 0xC0) { // 2-byte character
-
-                            if (*(++ __str__)) { // should succeed but check anyway if UTF-8 string is invalid
-                                ++ __str__;
-                            }
-                        } else if ((c & 0xF0) == 0xE0) { // 3-byte character
-                            ++ __str__; 
-                            if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
-                                ++ __str__;
-                                if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
-                                    ++ __str__;
-                                } 
-                            } 
-                        } else if ((c & 0xF8) == 0xF0) { // 4-byte character
-                            ++ __str__; 
-                            if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
-                                ++ __str__;
-                                if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
-                                    ++ __str__;
-                                    if (*__str__) { // should succeed but check anyway if UTF-8 string is invalid
-                                        ++ __str__;
-                                    } 
-                                } 
-                            }
-                        } else { // invalid UTF-8 character
-                            ++ __str__; 
-                        }
-
-                        return *this;
-                    }
-
-                
-                    // C++ will stop iterating when != operator returns false, only a argment is used to iterate with, so keep it fast and simple:
-                    friend bool operator != (const iterator& a, const iterator& b) { return *(a.__str__); } 
-
-                private:
-
-                    char* __str__;
-
-            };
-
-            iterator begin () { return iterator ((char *) this); }  // first element
-            iterator end () { return iterator (NULL); }             // past the last element
-
-
             // some std::string-like member functions
             inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
         
             inline size_t length () __attribute__((always_inline)) { return strlen (__c_str__); } 
 
             size_t characters () { // returns the number of characters in the string, considering UTF-8 encoding
-                #ifdef __LOCALE_HPP__
-                    if (__use_utf8__) {
-                        // count UTF-8 characters, the first UTF-8 byte starts with 0xxxxxxx for ASCII, 110xxxxx for 2 byte character, 1110xxxx for 3 byte character and 11110xxx for 4 byte character, all the following bytes start with 10xxxxxx
-                        size_t count = 0;
-                        for (size_t i = 0; __c_str__ [i]; ) {
-                            char c = __c_str__ [i];
-                            if ((c & 0x80) == 0) // 1-byte character
-                                i += 1;
-                            else if ((c & 0xE0) == 0xC0) // 2-byte character
-                                i += 2;
-                            else if ((c & 0xF0) == 0xE0) // 3-byte character
-                                i += 3;
-                            else if ((c & 0xF8) == 0xF0) // 4-byte character
-                                i += 4;
-                            else // invalid UTF-8 character
-                                i += 1;
+                // count UTF-8 characters, the first UTF-8 byte starts with 0xxxxxxx for ASCII, 110xxxxx for 2 byte character, 1110xxxx for 3 byte character and 11110xxx for 4 byte character, all the following bytes start with 10xxxxxx
+                size_t count = 0;
+                for (size_t i = 0; __c_str__ [i]; ) {
+                    char c = __c_str__ [i];
+                    if ((c & 0x80) == 0) // 1-byte character
+                        i += 1;
+                    else if ((c & 0xE0) == 0xC0) // 2-byte character
+                        i += 2;
+                    else if ((c & 0xF0) == 0xE0) // 3-byte character
+                        i += 3;
+                    else if ((c & 0xF8) == 0xF0) // 4-byte character
+                        i += 4;
+                    else // invalid UTF-8 character
+                        i += 1;
 
-                            count ++;
-                        }
-                        return count;
-                    } 
-                #endif
-
-                // ASCII
-                return length ();
+                    count ++;
+                }
+                return count;
             }
             
             inline size_t max_size () __attribute__((always_inline)) { return N; } 
@@ -801,8 +871,6 @@
                 }
                 return r;
             }
-
-            static const size_t npos = (size_t) 0xFFFFFFFFFFFFFFFF;
 
             size_t find (const char *str, size_t pos = 0) {
                 char *p = strstr (__c_str__ + pos, str);
@@ -886,12 +954,8 @@
 
             void remove (size_t pos = 0) {
                 if (pos > N) pos = N;
-                #ifdef __LOCALE_HPP__
-                    if (__use_utf8__)
-                        this->__rTrimUnfinishedUtf8Character__ ();
-                    else
-                #endif
-                    __c_str__ [pos] = 0;
+                this->__rTrimUnfinishedUtf8Character__ ();
+                // __c_str__ [pos] = 0;
             }
 
             void trim () {
@@ -908,11 +972,7 @@
                         if (*pc >= 'a' && *pc <= 'z')
                             *pc = (*pc - ('a' - 'A'));
                 #else // use locale, due to UTF-8 encodint the result string may (theoretically) be longer than the original one
-                    Cstring<N> tmp = __c_str__;
-                    const char *p = tmp.__c_str__;
-                    __c_str__ [0] = 0; // empty internal buffer without clearing error flags
-                    while (*p)
-                        operator += (__locale_toupper__ (&p));
+                    ::toupper (__c_str__);
                 #endif
             }
 
@@ -923,11 +983,7 @@
                         if (*pc >= 'A' && *pc <= 'Z')
                             *pc = (*pc + ('a' - 'A'));
                 #else // use locale, due to UTF-8 encodint the result string may (theoretically) be longer than the original one
-                    Cstring<N> tmp = __c_str__;
-                    const char *p = tmp.__c_str__;
-                    __c_str__ [0] = 0; // empty internal buffer without clearing error flags
-                    while (*p)
-                        operator += (__locale_tolower__ (&p));
+                    ::tolower (__c_str__);
                 #endif
             }
 
@@ -953,7 +1009,7 @@
                 __c_str__ [l] = 0;
             }
 
-            bool isValidUtf8 () { // with the help of Microsoft Copilot
+            bool isValidUtf8 () { 
                 size_t i = 0;
                 for (int i = 0; __c_str__ [i]; i ++) {
                     unsigned char c = __c_str__ [i];
@@ -991,62 +1047,22 @@
                 return true; // all characters are valid UTF-8
             }
 
-
-            // print Cstring to ostream
-            friend ostream& operator << (ostream& os, Cstring& s) {
-                os << s.c_str ();
-                return os;
-            }
-
-
         private:
 
-            #ifdef __LOCALE_HPP__
-                void __rTrimUnfinishedUtf8Character__ () {                            // trim (unfinished) UTF-8 byte from the right
-                    // the first UTF-8 byte starts with 0xxxxxxx for ASCII, 110xxxxx for 2 byte character, 1110xxxx for 3 byte character and 11110xxx for 4 byte character, all the following bytes start with 10xxxxxx
-                    int i;
-                    for (i = N - 1; i >= 0; i --) {
-                        if ((__c_str__ [i] & 0b11000000) == 0b10000000) {
-                            __c_str__ [i] = 0; // clear UTF-8 byte 
-                        } else {
-                            break;
-                        }
-                    }
-                    if (i >= 0 && (__c_str__ [i] & 0b11000000) == 0b11000000) {
-                        __c_str__ [i] = 0; // clear the first UTF-8 byte as well
+            void __rTrimUnfinishedUtf8Character__ () {                            // trim (unfinished) UTF-8 byte from the right
+                // the first UTF-8 byte starts with 0xxxxxxx for ASCII, 110xxxxx for 2 byte character, 1110xxxx for 3 byte character and 11110xxx for 4 byte character, all the following bytes start with 10xxxxxx
+                int i;
+                for (i = N - 1; i >= 0; i --) {
+                    if ((__c_str__ [i] & 0b11000000) == 0b10000000) {
+                        __c_str__ [i] = 0; // clear UTF-8 byte 
+                    } else {
+                        break;
                     }
                 }
-
-                int __strUtf8cmp__ (const char *str1, const char*str2) {              // compare two strings in locale sort order
-                    while (true) {
-                        if (*str1) {
-                            if (*str2) {
-                                // both strings still have characters
-                                int o1 = __locale_charOrder__ (&str1); // also increases the pointer
-                                int o2 = __locale_charOrder__ (&str2); // also increases the pointer
-                                if (o1 > o2) {
-                                    return 1;
-                                } else if (o1 < o2) {
-                                    return -1;
-                                }
-                                // both characters are the same, continue with the next ones
-                            } else {
-                                // str1 has a character but str2 already ended
-                                return 1;
-                            }
-                        } else {
-                            if (*str2) {
-                                // str2 has a character but str1 already ended
-                                return -1;
-                            } else {
-                                // both strings ended at the same time, they are the same
-                                return 0;
-                            }
-                        }
-                    }
+                if (i >= 0 && (__c_str__ [i] & 0b11000000) == 0b11000000) {
+                    __c_str__ [i] = 0; // clear the first UTF-8 byte as well
                 }
-
-            #endif
+            }
 
     };
 

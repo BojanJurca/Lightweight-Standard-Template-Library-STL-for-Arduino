@@ -21,7 +21,7 @@
  *                              | __front__           __back__          |
  *                              |<-------------- __capacity__ --------->|  
  *
- *  Aug 12, 2025, Bojan Jurca
+ *  Oct 23, 2025, Bojan Jurca
  * 
  */
 
@@ -32,7 +32,7 @@
 
     // ----- TUNNING PARAMETERS -----
 
-    // #define __THROW_VECTOR_QUEUE_EXCEPTIONS__  // uncomment this line if you want vector to throw exceptions
+    // #define THROW_VECTOR_QUEUE_EXCEPTIONS  // uncomment this line if you want vector to throw exceptions
 
 
     // error flags: there are only two types of error flags that can be set: err_bad_alloc and err_out_of_range - please note that all errors are negative (char) numbers
@@ -74,7 +74,7 @@
             vector (const vector& other) {
                 signed char e = this->reserve (other.size ()); // prevent resizing __elements__ for each element beeing pushed back
                 if (e) { // != OK
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw e;
                     #endif                      
                     return; 
@@ -116,7 +116,7 @@
                     vector (const vectorType (&array) [N]) {
                         signed char e = reserve (N); // prevent resizing __elements__ for each element beeing pushed back
                         if (e) { // != OK
-                            #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                            #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                                 throw e;
                             #endif                      
                         }
@@ -178,7 +178,7 @@
         
             signed char reserve (int newCapacity) {
                 if (newCapacity < __size__) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;   
@@ -199,7 +199,7 @@
             * Checks if vector is empty.
             */
 
-            bool empty () { return __size__ == 0; }
+            bool empty () const { return __size__ == 0; }
 
 
            /*
@@ -230,7 +230,7 @@
       
             vectorType &operator [] (int position) {
                 if (position < 0 || position >= __size__) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif                      
                     __errorFlags__ |= err_out_of_range;                    
@@ -245,7 +245,7 @@
 
             vectorType &at (int position) {
                 if (position < 0 || position >= __size__) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif                      
                     __errorFlags__ |= err_out_of_range;                    
@@ -267,7 +267,7 @@
             vector (vector& other) {
                 signed char e = this->reserve (other.size ()); // prevent resizing __elements__ for each element beeing pushed back
                 if (e) { // != OK
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw e;
                     #endif                      
                     return; 
@@ -293,7 +293,7 @@
                 this->clear (); // clear existing elements if needed
                 signed char e = this->reserve (other.size ());
                 if (e) { // != OK
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw e;
                     #endif                      
                     return this; // prevent resizing __elements__ for each element beeing pushed back
@@ -338,7 +338,7 @@
                 if (__size__ == __capacity__) {
                     signed char e = __changeCapacity__ (__capacity__ + __increment__);
                     if (e) { // != OK
-                        #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                        #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                             throw e;
                         #endif                                                                    
                         return e;
@@ -361,7 +361,7 @@
                 if (__size__ == __capacity__) {
                     signed char e = __changeCapacity__ (__capacity__ + __increment__);
                     if (e) { // != OK
-                        #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                        #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                             throw e;
                         #endif                      
                         return e;
@@ -387,7 +387,7 @@
       
             signed char pop_back () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;                    
@@ -410,7 +410,7 @@
         
             signed char pop_front () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;                                      
@@ -434,7 +434,7 @@
         
             vectorType& front () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -451,10 +451,18 @@
         
             vectorType& back () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
+                    static vectorType ev = {};
+                    return ev;
+                }
+                return __elements__ [(__front__ + __size__ - 1) % __capacity__];
+            }
+
+            vectorType& back () const { // const version without error reporting
+                if (__size__ == 0) {
                     static vectorType ev = {};
                     return ev;
                 }
@@ -528,7 +536,7 @@
                 // check if position is valid
                 iterator e = end ();
                 if (!(position != e)) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif                           
                     __errorFlags__ |= err_out_of_range;                       
@@ -632,7 +640,7 @@
                 }
             }
 
-            #ifdef __CONSOLE_HPP__
+            #ifdef __OSTREAM_HPP__
                 // print vector to ostream
                 friend ostream& operator << (ostream& os, vector& v) {
                     bool first = true;
@@ -647,6 +655,7 @@
                     return os;
                 }
             #endif
+
 
       private:
 
@@ -695,7 +704,7 @@
                     vectorType *newElements = (vectorType *) malloc (sizeof (vectorType) * newCapacity);
                 #endif
                 if (newElements == NULL) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;
@@ -807,7 +816,7 @@
 
                         for (String element: il) {
                             if (!element) { // String constructor failed
-                                #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                                #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                                     throw err_bad_alloc;
                                 #endif
                                 __errorFlags__ |= err_bad_alloc;   
@@ -829,7 +838,7 @@
                     vector (const String (&array) [N]) {
                         signed char e = reserve (N); // prevent resizing __elements__ for each element beeing pushed back
                         if (e) { // != OK
-                            #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                            #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                                 throw e;
                             #endif                      
                         }
@@ -895,7 +904,7 @@
         
             signed char reserve (int newCapacity) {
                 if (newCapacity < __size__) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;   
@@ -916,7 +925,7 @@
             * Checks if vector is empty.
             */
 
-            bool empty () { return __size__ == 0; }
+            bool empty () const { return __size__ == 0; }
 
 
            /*
@@ -946,7 +955,7 @@
       
             String &operator [] (int position) {
                 if (position < 0 || position >= __size__) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif 
                     __errorFlags__ |= err_out_of_range;                                         
@@ -961,7 +970,7 @@
 
             String &at (int position) {
                 if (position < 0 || position >= __size__) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif    
                     __errorFlags__ |= err_out_of_range;                                      
@@ -998,7 +1007,7 @@
                 this->clear (); // clear existing elements if needed
                 signed char e = this->reserve (other.size ());
                 if (e) { // != OK
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw e;
                     #endif                      
                     return this; // prevent resizing __elements__ for each element beeing pushed back
@@ -1048,7 +1057,7 @@
     
             signed char push_back (String element) {
                 if (!element) {                             // ... check if parameter construction is valid
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;       // report error if it is not
@@ -1059,7 +1068,7 @@
                 if (__size__ == __capacity__) {
                     signed char e = __changeCapacity__ (__capacity__ + __increment__);
                     if (e) { // != OK
-                        #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                        #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                             throw e;
                         #endif                                                                    
                         return e;
@@ -1078,7 +1087,7 @@
               
             signed char push_front (String element) {
                 if (!element) {                             // ... check if parameter construction is valid
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;       // report error if it is not
@@ -1089,7 +1098,7 @@
                 if (__size__ == __capacity__) {
                     signed char e = __changeCapacity__ (__capacity__ + __increment__);
                     if (e) { // != OK
-                        #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                        #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                             throw e;
                         #endif                      
                         return e;
@@ -1115,7 +1124,7 @@
       
             signed char pop_back () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         if (__size__ == 0) throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;                    
@@ -1138,7 +1147,7 @@
         
             signed char pop_front () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         if (__size__ == 0) throw err_out_of_range;
                     #endif        
                     __errorFlags__ |= err_out_of_range;                                        
@@ -1162,7 +1171,7 @@
         
             String& front () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         if (__size__ == 0) throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
@@ -1179,10 +1188,18 @@
 
             String& back () {
                 if (__size__ == 0) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         if (__size__ == 0) throw err_out_of_range;
                     #endif          
                     __errorFlags__ |= err_out_of_range;
+                    static String ev = {};
+                    return ev;
+                }
+                return __elements__ [(__front__ + __size__ - 1) % __capacity__];
+            }
+
+            String& back () const { // const version without error reporting
+                if (__size__ == 0) {
                     static String ev = {};
                     return ev;
                 }
@@ -1256,7 +1273,7 @@
                 // check if position is valid
                 iterator e = end ();
                 if (!(position != e)) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif                           
                     __errorFlags__ |= err_out_of_range;                       
@@ -1312,7 +1329,7 @@
 
             signed char insert (iterator position, String element) {
                 if (!element) { // String constuctor failed
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;   
@@ -1368,7 +1385,7 @@
                 }
             }
 
-            #ifdef __CONSOLE_HPP__
+            #ifdef __OSTREAM_HPP__
                 // print vector to ostream
                 friend ostream& operator << (ostream& os, vector& v) {
                     bool first = true;
@@ -1383,7 +1400,6 @@
                     return os;
                 }
             #endif
-
 
       private:
 
@@ -1427,7 +1443,7 @@
                     String *newElements = (String *) malloc (sizeof (String) * newCapacity);
                 #endif
                 if (newElements == NULL) {
-                    #ifdef __THROW_VECTOR_QUEUE_EXCEPTIONS__
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
                     #endif
                     __errorFlags__ |= err_bad_alloc;

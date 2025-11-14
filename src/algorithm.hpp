@@ -107,134 +107,135 @@
         */
 
 
-      template <typename forwardIterator>
-      void __mergeSort__ (forwardIterator first, forwardIterator last) {
-          // check if number of elements is <= 1 so sorting isn't necessary
-          if (first.__p__ == last.__p__ || first.__p__->next == last.__p__)
-              return;
-          // form here on there are at least 2 elements in the list - this is inportant, since lists are only single linked so we can't change the pointer to the first element the same way as we can the other pointers
+    #ifdef __LIST_HPP__
+        template <typename forwardIterator>
+        void __mergeSort__ (forwardIterator first, forwardIterator last) {
+            // check if number of elements is <= 1 so sorting isn't necessary
+            if (first.__p__ == last.__p__ || first.__p__->next == last.__p__)
+                return;
+            // form here on there are at least 2 elements in the list - this is inportant, since lists are only single linked so we can't change the pointer to the first element the same way as we can the other pointers
 
-          using listElementType = typename remove_reference<decltype(*first)>::type; 
-          list<listElementType> workingList [4];
-          list<listElementType> *pPrimaryOutputList = &workingList [0];
-          list<listElementType> *pStandbyOutputList = &workingList [1];
-          list<listElementType> *pFirstInputList = &workingList [2];
-          list<listElementType> *pSecondInputList = &workingList [3];
+            using listElementType = typename remove_reference<decltype(*first)>::type; 
+            list<listElementType> workingList [4];
+            list<listElementType> *pPrimaryOutputList = &workingList [0];
+            list<listElementType> *pStandbyOutputList = &workingList [1];
+            list<listElementType> *pFirstInputList = &workingList [2];
+            list<listElementType> *pSecondInputList = &workingList [3];
 
-          // statistics
-          // unsigned int N = 0;
-          // unsigned int iterations = 0;
+            // statistics
+            // unsigned int N = 0;
+            // unsigned int iterations = 0;
 
-          // do the first merging from first iterator to workingList [0] and workingList [1] and loacate min element meanwhile
-          auto pMin = first.__p__;
-          while (first.__p__->next != last.__p__) {
+            // do the first merging from first iterator to workingList [0] and workingList [1] and loacate min element meanwhile
+            auto pMin = first.__p__;
+            while (first.__p__->next != last.__p__) {
 
-              // 1. swith output lists if needed
-              if (pPrimaryOutputList->__front__ && first.__p__->next->element < pPrimaryOutputList->back ()) {
-                  list<listElementType> *pTmpOutputList = pPrimaryOutputList;
-                  pPrimaryOutputList = pStandbyOutputList;
-                  pStandbyOutputList = pTmpOutputList;
-              }
-              // 2. is this min element so far?
-              if (first.__p__->next->element < pMin->element)
-                  pMin = first.__p__->next;
-              // 3. add first.__p__->next->next to the back of primaryOutputList and remove it from p list
-              if (pPrimaryOutputList->__front__ == NULL)
-                  pPrimaryOutputList->__front__ = first.__p__->next;
-              if (pPrimaryOutputList->__back__ == NULL)
-                  pPrimaryOutputList->__back__ = first.__p__->next;
-              else {
-                  pPrimaryOutputList->__back__->next = first.__p__->next;
-                  pPrimaryOutputList->__back__ = pPrimaryOutputList->__back__->next;
-              }
-              first.__p__->next = first.__p__->next->next;
-              pPrimaryOutputList->__back__->next = NULL;
+                // 1. swith output lists if needed
+                if (pPrimaryOutputList->__front__ && first.__p__->next->element < pPrimaryOutputList->back ()) {
+                    list<listElementType> *pTmpOutputList = pPrimaryOutputList;
+                    pPrimaryOutputList = pStandbyOutputList;
+                    pStandbyOutputList = pTmpOutputList;
+                }
+                // 2. is this min element so far?
+                if (first.__p__->next->element < pMin->element)
+                    pMin = first.__p__->next;
+                // 3. add first.__p__->next->next to the back of primaryOutputList and remove it from p list
+                if (pPrimaryOutputList->__front__ == NULL)
+                    pPrimaryOutputList->__front__ = first.__p__->next;
+                if (pPrimaryOutputList->__back__ == NULL)
+                    pPrimaryOutputList->__back__ = first.__p__->next;
+                else {
+                    pPrimaryOutputList->__back__->next = first.__p__->next;
+                    pPrimaryOutputList->__back__ = pPrimaryOutputList->__back__->next;
+                }
+                first.__p__->next = first.__p__->next->next;
+                pPrimaryOutputList->__back__->next = NULL;
 
-              // statistics
-              // N ++;
-          }
+                // statistics
+                // N ++;
+            }
 
-          // swith first iterator element with min element so this part of list is sorted and we won't have to deal with it again
-          if (pMin->element < first.__p__->element) {
-              // swithc elements in the way if they are objects their constructors and destructors would not get called
-              //listElementType tmp;
-              char tmp [sizeof (listElementType)];
-              memcpy (tmp, &(first.__p__->element), sizeof (listElementType));
-              memcpy (&(first.__p__->element), &(pMin->element), sizeof (listElementType));
-              memcpy (&(pMin->element), tmp, sizeof (listElementType));
-          }
+            // swith first iterator element with min element so this part of list is sorted and we won't have to deal with it again
+            if (pMin->element < first.__p__->element) {
+                // swithc elements in the way if they are objects their constructors and destructors would not get called
+                //listElementType tmp;
+                char tmp [sizeof (listElementType)];
+                memcpy (tmp, &(first.__p__->element), sizeof (listElementType));
+                memcpy (&(first.__p__->element), &(pMin->element), sizeof (listElementType));
+                memcpy (&(pMin->element), tmp, sizeof (listElementType));
+            }
 
-          // if we've only got a single output list then the sorting is already done and we only have to move primaryOutputList back to front iterator
-          while (pStandbyOutputList->__front__) {
-              // it we'we got 2 output lists the elements are not yet in order - do the mergesort magic here in te right way, otherwise we won't get O (n log n) time complexity
+            // if we've only got a single output list then the sorting is already done and we only have to move primaryOutputList back to front iterator
+            while (pStandbyOutputList->__front__) {
+                // it we'we got 2 output lists the elements are not yet in order - do the mergesort magic here in te right way, otherwise we won't get O (n log n) time complexity
 
-                  // switch input and output lists so all the elements are in two input lists and both output lists are empty
-                  list<listElementType> *pTmpList = pPrimaryOutputList;
-                  pPrimaryOutputList = pFirstInputList;
-                  pFirstInputList = pStandbyOutputList;
-                  pStandbyOutputList = pSecondInputList;
-                  pSecondInputList = pTmpList;
+                    // switch input and output lists so all the elements are in two input lists and both output lists are empty
+                    list<listElementType> *pTmpList = pPrimaryOutputList;
+                    pPrimaryOutputList = pFirstInputList;
+                    pFirstInputList = pStandbyOutputList;
+                    pStandbyOutputList = pSecondInputList;
+                    pSecondInputList = pTmpList;
 
-                  // merge the input lists into output lists
-                  list<listElementType> *pInputList = NULL;
-                  listElementType *lastElementMerged = NULL;
+                    // merge the input lists into output lists
+                    list<listElementType> *pInputList = NULL;
+                    listElementType *lastElementMerged = NULL;
 
-                  while (pFirstInputList->__front__ || pSecondInputList->__front__) { // while there is any input
+                    while (pFirstInputList->__front__ || pSecondInputList->__front__) { // while there is any input
 
-                      if (pFirstInputList->__front__) {
-                          pInputList = pFirstInputList;
-                          if (pSecondInputList->__front__) { // there are both inputs available    
-                              if (lastElementMerged) { // pick the smallest element from inputs that is bigger than the last element already in output (this would create longer sorted output sequences)    
-                                  if (pSecondInputList->__front__->element < pFirstInputList->__front__->element && pSecondInputList->__front__->element >= *lastElementMerged) {
-                                      pInputList = pSecondInputList;
-                                  }
-                              } else { // just pick a smaller of both inputs (this would create longer sorted output sequences)
-                                  if (pSecondInputList->__front__->element < pFirstInputList->__front__->element) {
-                                      pInputList = pSecondInputList;
-                                  }
-                              }
-                          }
-                          // else there is only the first input available, we don't have to do anything
-                      } else { // there is only the second input available
-                          pInputList = pSecondInputList;
-                      }
+                        if (pFirstInputList->__front__) {
+                            pInputList = pFirstInputList;
+                            if (pSecondInputList->__front__) { // there are both inputs available    
+                                if (lastElementMerged) { // pick the smallest element from inputs that is bigger than the last element already in output (this would create longer sorted output sequences)    
+                                    if (pSecondInputList->__front__->element < pFirstInputList->__front__->element && pSecondInputList->__front__->element >= *lastElementMerged) {
+                                        pInputList = pSecondInputList;
+                                    }
+                                } else { // just pick a smaller of both inputs (this would create longer sorted output sequences)
+                                    if (pSecondInputList->__front__->element < pFirstInputList->__front__->element) {
+                                        pInputList = pSecondInputList;
+                                    }
+                                }
+                            }
+                            // else there is only the first input available, we don't have to do anything
+                        } else { // there is only the second input available
+                            pInputList = pSecondInputList;
+                        }
 
-                      // we have selected the input, now see if we have to swithc the outputs
-                      if (lastElementMerged && pInputList->__front__->element < *lastElementMerged) {
-                          pTmpList = pPrimaryOutputList;
-                          pPrimaryOutputList = pStandbyOutputList;
-                          pStandbyOutputList = pTmpList;
-                      } 
+                        // we have selected the input, now see if we have to swithc the outputs
+                        if (lastElementMerged && pInputList->__front__->element < *lastElementMerged) {
+                            pTmpList = pPrimaryOutputList;
+                            pPrimaryOutputList = pStandbyOutputList;
+                            pStandbyOutputList = pTmpList;
+                        } 
 
-                      // 1. insert element to the output list
-                      auto pTmp = pInputList->__front__->next;
-                      pInputList->__front__->next = NULL;
-                      if (pPrimaryOutputList->__front__ == NULL)
-                          pPrimaryOutputList->__front__ = pInputList->__front__;
-                      if (pPrimaryOutputList->__back__ != NULL)
-                          pPrimaryOutputList->__back__->next = pInputList->__front__;
-                      pPrimaryOutputList->__back__ = pInputList->__front__;
-                      // 2. remove it from pInputList list
-                      pInputList->__front__ = pTmp;
-                      if (pInputList->__front__ == NULL)
-                          pInputList->__back__ = NULL;
-                      // 3. remember the last element merged so far in this iteration
-                      lastElementMerged = &(pPrimaryOutputList->__back__->element);
-                  } // merging inputs into outputs
+                        // 1. insert element to the output list
+                        auto pTmp = pInputList->__front__->next;
+                        pInputList->__front__->next = NULL;
+                        if (pPrimaryOutputList->__front__ == NULL)
+                            pPrimaryOutputList->__front__ = pInputList->__front__;
+                        if (pPrimaryOutputList->__back__ != NULL)
+                            pPrimaryOutputList->__back__->next = pInputList->__front__;
+                        pPrimaryOutputList->__back__ = pInputList->__front__;
+                        // 2. remove it from pInputList list
+                        pInputList->__front__ = pTmp;
+                        if (pInputList->__front__ == NULL)
+                            pInputList->__back__ = NULL;
+                        // 3. remember the last element merged so far in this iteration
+                        lastElementMerged = &(pPrimaryOutputList->__back__->element);
+                    } // merging inputs into outputs
 
-                  // statistics
-                  // iterations ++;
-          } // while we are getting more than one output
+                    // statistics
+                    // iterations ++;
+            } // while we are getting more than one output
 
-          // move all elements from (a single, which is) primaryOutputList back to front iterator
-          pPrimaryOutputList->__back__ = last.__p__;
-          first.__p__->next = pPrimaryOutputList->__front__;
-          pPrimaryOutputList->__front__ = NULL;
+            // move all elements from (a single, which is) primaryOutputList back to front iterator
+            pPrimaryOutputList->__back__ = last.__p__;
+            first.__p__->next = pPrimaryOutputList->__front__;
+            pPrimaryOutputList->__front__ = NULL;
 
-          // statistics
-          // Serial.printf ("__mergeSort__: N = %i, iterations = %i\n", ++ N, iterations);
-      }
-
+            // statistics
+            // Serial.printf ("__mergeSort__: N = %i, iterations = %i\n", ++ N, iterations);
+        }
+    #endif
 
 
        /*
@@ -308,9 +309,10 @@
 
 
        /*
-        *   (heap)sort String template specialization
+        *   (heap)sort vector<String> template specialization
         */
 
+    #ifdef __VECTOR_HPP__
         template <>
         void __heapSort__ (vector<String>::iterator first, vector<String>::iterator last) {
             int n = last - first;
@@ -377,6 +379,7 @@
             }        
 
         }
+    #endif
 
 
        /*
@@ -459,23 +462,29 @@
             }
         };
 
-        // Partial sortHelper specialization
-        template<typename T>
-        struct sortHelper<T, T> { // T is a list iterator template
-            void sort (T first, T last) {
-                __mergeSort__ (first, last);
-            }
-        };
+        #ifdef __LIST_HPP__
+            // Partial sortHelper specialization
+            template<typename T>
+            struct sortHelper<T, T> { // T is a list iterator template
+                void sort (T first, T last) {
+                    __mergeSort__ (first, last);
+                }
+            };
+        #endif
 
 
         // General sort function
         template <typename T, typename U> 
-        void sort(T first, U last) { 
-            using listElementType = typename remove_reference<decltype(*first)>::type; 
+        void sort (T first, U last) { 
+            using listElementType = typename remove_reference<decltype (*first)>::type; 
             // Define the list iterator type  
-            using listIteratorType = typename list<listElementType>::iterator; 
-            sortHelper<decltype(first), listIteratorType> o; 
-            o.sort (first, last);
+            #ifdef __LIST_HPP__
+                using listIteratorType = typename list<listElementType>::iterator; 
+                sortHelper<decltype (first), listIteratorType> o; 
+            #else
+                sortHelper<decltype (first), decltype (first)> o;
+            #endif
+            o.sort (first, last);                 
         }
 
 #endif

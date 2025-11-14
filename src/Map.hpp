@@ -7,7 +7,7 @@
  *
  *  Map functions are not thread-safe.
  * 
- *  Aug 12, 2025, Bojan Jurca
+ *  Oct 23, 2025, Bojan Jurca
  *  
  */
 
@@ -20,7 +20,7 @@
 
     #define __MAP_MAX_STACK_SIZE__ 32 // statically allocated stack needed for iterating through elements, 24 should be enough for the number of elemetns that fit into ESP32's memory
 
-    // #define __USE_MAP_EXCEPTIONS__   // uncomment this line if you want Map to throw exceptions
+    // #define USE_MAP_EXCEPTIONS   // uncomment this line if you want Map to throw exceptions
 
 
     // error flags: there are only two types of error flags that can be set: OVERFLOW and OUT_OF_RANGE - please note that all errors are negative (char) numbers
@@ -109,7 +109,7 @@
                         
                         if (is_same<keyType, String>::value)     // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                             if (!*(String *) &(array [i]).first) {        // ... check if parameter construction is valid
-                                #ifdef __USE_MAP_EXCEPTIONS__
+                                #ifdef USE_MAP_EXCEPTIONS
                                     throw err_bad_alloc;
                                 #endif
                                 __errorFlags__ |= err_bad_alloc;          // report error if it is not
@@ -118,7 +118,7 @@
 
                         if (is_same<valueType, String>::value)   // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                             if (!*(String *) &(array [i]).second) {       // ... check if parameter construction is valid
-                                #ifdef __USE_MAP_EXCEPTIONS__
+                                #ifdef USE_MAP_EXCEPTIONS
                                     throw err_bad_alloc;
                                 #endif
                                 __errorFlags__ |= err_bad_alloc;          // report error if it is not
@@ -218,7 +218,7 @@
                     if (is_same<keyType, String>::value)     // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                         if (!*(String *) &e.first) {                            // ... check if parameter construction is valid
                             // log_e ("BAD_ALLOC");
-                            #ifdef __USE_MAP_EXCEPTIONS__
+                            #ifdef USE_MAP_EXCEPTIONS
                                 throw err_bad_alloc;
                             #endif
                             __errorFlags__ |= err_bad_alloc;          // report error if it is not
@@ -228,7 +228,7 @@
                     if (is_same<valueType, String>::value)   // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                         if (!*(String *) &e.second) {                          // ... check if parameter construction is valid
                             // log_e ("BAD_ALLOC");
-                            #ifdef __USE_MAP_EXCEPTIONS__
+                            #ifdef USE_MAP_EXCEPTIONS
                                 throw err_bad_alloc;
                             #endif
                             __errorFlags__ |= err_bad_alloc;          // report error if it is not
@@ -253,7 +253,7 @@
             *    mp [key] = value;
             *
             *  Operator searches for the node containing the key. It it can't be found it inserts a new pair into the Map.
-            *  Error handling can be somewhat tricky. It may be a good idea to use __USE_MAP_EXCEPTIONS__ if using [] operator.
+            *  Error handling can be somewhat tricky. It may be a good idea to use USE_MAP_EXCEPTIONS if using [] operator.
             */
 
             valueType &operator [] (keyType key) {
@@ -263,7 +263,7 @@
                 if (is_same<keyType, String>::value)      // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!*(String *) &key) {              // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;  // report error if it is not
@@ -306,7 +306,7 @@
                 if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!*(String *) &key) {                 // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;        // report error if it is not
@@ -332,7 +332,7 @@
                 if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!*(String *) &pair.first) {                        // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;        // report error if it is not
@@ -342,7 +342,7 @@
                 if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!*(String *) &pair.second) {                      // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;        // report error if it is not
@@ -363,7 +363,7 @@
                 if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!*(String *) &key) {                             // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;        // report error if it is not
@@ -373,7 +373,7 @@
                 if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!*(String *) &value) {               // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;        // report error if it is not
@@ -572,7 +572,7 @@
                 if (is_same<keyType, String>::value)      // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
                     if (!*(String *) &key) {              // ... check if parameter construction is valid
                         // log_e ("BAD_ALLOC");
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;  // report error if it is not
@@ -582,22 +582,19 @@
                 return iterator (key, this);
             }
 
-            #ifdef __CONSOLE_HPP__
+            #ifdef __OSTREAM_HPP__
                 // print map to ostream
                 friend ostream& operator << (ostream& os, Map& m) {
                     bool first = true;
-                    os << "[";
                     for (const auto e : m) {
                         if (!first)
                             os << ",";
                         first = false;
-                        os << e.first << "→" << e.second;
+                        os << "{" << e.first << "," << e.second << "}";
                     }
-                    os << "]";
                     return os;
                 }
             #endif
-
 
         private:
         
@@ -637,7 +634,7 @@
                     #endif
 
                     if (n == NULL) {
-                        #ifdef __USE_MAP_EXCEPTIONS__
+                        #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
                         __errorFlags__ |= err_bad_alloc;
@@ -711,7 +708,7 @@
                 // 3. case: the node with the same values already exists 
                 if (!((*p)->pair.first < key)) { // meaning at this point that key == (*p)->pair.first
                     // log_e ("NOT_UNIQUE");
-                    #ifdef __USE_MAP_EXCEPTIONS__
+                    #ifdef USE_MAP_EXCEPTIONS
                         throw err_not_unique;
                     #endif
                     __errorFlags__ |= err_not_unique;
@@ -764,7 +761,7 @@
                 // 1. case: a leaf has been reached - key was not found
                 if ((*p) == NULL) {
                     // log_e ("NOT_FOUND");
-                    #ifdef __USE_MAP_EXCEPTIONS__
+                    #ifdef USE_MAP_EXCEPTIONS
                         throw err_not_found;
                     #endif                    
                     __errorFlags__ |= err_not_found;

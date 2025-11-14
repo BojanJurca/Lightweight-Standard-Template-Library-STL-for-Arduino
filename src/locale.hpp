@@ -1,11 +1,9 @@
 /*
  *  locale.hpp for Arduino
  *
- *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
+ *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  This file is more or less just an example. Implement your own locale settings here.
- *
- *  Aug 12, 2025, Bojan Jurca
+ *  Oct 23, 2025, Bojan Jurca
  *
  */
 
@@ -13,8 +11,69 @@
 #ifndef __LOCALE_HPP__
     #define __LOCALE_HPP__
 
-    // ----- TO DO: implement your own locale settings (an example is below) -----
+    struct utf8char {
+        char c_str [5] = {}; // max 4 + null terminator
+        public:
+        utf8char () {}
 
+        utf8char (const char* s) {
+            int len = length (static_cast<unsigned char> (s [0]));
+            memcpy (c_str, s, len);
+            c_str [len] = '\0';
+        }
+
+        bool operator == (const utf8char& other) const {
+            return strcmp (c_str, other.c_str) == 0;
+        }
+
+        static int length (unsigned char lead) {
+            if ((lead & 0x80) == 0) return 1;           // 0xxxxxxx
+            if ((lead & 0xE0) == 0xC0) return 2;        // 110xxxxx
+            if ((lead & 0xF0) == 0xE0) return 3;        // 1110xxxx
+            if ((lead & 0xF8) == 0xF0) return 4;        // 11110xxx
+        }
+    };
+
+    class utf8_iterator {
+        const char* __ptr__;
+
+    public:
+        utf8_iterator (const char* ptr) : __ptr__ (ptr) {}
+
+            static int length (unsigned char lead) {
+                if ((lead & 0x80) == 0) return 1;           // 0xxxxxxx
+                if ((lead & 0xE0) == 0xC0) return 2;        // 110xxxxx
+                if ((lead & 0xF0) == 0xE0) return 3;        // 1110xxxx
+                if ((lead & 0xF8) == 0xF0) return 4;        // 11110xxx
+            }
+
+        utf8char operator *() const {
+            int len = length (static_cast<unsigned char> (*__ptr__));
+            utf8char u8c;
+            memcpy (u8c.c_str, __ptr__, len);
+            u8c.c_str [len] = '\0';
+            return u8c;
+        }
+
+        char* get () const { return (char *) __ptr__; }
+
+        void set (const utf8char& c) {
+            int len = length (static_cast<unsigned char> (*__ptr__));
+            memcpy ((void *) __ptr__, c.c_str, len); // overwrite in-place
+        }
+
+        utf8_iterator& operator ++ () {
+            int len = length (static_cast<unsigned char> (*__ptr__));
+            __ptr__ += len;
+            return *this;
+        }
+
+        bool operator < (const utf8_iterator& other) const { return __ptr__ < other.__ptr__; }
+        bool operator <= (const utf8_iterator& other) const { return __ptr__ <= other.__ptr__; }
+    };
+
+
+    // Please note that not all locale categories are supported
     enum localeCategory_t {
         lc_collate  = 0b00000001, // LC_COLLATE is used for string comparison and sorting. It defines how strings are compared and sorted according to the rules of the specified locale.
         lc_ctype    = 0b00000010, // LC_CTYPE is crucial for character classification and conversion functions. It governs what’s considered a letter, digit, punctuation mark, etc., and how characters convert between uppercase and lowercase.
@@ -25,322 +84,123 @@
         lc_all      = 0b00111111
     };
 
-    bool setlocale (localeCategory_t category, const char *locale);
 
+    // ----- The default locale - ASCII locale, which is also a base class for all other locales -----
 
-    // ----- this is the default - ASCII locale -----
+    class locale {
+        public:
+            // list of supported locales
+            locale *nextLocale = NULL;
 
-    #ifndef __UTF8CHAR__
-        #define __UTF8CHAR__
-        
-        struct utf8char { 
-            char __c_str__ [5]; // UTF-8 encoding requires max 4 bytes to represent a character
-            inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
-            inline operator char *() __attribute__((always_inline)) { return __c_str__; }
+            // locale name
+            virtual const char* name () const { return "ASCII"; }
 
-            bool operator == (const utf8char* other) const {
-                if (other == NULL) return false;
-
-                char c;
-                if ((c = __c_str__ [0]) != other->__c_str__ [0])
-                        return false;
-
-                if ((c & 0x80) == 0) { // 1-byte character
-                    return true;
-                } else if ((c & 0xE0) == 0xC0) { // 2-byte character
-                    return __c_str__ [1] == other->__c_str__ [1];
-                } else if ((c & 0xF0) == 0xE0) { // 3-byte character
-                    return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2];
-                } else if ((c & 0xF8) == 0xF0) { // 4-byte character
-                    return __c_str__ [1] == other->__c_str__ [1] && __c_str__ [2] == other->__c_str__ [2] && __c_str__ [3] == other->__c_str__ [3];
-                } else { // invalid UTF-8 character
-                    return true;
-                }
-            }        
-
-        };
-    #endif
-
-    // assing each charcter its own number that will be used for sorting - in case of ASCII character just return its ASCII code and increase the pointer
-    int __charOrder_ASCII__ (const char **pc) {
-        int i = **pc;
-        (*pc) ++;
-        return i;
-    }
-
-    // returns upper case ASCII code as UTF-8 character and increase the pointer
-    utf8char __toupper_ASCII__ (const char **pc) {
-        char c = **pc;
-        (*pc) ++;
-        if (c >= 'a' && c <= 'z')
-            return {(char) (c - ('a' - 'A')), 0};
-        else
-            return {c, 0};
-    }
-
-    // returns lower case ASCII code as UTF-8 character and increase the pointer
-    utf8char __tolower_ASCII__ (const char **pc) {
-        char c = **pc;
-        (*pc) ++;
-        if (c >= 'A' && c <= 'Z')
-            return {(char) (c + ('a' - 'A')), 0};
-        else
-            return {c, 0};
-    }
-
-    const char *__locale_name__ = NULL;
-
-    int (*__locale_charOrder__) (const char **) = __charOrder_ASCII__; // by default
-
-    utf8char (*__locale_toupper__) (const char **) = __toupper_ASCII__; // by default
-    utf8char (*__locale_tolower__) (const char **) = __tolower_ASCII__; // by default
-
-    char __locale_decimalSeparator__ = '.';
-    char __locale_thousandSeparator__ = ',';
-
-    const char *__locale_time__ = "%Y/%m/%d %T";
-
-    bool __use_utf8__ = false;
-
-
-    // ----- example for locale "en_150.UTF-8", English (ASCII) with EU settings, you may freely delete this part if not needed -----
-
-        /*
-        
-            Don't have to imeplement anything (like charOrder, toupper, tolower), just use ASCII functions
-
-        */
-
-
-    // ----- example for locale "sl_SI.UTF-8", you may freely delete this part if not needed -----
-    /*
-
-                //  Slovenian alphabet, extended with some frequently used foreign letters:
-                //  A B C Č (Ć) D (Đ) E F G H I J K L M N O P (Q) R S Š T U V (W) (X) (Y) Z Ž
-                //        |  |     |                                  |                     |
-                //     2 byte UTF-8 characters               2 byte UTF-8 character    2 byte UTF-8 character
-
-
-                // assing each UTF-8 charcter in "sl_SI.UTF-8" locale its own number that will be used for sorting
-                int __charOrder_sl_SI_UTF_8__ (const char **pc) {
-                    // count UTF-8 characters, the first UTF-8 byte starts with 0xxxxxxx for ASCII, 110xxxxx for 2 byte character, 1110xxxx for 3 byte character and 11110xxx for 4 byte character, all the following bytes start with 10xxxxxx
-
-                    // is it a 2 byteUTF-8 characters in "sl_SI.UTF-8" locale?
-                    char c1 = **pc;
-                    if ((c1 & 0xE0) == 0xC0) { // 2-byte character                        
-                        char c2 = *(*pc + 1); 
-
-                        if (c1 == (char) 196 && c2 == (char) 140) {
-                            (*pc) += 2;
-                            return 67 * 3 + 1; // C + 1 = Č
-                        } else if (c1 == (char) 196 && c2 == (char) 134) {
-                            (*pc) += 2;
-                            return 67 * 3 + 2; // C + 2 = Ć
-                        } else if (c1 == (char) 196 && c2 == (char) 144) {
-                            (*pc) += 2;
-                            return 68 * 3 + 1; // D + 1 = Đ
-                        } else if (c1 == (char) 197 && c2 == (char) 160) {
-                            (*pc) += 2;
-                            return 83 * 3 + 1; // S + 1 = Š
-                        } else if (c1 == (char) 197 && c2 == (char) 189) {
-                            (*pc) += 2;
-                            return 90 * 3 + 1; // Z + 1 = Ž
-                        } else if (c1 == (char) 196 && c2 == (char) 141) {
-                            (*pc) += 2;
-                            return 99 * 3 + 1; // c + 1 = č
-                        } else if (c1 == (char) 196 && c2 == (char) 135) {
-                            (*pc) += 2;
-                            return 99 * 3 + 2; // c + 2 = ć
-                        } else if (c1 == (char) 196 && c2 == (char) 145) {
-                            (*pc) += 2;
-                            return 100 * 3 + 1; // d + 1 = đ
-                        } else if (c1 == (char) 197 && c2 == (char) 161) {
-                            (*pc) += 2;
-                            return 115 * 3 + 1; // s + 1 = š
-                        } else if (c1 == (char) 197 && c2 == (char) 190) {
-                            (*pc) += 2;
-                            return 122 * 3 + 1; // z + 1 = ž
-                        }
-                    }
-
-                    // if none of 2 byte UTF-8 characters in "sl_SI.UTF-8" locale, treat each character as a single byte character
-                    int i = 3 * c1; // returning triple ASCII value will ensure 2 free number between ASCII characters, this is just what we need
-                    (*pc) ++;
-                    return i;
-                }
-
-                utf8char __toupper_sl_SI_UTF_8__ (const char **pc) {
-                    // count UTF-8 characters, the first UTF-8 byte starts with 0xxxxxxx for ASCII, 110xxxxx for 2 byte character, 1110xxxx for 3 byte character and 11110xxx for 4 byte character, all the following bytes start with 10xxxxxx
-
-                    // is it a 2 byteUTF-8 characters in "sl_SI.UTF-8" locale?
-                    char c1 = **pc;
-                    if ((c1 & 0xE0) == 0xC0) { // 2-byte character
-                        
-                        char c2 = *(*pc + 1); 
-                        if (c1 == (char) 196 && c2 == (char) 140) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 140, (char) 0}; // Č is alread in upper case
-                        } else if (c1 == (char) 196 && c2 == (char) 134) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 134, (char) 0}; // Ć is alread in upper case
-                        } else if (c1 == (char) 196 && c2 == (char) 144) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 144, (char) 0}; // Đ is alread in upper case
-                        } else if (c1 == (char) 197 && c2 == (char) 160) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 160, (char) 0}; // Š is alread in upper case
-                        } else if (c1 == (char) 197 && c2 == (char) 189) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 189, (char) 0}; // Ž is alread in upper case
-                        } else if (c1 == (char) 196 && c2 == (char) 141) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 140, (char) 0}; // č -> Č
-                        } else if (c1 == (char) 196 && c2 == (char) 135) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 134, (char) 0}; // ć -> Ć
-                        } else if (c1 == (char) 196 && c2 == (char) 145) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 144, (char) 0}; // đ -> Đ
-                        } else if (c1 == (char) 197 && c2 == (char) 161) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 160, (char) 0}; // š -> Š
-                        } else if (c1 == (char) 197 && c2 == (char) 190) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 189, (char) 0}; // ž -> Ž
-                        }
-                    }
-    
-                    return __toupper_ASCII__ (pc);
-                }
-
-                utf8char __tolower_sl_SI_UTF_8__ (const char **pc) {
-                    // count UTF-8 characters, the first UTF-8 byte starts with 0xxxxxxx for ASCII, 110xxxxx for 2 byte character, 1110xxxx for 3 byte character and 11110xxx for 4 byte character, all the following bytes start with 10xxxxxx
-
-                    // is it a 2 byteUTF-8 characters in "sl_SI.UTF-8" locale?
-                    char c1 = **pc;
-                    if ((c1 & 0xE0) == 0xC0) { // 2-byte character
-                        
-                        char c2 = *(*pc + 1); 
-                        if (c1 == (char) 196 && c2 == (char) 140) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 141, (char) 0}; // Č -> č
-                        } else if (c1 == (char) 196 && c2 == (char) 134) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 135, (char) 0}; // Ć -> ć
-                        } else if (c1 == (char) 196 && c2 == (char) 144) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 145, (char) 0}; // Đ -> đ
-                        } else if (c1 == (char) 197 && c2 == (char) 160) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 161, (char) 0}; // Š -> š
-                        } else if (c1 == (char) 197 && c2 == (char) 189) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 190, (char) 0}; // Ž -> ž
-                        } else if (c1 == (char) 196 && c2 == (char) 141) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 141, (char) 0}; // č is already in lower case
-                        } else if (c1 == (char) 196 && c2 == (char) 135) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 135, (char) 0}; // ć is already in lower case
-                        } else if (c1 == (char) 196 && c2 == (char) 145) {
-                            (*pc) += 2;
-                            return {(char) 196, (char) 145, (char) 0}; // đ is already in lower case
-                        } else if (c1 == (char) 197 && c2 == (char) 161) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 161, (char) 0}; // š is alread in lowercase
-                        } else if (c1 == (char) 197 && c2 == (char) 190) {
-                            (*pc) += 2;
-                            return {(char) 197, (char) 190, (char) 0}; // ž -> Ž
-                        }
-                    }
-    
-                    return __tolower_ASCII__ (pc);
-                }
-    */
-
-
-    bool setlocale (localeCategory_t category, const char *locale) {
-
-        if (locale == NULL) {
-            __use_utf8__ = false;
-
-            if (category & lc_collate)
-                __locale_charOrder__ = __charOrder_ASCII__;
-
-            if (category & lc_ctype) {
-                __locale_toupper__ = __toupper_ASCII__;
-                __locale_tolower__ = __tolower_ASCII__;
+            // lc_collate
+            virtual int strcoll (const char *s1, const char *s2) {
+                return strcmp (s1, s2);
             }
 
-            if (category & lc_numeric) {
-                __locale_decimalSeparator__ = '.';
-                __locale_thousandSeparator__ = ',';
+            // lc_ctype
+            virtual bool toupper (char *ps) {
+                while (*ps) {
+                    if (*ps >= 'a' && *ps <= 'z')
+                        *ps = (*ps - ('a' - 'A'));
+                    ps ++;
+                }
+                return true;
             }
 
-            if (category & lc_time)
-                __locale_time__ = "%Y/%m/%d %T";
+            virtual bool tolower (char *ps) {
+                while (*ps) {
+                    if (*ps >= 'A' && *ps <= 'Z')
+                        *ps = (*ps + ('a' - 'A'));
+                    ps ++;
+                }
+                return true;
+            }            
 
-            __locale_name__ = NULL;
-            Serial.println ("locale set to ASCII");
+            // lc_numeric
+            virtual char getDecimalSeparator () const { return '.'; }
+            virtual char getThousandsSeparator () const { return ','; }
+            // lc_time
+            virtual const char* getTimeFormat () const { return "%Y/%m/%d %r"; }
+    };
 
-            return true;
+    // Create a working instance
+    locale default_locale;
+
+    // ----- Locale en_150.UTF-8  -----
+    class en_150_UTF_8_locale : public locale {
+        public:
+            // locale name
+            const char* name () const override { return "en_150.UTF-8"; }
+            // lc_ctype
+            // lc_numeric
+            char getDecimalSeparator () const override { return ','; }
+            char getThousandsSeparator () const override { return '.'; }
+            // lc_time
+            const char* getTimeFormat () const override { return "%d/%m/%Y %H:%M:%S"; }
+    };
+
+    // Add new locale instance to the supported locale list
+    bool addlocale (locale *loc) {
+        if (loc->name () == NULL) // only the default locale has no ID string
+            return false;
+
+        locale *p = &default_locale;
+        while (p->nextLocale != NULL) {
+            if (!strcmp (p->name (), loc->name ()))
+                return false;
+            p = p->nextLocale;
         }
 
-        /* ----- example for locale "en_150.UTF-8" ----- */
-        else if (!strcmp (locale, "en_150.UTF-8")) {
-            __use_utf8__ = true;
+        p->nextLocale = loc;
+        return true;
+    };
 
-            if (category & lc_collate)
-                __locale_charOrder__ = __charOrder_ASCII__;
+    // Create a working instance and insert it into supported locale list
+    bool __locale_en_150_UTF_8__ = addlocale (new en_150_UTF_8_locale);
 
-            if (category & lc_ctype) {
-                __locale_toupper__ = __toupper_ASCII__;
-                __locale_tolower__ = __tolower_ASCII__;
-            }
+    // setlocale
+    locale *lc_collate_locale = &default_locale;
+    locale *lc_ctype_locale = &default_locale;
+    locale *lc_numeric_locale = &default_locale;
+    locale *lc_time_locale = &default_locale;
 
-            if (category & lc_numeric) {
-                __locale_decimalSeparator__ = ',';
-                __locale_thousandSeparator__ = '.';
-            }
+    bool setlocale (localeCategory_t category, const char *name) {
+        // find locale with name
+        locale *p = &default_locale;
+        while (p && strcmp (p->name (), name))
+            p = p->nextLocale;
 
+        if (!p) // not found
+            return false;
+
+        if (category & lc_collate)
+            lc_collate_locale = p;
+
+        if (category & lc_ctype)
+            lc_ctype_locale = p;
+
+        if (category & lc_numeric)
+            lc_numeric_locale = p;
+
+        #ifndef ARDUINO_ARCH_AVR
             if (category & lc_time)
-                __locale_time__ = "%d/%m/%Y %H:%M:%S";
+                lc_time_locale = p;
+        #endif
 
-            __locale_name__ = locale;
-            Serial.print ("locale set to "); Serial.println (locale);
-
-            return true;
-        }
-
-        /* ----- example for locale "sl_SI.UTF-8" -----
-        else if (!strcmp (locale, "sl_SI.UTF-8")) {
-            __use_utf8__ = true;
-
-            if (category & lc_collate) {
-                __locale_charOrder__ = __charOrder_sl_SI_UTF_8__;
-            }
-
-            if (category & lc_ctype) {
-                __locale_toupper__ = __toupper_sl_SI_UTF_8__;
-                __locale_tolower__ = __tolower_sl_SI_UTF_8__;
-            }
-
-            if (category & lc_numeric) {
-                __locale_decimalSeparator__ = ',';
-                __locale_thousandSeparator__ = '.';
-            }
-
-            if (category & lc_time)
-                __locale_time__ = "%d.%m.%Y %H:%M:%S";
-
-            __locale_name__ = locale;
-            Serial.print ("locale set to "); Serial.println (locale);
-
-            return true;
-        }
-        */
-
-        return false; // locale not set
+        return true;
     }
+
+    // strcoll
+    int strcoll (const char *s1, const char *s2) { return lc_collate_locale->strcoll (s1, s2); } 
+    int strcoll (String& s1, String& s2) { return lc_collate_locale->strcoll ((char *) s1.c_str (), (char *) s2.c_str ()); } 
+
+    // toupper, tolower
+    bool toupper (char *cp) { return lc_ctype_locale->toupper (cp); }
+    bool toupper (String& s) { return lc_ctype_locale->toupper ((char *) s.c_str ()); }
+    bool tolower (char *cp) { return lc_ctype_locale->tolower (cp); }
+    bool tolower (String& s) { return lc_ctype_locale->tolower ((char *) s.c_str ()); }
 
 #endif
