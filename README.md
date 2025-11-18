@@ -18,9 +18,10 @@ You can configure the library to use PSRAM (if available) for container storage,
 Works across AVR, ESP32, and other Arduino-compatible platforms.
 
 
-## Repositiry status
+## Repository status
 
 [![GitHub stars](https://img.shields.io/github/stars/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino?style=flat-square)](https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino?style=flat-square)](https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino/network/members)
 [![GitHub issues](https://img.shields.io/github/issues/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino?style=flat-square)](https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino/issues)
 [![GitHub release downloads](https://img.shields.io/github/downloads/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino/latest/total?style=flat-square)](https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino/releases/latest)
+
