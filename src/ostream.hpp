@@ -66,6 +66,7 @@
         showpoint,
         noshowpoint,
         defaultfloat,
+        hexfloat,
         // scientific, not (yet) supported
         fixed
     };
@@ -152,6 +153,83 @@
                 }
             #endif
 
+            #ifdef ARDUINO_ARCH_AVR
+                void __printHexFloat__(float value) {
+                    union { float f; uint32_t u; } data;
+                    data.f = value;
+                    uint32_t bits = data.u;
+
+                    uint32_t sign = bits >> 31;
+                    uint32_t exp  = (bits >> 23) & 0xFF;
+                    uint32_t frac = bits & 0x7FFFFF;
+
+                    // handle special cases first
+                    if (exp == 0xFF) {
+                        if (frac == 0)
+                            Serial.print ( sign ? "-inf" : "inf" );
+                        else
+                            Serial.print ("nan");
+                        return;
+                    } else if (exp == 0 && frac == 0) {
+                        Serial.print ( sign ? "-0x0p+0" : "0x0p+0" );
+                        return;
+                    }
+
+                    char buf[40];
+                    int pos = 0;
+
+                    if (sign) Serial.print ("-0x"); else Serial.print ("0x");
+
+                    int e;
+                    uint32_t mant24;
+
+                    if (exp == 0) {
+                        // subnormal: value = frac/2^23 * 2^-126
+                        // normalize: raise leading bit
+                        int shift = 0;
+                        uint32_t tmp = frac;
+                        while ((tmp & 0x800000) == 0) { tmp <<= 1; shift++; }
+                        mant24 = tmp;            // now there is 1 in bit 23
+                        e = -126 - shift;
+                    } else {
+                        mant24 = (1u << 23) | frac;
+                        e = (int) exp - 127;
+                    }
+
+                    // fraction (23 bits)
+                    uint32_t frac23 = mant24 & 0x7FFFFF;
+                    char fracbuf [7];
+                    fracbuf [0] = "0123456789abcdef" [(frac23 >> 19) & 0xF];
+                    fracbuf [1] = "0123456789abcdef" [(frac23 >> 15) & 0xF];
+                    fracbuf [2] = "0123456789abcdef" [(frac23 >> 11) & 0xF];
+                    fracbuf [3] = "0123456789abcdef" [(frac23 >>  7) & 0xF];
+                    fracbuf [4] = "0123456789abcdef" [(frac23 >>  3) & 0xF];
+                    fracbuf [5] = "0123456789abcdef" [((frac23 & 0x7) << 1) & 0xF];
+                    fracbuf [6] = '\0';
+
+                    // remove trailing '0'
+                    int last = 5;
+                    while (last >= 0 && fracbuf [last] == '0') {
+                        fracbuf [last] = '\0';
+                        last--;
+                    }
+
+                    // leading part: always '1', dotonly if fraction is not empty
+                    Serial.print ('1');
+                    if (fracbuf [0] != '\0') {
+                        Serial.print ('.');
+                        Serial.print (fracbuf);
+                    }
+                    Serial.print ('p');
+                    if (e >= 0) Serial.print ('+');
+                    char eb [12];
+                    int elen = snprintf (eb, sizeof (eb), "%d", e);
+                    for (int i = 0; i < elen; ++i) Serial.print (eb [i]);
+
+                    buf [pos] = '\0';
+                    Serial.print (buf);
+                }
+            #endif
     };
 
 
@@ -167,7 +245,8 @@
                                 __showpoint__ = false;
                                 break;
             case fixed:         
-            case defaultfloat:  
+            case defaultfloat:
+            case hexfloat:  
                                 __fpOutput__ = manipulator;
                                 break;
             default:            // setprecision 0 - 19
@@ -291,28 +370,43 @@
     template<>
     ostream& ostream::operator << <float> (const float& value) {
         char buf [61]; // min: -3.4028235×10^38, max 60 characters (considering max precision = 19)
-        if (__fpOutput__ == fixed) {
-            #ifdef ARDUINO_ARCH_AVR
-                dtostrf (value, 1, __precision__, buf);
-            #else
-                snprintf (buf, sizeof (buf), __floatFormat__, value);
-            #endif
-            if (__showpoint__ && __fpOutput__ == fixed) {
-                __showPointPrintFloat__ (buf);
-                return *this;
-            }
-        } else {
-            #ifdef ARDUINO_ARCH_AVR
-                dtostrf (value, 0, 2, buf); // default AVR format
-            #else
-                sprintf (buf, "%f", value);                                    
-            #endif
+        switch (__fpOutput__) {
+            case defaultfloat:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    dtostrf (value, 0, 2, buf); // default AVR format
+                                #else
+                                    sprintf (buf, "%f", value);                                    
+                                #endif
+                                #ifdef __LOCALE_HPP__
+                                    __localizeSeparators__ (buf);
+                                #endif
+                                Serial.print (buf);
+                                return *this;
+            case fixed:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    dtostrf (value, 1, __precision__, buf);
+                                #else
+                                    snprintf (buf, sizeof (buf), __floatFormat__, value);
+                                #endif
+                                if (__showpoint__) {
+                                    __showPointPrintFloat__ (buf); // takes care of __LOCALE_HPP__ as well
+                                } else {
+                                    #ifdef __LOCALE_HPP__
+                                        __localizeSeparators__ (buf);
+                                    #endif
+                                    Serial.print (buf);
+                                }
+                                return *this;
+            case hexfloat:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    __printHexFloat__ (value);
+                                #else
+                                    sprintf (buf, "%a", value); 
+                                    // no localization for hexfloat
+                                    Serial.print (buf);
+                                #endif
+                                return *this;
         }
-        #ifdef __LOCALE_HPP__
-            __localizeSeparators__ (buf);
-        #endif
-        Serial.print (buf);
-
         return *this;
     }
 
@@ -320,28 +414,43 @@
     ostream& ostream::operator << <double> (const double& value) {
         const int bufSize = (sizeof (double) == 4 /* only 4 bytes on AVR boards */) ? 61 : 331; // min: -1.7976931348623157×10^308 -> max cca 4932 characters (considering max precision = 19)
         char buf [bufSize];
-        if (__fpOutput__ == fixed) {
-            #ifdef ARDUINO_ARCH_AVR
-                dtostrf (value, 1, __precision__, buf);
-            #else
-                snprintf (buf, bufSize, __doubleFormat__, value);
-            #endif
-            if (__showpoint__ && __fpOutput__ == fixed) {
-                __showPointPrintFloat__ (buf);
-                return *this;
-            }
-        } else {
-            #ifdef ARDUINO_ARCH_AVR
-                dtostrf (value, 0, 2, buf); // default AVR format
-            #else
-                sprintf (buf, "%f", value);                                    
-            #endif
+        switch (__fpOutput__) {
+            case defaultfloat:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    dtostrf (value, 0, 2, buf); // default AVR format
+                                #else
+                                    sprintf (buf, "%lf", value);                                    
+                                #endif
+                                #ifdef __LOCALE_HPP__
+                                    __localizeSeparators__ (buf);
+                                #endif
+                                Serial.print (buf);
+                                return *this;
+            case fixed:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    dtostrf (value, 1, __precision__, buf);
+                                #else
+                                    snprintf (buf, sizeof (buf), __doubleFormat__, value);
+                                #endif
+                                if (__showpoint__) {
+                                    __showPointPrintFloat__ (buf); // takes care of __LOCALE_HPP__ as well
+                                } else {
+                                    #ifdef __LOCALE_HPP__
+                                        __localizeSeparators__ (buf);
+                                    #endif
+                                    Serial.print (buf);
+                                }
+                                return *this;
+            case hexfloat:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    __printHexFloat__ (value);
+                                #else
+                                    sprintf (buf, "%a", value); 
+                                    // no localization for hexfloat
+                                    Serial.print (buf);
+                                #endif
+                                return *this;
         }
-        #ifdef __LOCALE_HPP__
-            __localizeSeparators__ (buf);
-        #endif
-        Serial.print (buf);
-
         return *this;
     }
  
@@ -349,31 +458,45 @@
     ostream& ostream::operator << <long double> (const long double& value) {
         const int bufSize = (sizeof (long double) == 4 /* only 4 bytes on AVR boards */) ? 61 : 331; // min: -1.7976931348623157×10^308 -> max 331 characters (considering max precision = 19)
         char buf [bufSize];
-        if (__fpOutput__ == fixed) {
-            #ifdef ARDUINO_ARCH_AVR
-                dtostrf (value, 1, __precision__, buf);
-            #else
-                snprintf (buf, bufSize, __longDoubleFormat__, value);
-            #endif
-            if (__showpoint__ && __fpOutput__ == fixed) {
-                __showPointPrintFloat__ (buf);
-                return *this;
-            }
-        } else {
-            #ifdef ARDUINO_ARCH_AVR
-                dtostrf (value, 0, 2, buf); // default AVR format
-            #else
-                sprintf (buf, "%f", value);                                    
-            #endif
+        switch (__fpOutput__) {
+            case defaultfloat:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    dtostrf (value, 0, 2, buf); // default AVR format
+                                #else
+                                    sprintf (buf, "%Lf", value);                                    
+                                #endif
+                                #ifdef __LOCALE_HPP__
+                                    __localizeSeparators__ (buf);
+                                #endif
+                                Serial.print (buf);
+                                return *this;
+            case fixed:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    dtostrf (value, 1, __precision__, buf);
+                                #else
+                                    snprintf (buf, sizeof (buf), __longDoubleFormat__, value);
+                                #endif
+                                if (__showpoint__) {
+                                    __showPointPrintFloat__ (buf); // takes care of __LOCALE_HPP__ as well
+                                } else {
+                                    #ifdef __LOCALE_HPP__
+                                        __localizeSeparators__ (buf);
+                                    #endif
+                                    Serial.print (buf);
+                                }
+                                return *this;
+            case hexfloat:
+                                #ifdef ARDUINO_ARCH_AVR
+                                    __printHexFloat__ (value);
+                                #else
+                                    sprintf (buf, "%La", value); 
+                                    // no localization for hexfloat
+                                    Serial.print (buf);
+                                #endif
+                                return *this;
         }
-        #ifdef __LOCALE_HPP__
-            __localizeSeparators__ (buf);
-        #endif
-        Serial.print (buf);
-
         return *this;
     }
-
 
     // explicit ostream class specialization for time_t and struct tm
     #ifndef ARDUINO_ARCH_AVR 
