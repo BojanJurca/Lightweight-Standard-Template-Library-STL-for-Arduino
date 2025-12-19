@@ -1,4 +1,4 @@
-# Lightweight C++ Standard Template Library (STL) for Arduino
+# Lightweight STL Arduino library
 A modular, exception-free implementation of selected C++ STL components - designed for microcontrollers with limited resources.
 
 ## Features
@@ -15,3 +15,4 @@ You can configure the library to use PSRAM (if available) for container storage,
 
 ## Compatibility
 Works across AVR, ESP32, and other Arduino-compatible platforms.
+
