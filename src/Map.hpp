@@ -42,12 +42,12 @@
 
         private: 
 
-            signed char __errorFlags__ = 0;
+            mutable signed char __errorFlags__ = 0;
 
 
         public:
 
-            signed char errorFlags () { return __errorFlags__ & 0b01111111; }
+            signed char errorFlags () const { return __errorFlags__ & 0b01111111; }
             void clearErrorFlags () { __errorFlags__ = 0; }
 
             struct Pair {
@@ -256,6 +256,7 @@
             *  Error handling can be somewhat tricky. It may be a good idea to use USE_MAP_EXCEPTIONS if using [] operator.
             */
 
+            // mp [key] = value version of [] operator
             valueType &operator [] (keyType key) {
                 static valueType dummyValue1 = {};
                 static valueType dummyValue2 = {};
@@ -292,6 +293,38 @@
                 // else there was some other kind of error
                 dummyValue1 = dummyValue2;
                 return dummyValue1;                         // operator must return a reference, so return the reference to dummy value (make a copy of the default value first)
+            }
+
+            // value = mp [key] version of [] operator (similar as above, but without inserting a key)
+            const valueType &operator [] (keyType key) const {
+                static valueType dummyValue1 = {};
+                static valueType dummyValue2 = {};
+
+                if (is_same<keyType, String>::value)      // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
+                    if (!*(String *) &key) {              // ... check if parameter construction is valid
+                        // log_e ("BAD_ALLOC");
+                        #ifdef USE_MAP_EXCEPTIONS
+                            throw err_bad_alloc;
+                        #endif
+                        __errorFlags__ |= err_bad_alloc;  // report error if it is not
+                        dummyValue1 = dummyValue2;
+                        return dummyValue1;               // operator must return a reference, so return the reference to dummy value (make a copy of the default value first)
+                    }
+
+                // find the right pair
+                __balancedBinarySearchTreeNode__ *p = __root__;
+                while (p != NULL) {
+                    if (key < p->pair.first) 
+                        p = p->leftSubtree;           // 1. case: continue searching in left subtree
+                    else if (p->pair.first < key) 
+                        p = p->rightSubtree;          // 2. case: continue searching in reight subtree
+                    else {
+                        return p->pair.second;        // 3. case: found, return the reference ot the value
+                    }
+                }
+                // else                               // 4. case: not found
+                dummyValue1 = dummyValue2;
+                return dummyValue1;                   // operator must return a reference, so return the reference to dummy value (make a copy of the default value first)
             }
 
 

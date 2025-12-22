@@ -96,11 +96,13 @@
                 return *this << static_cast<const char *> (value);
             }
 
+
             template<typename T>
             ostream& operator << (const T& value) {
                 Serial.print (value);            
                 return *this;
             }
+
 
         private:
 

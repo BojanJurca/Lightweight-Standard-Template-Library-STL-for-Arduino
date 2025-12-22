@@ -53,12 +53,12 @@
 
         private: 
 
-            signed char __errorFlags__ = 0;
+            mutable signed char __errorFlags__ = 0;
 
 
         public:
 
-            signed char errorFlags () { return __errorFlags__ & 0b01111111; }
+            signed char errorFlags () const { return __errorFlags__ & 0b01111111; }
             void clearErrorFlags () { __errorFlags__ = 0; }
 
 
@@ -70,24 +70,8 @@
             */
             
             vector () {}
-            /*
-            vector (const vector& other) {
-                signed char e = this->reserve (other.size ()); // prevent resizing __elements__ for each element beeing pushed back
-                if (e) { // != OK
-                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
-                        throw e;
-                    #endif                      
-                    return; 
-                }
 
-                // copy other's elements - storage will not get resized meanwhile
-                for (auto element: other)
-                    if (this->push_back (element)) // error
-                        break;
-            }
-            */
-
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+            #ifndef ARDUINO_ARCH_AVR
                    /*
                     *  Constructor of vector from brace enclosed initializer list allows the following kinds of creation of vectors: 
                     *  
@@ -126,13 +110,6 @@
                                 break;
                     }
 
-                /*
-                // helper function for easier initialization (AVR boards)
-                template <int N>
-                vector<vectorType> initializer_list (const vectorType (&array) [N]) {
-                    return vector<vectorType> (array);
-                }
-                */
             // #endif
 
 
@@ -142,7 +119,7 @@
             
             ~vector () { 
                 if (__elements__ != NULL) {
-                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    #ifndef ARDUINO_ARCH_AVR
                         for (int i = 0; i < __capacity__; i++)
                             __elements__ [i].~vectorType ();
                     #else
@@ -157,7 +134,7 @@
             * Returns the number of elements in the vector.
             */
 
-            int size () { return __size__; }
+            size_t size () { return __size__; }
 
 
            /*
@@ -229,6 +206,16 @@
             */
       
             vectorType &operator [] (int position) {
+                if (position < 0 || position >= __size__) {
+                    #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
+                        throw err_out_of_range;
+                    #endif                      
+                    __errorFlags__ |= err_out_of_range;                    
+                }
+                return __elements__ [(__front__ + position) % __capacity__];
+            }
+
+            const vectorType &operator [] (int position) const {
                 if (position < 0 || position >= __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
@@ -679,7 +666,7 @@
                 if (newCapacity == 0) {
                     // delete old buffer
                     if (__elements__ != NULL) {
-                        #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                        #ifndef ARDUINO_ARCH_AVR 
                             for (int i = 0; i < __capacity__; i++)
                                 __elements__ [i].~vectorType ();
                         #else
@@ -712,7 +699,7 @@
                 }
 
                 memset (newElements, 0, sizeof (vectorType) * newCapacity);
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR
                     new (newElements) vectorType [newCapacity]; 
                 #endif
 
@@ -735,7 +722,7 @@
 
                 // delete the old elements' buffer
                 if (__elements__ != NULL) {
-                    #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                    #ifndef ARDUINO_ARCH_AVR
                         for (int i = 0; i < __capacity__; i++)
                             __elements__ [i].~vectorType ();
                     #else
@@ -801,7 +788,7 @@
             
             vector () {}
 
-            #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+            #ifndef ARDUINO_ARCH_AVR
                    /*
                     *  Constructor of vector from brace enclosed initializer list allows the following kinds of creation of vectors: 
                     *  
@@ -856,13 +843,6 @@
                         }
                     }
 
-                /*
-                // helper function for easier initialization (AVR boards)
-                template <int N>
-                vector<String> initializer_list (const String (&array) [N]) {
-                    return vector<String> (array);
-                } 
-                */               
             // #endif
 
 
@@ -883,7 +863,7 @@
             * Returns the number of elements in the vector.
             */
 
-            int size () { return __size__; }
+            size_t size () { return __size__; }
 
 
            /*
@@ -1451,7 +1431,7 @@
                 }
 
                 memset (newElements, 0, sizeof (String) * newCapacity);
-                #ifndef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
+                #ifndef ARDUINO_ARCH_AVR
                     new (newElements) String [newCapacity];
                 #else
                     for (int i = 0; i < newCapacity; i++) newElements [i] = String (); // assign empty String
@@ -1500,16 +1480,5 @@
             }
 
     };
-
-
-    /*
-    #ifdef ARDUINO_ARCH_AVR // Assuming Arduino Mega or Uno
-        // Helper function to create aray from an initializer list
-        template<typename T, size_t N>
-        vector<T> initializer_list (const T (&arr) [N]) {
-            return vector<T> (arr);
-        }
-    #endif
-    */
 
 #endif

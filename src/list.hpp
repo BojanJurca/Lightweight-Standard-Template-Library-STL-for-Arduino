@@ -52,7 +52,7 @@
 
         public:
 
-            signed char errorFlags () { return __errorFlags__ & 0b01111111; }
+            signed char errorFlags () const { return __errorFlags__ & 0b01111111; }
             void clearErrorFlags () { __errorFlags__ = 0; }
 
 

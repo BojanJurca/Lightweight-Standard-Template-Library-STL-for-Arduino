@@ -38,7 +38,7 @@
 
         public:
 
-            signed char errorFlags () { return __errorFlags__ & 0b01111111; }
+            signed char errorFlags () const { return __errorFlags__ & 0b01111111; }
             void clearErrorFlags () { __errorFlags__ = 0; }
         
         
@@ -60,7 +60,18 @@
                 strncpy (this->__c_str__, other.__c_str__, N + 1);
                 this->__errorFlags__ = other.__errorFlags__;                  // inherit all errors from other Cstring
             }
-        
+
+            template<size_t M>
+            Cstring (const Cstring<M>& other) {
+                strncpy (this->__c_str__, other.c_str (), N + 1);
+                this->__errorFlags__ = other.errorFlags ();
+                if (this->__c_str__ [N]) {
+                    this->__errorFlags__ |= err_overflow;
+                    this->__c_str__ [N] = 0;
+                    this->__rTrimUnfinishedUtf8Character__ ();
+                }
+            }            
+                    
             Cstring (const char& other) {                      // for declarations with initialization, like Cstring<15> d ('c'); (convert char to Cstring)
                 #if N > 0
                     this->__c_str__ [0] = other;
@@ -236,8 +247,8 @@
 
             // char *() operator so that Cstring can be used the same way as C char arrays, like; Cstring<5> a = "123"; Serial.printf ("%s\n", a);
             inline operator char *() const __attribute__((always_inline)) { return (char *) __c_str__; }
-            inline operator const char *() const __attribute__((always_inline)) { return (const char *) __c_str__; }
-            
+            // inline operator const char *() const __attribute__((always_inline)) { return (const char *) __c_str__; }
+
 
             // = operator
             Cstring operator = (const char *other) {           // for assigning C char array to Cstring, like: a = "abc";
@@ -263,7 +274,7 @@
             }
 
             template<size_t M>
-            Cstring operator = (Cstring<M>& other) {    // for assigning other Cstring to Cstring of different size, like: a = b;
+            Cstring operator = (const Cstring<M>& other) {    // for assigning other Cstring to Cstring of different size, like: a = b;
                 strncpy (this->__c_str__, other.c_str (), N + 1);
                 this->__errorFlags__ = other.errorFlags ();                 // inherit all errors from original string
                 if (this->__c_str__ [N]) {
@@ -314,7 +325,7 @@
                 }
             #endif
 
-            Cstring operator = (int number) {                   // for assigning int to Cstring, like: a = 1234;
+            Cstring operator = (const int number) {                   // for assigning int to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%i", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -325,7 +336,7 @@
                 return *this;
             }
 
-            Cstring operator = (unsigned int number) {           // for assigning unsigned int to Cstring, like: a = 1234;
+            Cstring operator = (const unsigned int number) {           // for assigning unsigned int to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%u", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -336,7 +347,7 @@
                 return *this;
             }
 
-            Cstring operator = (long number) {                   // for assigning long to Cstring, like: a = 1234;
+            Cstring operator = (const long number) {                   // for assigning long to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%ld", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -347,7 +358,7 @@
                 return *this;
             }
 
-            Cstring operator = (unsigned long number) {          // for assigning unsigned long to Cstring, like: a = 1234;
+            Cstring operator = (const unsigned long number) {          // for assigning unsigned long to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%lu", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -360,7 +371,7 @@
 
             // this doesn't work on AVR boards
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator = (long long number) {              // for assigning long to Cstring, like: a = 1234;
+                Cstring operator = (const long long number) {              // for assigning long to Cstring, like: a = 1234;
                     snprintf (this->__c_str__, N + 2, "%lld", number);
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -371,7 +382,7 @@
                     return *this;
                 }
 
-                Cstring operator = (unsigned long long number) {     // for assigning unsigned long to Cstring, like: a = 1234;
+                Cstring operator = (const unsigned long long number) {     // for assigning unsigned long to Cstring, like: a = 1234;
                     snprintf (this->__c_str__, N + 2, "%lu", number);
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -383,7 +394,7 @@
                 }
             #endif
 
-            Cstring operator = (float number) {                  // for assigning float to Cstring, like: a = 1234.5;
+            Cstring operator = (const float number) {                  // for assigning float to Cstring, like: a = 1234.5;
                 #ifdef ARDUINO_ARCH_AVR
                     dtostrf (number, -(N + 1), 2, this->__c_str__);
                 #else
@@ -407,7 +418,7 @@
                 return *this;
             }
 
-            Cstring operator = (double number) {                 // for assigning double to Cstring, like: a = 1234.5;
+            Cstring operator = (const double number) {                 // for assigning double to Cstring, like: a = 1234.5;
                 #ifdef ARDUINO_ARCH_AVR
                     dtostrf (number, -(N + 1), 2, this->__c_str__);
                 #else
@@ -431,7 +442,7 @@
                 return *this;
             }
 
-            Cstring operator = (long double number) {            // for assigning double to Cstring, like: a = 1234.5;
+            Cstring operator = (const long double number) {            // for assigning double to Cstring, like: a = 1234.5;
                 #ifdef ARDUINO_ARCH_AVR
                     dtostrf (number, -(N + 1), 2, this->__c_str__);
                 #else
@@ -456,7 +467,7 @@
             }
 
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator = (struct tm st) {                       // for assigning struct tm to Cstring, like: a = st;
+                Cstring operator = (const struct tm st) {                       // for assigning struct tm to Cstring, like: a = st;
                     char buf [80];
                     #ifdef __LOCALE_HPP__
                         strftime (buf, sizeof (buf), lc_time_locale->getTimeFormat (), &st);
@@ -482,7 +493,7 @@
 
 
             // += operator
-            Cstring operator += (const char *other) {          // concatenate C string to Cstring, like: a += "abc";
+            Cstring& operator += (const char *other) {          // concatenate C string to Cstring, like: a += "abc";
                 if (other && !(__errorFlags__ & err_overflow)) {              // check if NULL char * pointer to overcome from possible programmer's errors and that overwlow flag has not been set yet
                     strncat (this->__c_str__, other, N + 1 - strlen (this->__c_str__));
                     if (this->__c_str__ [N]) {
@@ -494,7 +505,7 @@
                 return *this;
             }
 
-            Cstring operator += (const Cstring& other) {      // concatenate one Cstring to anoterh, like: a += b;
+            Cstring& operator += (const Cstring& other) {      // concatenate one Cstring to anoterh, like: a += b;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     strncat (this->__c_str__, other.__c_str__, N + 1 - strlen (this->__c_str__));
                     this->__errorFlags__ |= other.__errorFlags__;             // add all errors from other string
@@ -508,7 +519,7 @@
             }
 
             template<size_t M>
-            Cstring operator += (Cstring<M>& other) {      // concatenate one Cstring to another of different size, like: a += b;
+            Cstring& operator += (const Cstring<M>& other) {      // concatenate one Cstring to another of different size, like: a += b;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     strncat (this->__c_str__, other.c_str (), N + 1 - strlen (this->__c_str__));
                     this->__errorFlags__ |= other.errorFlags ();              // add all errors from other string
@@ -521,7 +532,7 @@
                 return *this;
             }
 
-            Cstring operator += (const char& other) {          // concatenate a charactr to Cstring, like: a += 'b';
+            Cstring& operator += (const char& other) {          // concatenate a charactr to Cstring, like: a += 'b';
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
                     if (l < N) { 
@@ -535,7 +546,7 @@
             }
 
             #ifdef __LOCALE_HPP__ tole še ni
-                 Cstring operator += (const utf8char& other) { // concatenate a charactr to Cstring, like d += utf8char ("🌎");
+                 Cstring& operator += (const utf8char& other) { // concatenate a charactr to Cstring, like d += utf8char ("🌎");
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
                         if ((other.c_str [l] & 0x80) == 0 && N > l) {             // 0xxxxxxx = 1 byte character
@@ -564,7 +575,7 @@
                 }
             #endif
 
-            Cstring operator += (int number) {                 // concatenate an int to Cstring, like: a += 12;
+            Cstring& operator += (const int number) {                 // concatenate an int to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
                     snprintf (this->__c_str__ + l, N + 2 - l, "%i", number);
@@ -576,7 +587,7 @@
                 return *this;
             }
 
-            Cstring operator += (unsigned int number) {        // concatenate an int to Cstring, like: a += 12;
+            Cstring& operator += (const unsigned int number) {        // concatenate an int to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
                     snprintf (this->__c_str__ + l, N + 2 - l, "%u", number);
@@ -588,7 +599,7 @@
                 return *this;
             }   
 
-            Cstring operator += (long number) {                // concatenate a long to Cstring, like: a += 12;
+            Cstring operator += (const long number) {                // concatenate a long to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
                     snprintf (this->__c_str__ + l, N + 2 - l, "%ld", number);
@@ -600,7 +611,7 @@
                 return *this;
             }   
 
-            Cstring operator += (unsigned long number) {        // concatenate an unsigned long to Cstring, like: a += 12;
+            Cstring operator += (const unsigned long number) {        // concatenate an unsigned long to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
                     snprintf (this->__c_str__ + l, N + 2 - l, "%lu", number);
@@ -614,7 +625,7 @@
 
             // this doesn't work on AVR boards
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator += (long long number) {           // concatenate a long to Cstring, like: a += 12;
+                Cstring operator += (const long long number) {           // concatenate a long to Cstring, like: a += 12;
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
                         snprintf (this->__c_str__ + l, N + 2 - l, "%lld", number);
@@ -626,7 +637,7 @@
                     return *this;
                 }   
 
-                Cstring operator += (unsigned long long number) {   // concatenate an unsigned long to Cstring, like: a += 12;
+                Cstring operator += (const unsigned long long number) {   // concatenate an unsigned long to Cstring, like: a += 12;
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
                         snprintf (this->__c_str__ + l, N + 2 - l, "%llu", number);
@@ -639,7 +650,7 @@
                 }   
             #endif
 
-            Cstring operator += (float number) {                // concatenate a flaot to Cstring, like: a += 12;
+            Cstring operator += (const float number) {                // concatenate a flaot to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
 
@@ -665,7 +676,7 @@
                 return *this;
             }   
 
-            Cstring operator += (double number) {                // concatenate a double to Cstring, like: a += 12;
+            Cstring operator += (const double number) {                // concatenate a double to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
 
@@ -692,7 +703,7 @@
             }   
 
 
-            Cstring operator += (long double number) {           // concatenate a double to Cstring, like: a += 12;
+            Cstring operator += (const long double number) {           // concatenate a double to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
 
@@ -719,7 +730,7 @@
             }   
 
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator += (struct tm st) {                    // concatenate a struct tm to Cstring, like: a += st;
+                Cstring operator += (const struct tm st) {                    // concatenate a struct tm to Cstring, like: a += st;
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
                         char buf [80];
@@ -742,26 +753,26 @@
 
 
             // + operator
-            Cstring operator + (const char *other) {             // for adding C string to Cstring, like: a + "abc";
+            Cstring operator + (const char *other) const {             // for adding C string to Cstring, like: a + "abc";
                 Cstring<N> tmp = *this; // copy of this, including error information
                 tmp += other;
                 return tmp;
             }
         
-            Cstring operator + (const Cstring& other) {       // for concatenating one Cstring with anoterh, like: a + b;
+            Cstring operator + (const Cstring& other) const {       // for concatenating one Cstring with anoterh, like: a + b;
                 Cstring<N> tmp = *this; // copy of this, including error information
                 tmp += other;
                 return tmp;
             }
 
             template<size_t M>
-            Cstring operator + (Cstring<M>& other) {          // concatenate one Cstring to another of different size, like: a + b;
+            Cstring operator + (const Cstring<M>& other) const {          // concatenate one Cstring to another of different size, like: a + b;
                 Cstring<N> tmp = *this; // copy of this, including error information
                 tmp += other;
                 return tmp;
             }
 
-            Cstring operator + (const char& other) {           // for adding a character to Cstring, like: a + 'b';
+            Cstring operator + (const char& other) const {           // for adding a character to Cstring, like: a + 'b';
                 Cstring<N> tmp = *this; // copy of this, including error information
                 tmp += other;
                 return tmp;
@@ -772,69 +783,79 @@
         
             // logical operators: ==, !=, <, <=, >, >=, ignore all possible errors
 
-            inline bool operator == (const char *other) __attribute__((always_inline))        { return !strcmp (this->__c_str__, other); }              // Cstring : C string   
-            inline bool operator == (char *other) __attribute__((always_inline))              { return !strcmp (this->__c_str__, other); }              // Cstring : C string   
-            inline bool operator == (const Cstring& other) __attribute__((always_inline))     { return !strcmp (this->__c_str__, other.__c_str__); }    // Cstring : Cstring
-            inline bool operator == (Cstring& other) __attribute__((always_inline))           { return !strcmp (this->__c_str__, other.__c_str__); }    // Cstring : Cstring
+            inline bool operator == (const char *other) const __attribute__((always_inline))        { return !strcmp (this->__c_str__, other); }              // Cstring : C string   
+            inline bool operator == (const Cstring& other) const __attribute__((always_inline))     { return !strcmp (this->__c_str__, other.__c_str__); }    // Cstring : Cstring
+            template<size_t M>
+            inline __attribute__((always_inline))
+            bool operator == (const Cstring<M>& other) const { return !strcmp (this->__c_str__, other.c_str ()); }    // Cstring : Cstring
 
-            inline bool operator != (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other); }               // Cstring : C string
-            inline bool operator != (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other); }               // Cstring : C string
-            inline bool operator != (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
-            inline bool operator != (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
+            inline bool operator != (const char *other) const __attribute__((always_inline))        { return strcmp (this->__c_str__, other); }               // Cstring : C string
+            inline bool operator != (const Cstring& other) const __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__); }     // Cstring : Cstring
+            template<size_t M>
+            inline __attribute__((always_inline))
+            bool operator != (const Cstring<M>& other) const { return strcmp (this->__c_str__, other.c_str ()); }    // Cstring : Cstring
 
             #ifndef __LOCALE_HPP__
-                inline bool operator <  (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other) < 0; }           // Cstring : C string
-                inline bool operator <  (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other) < 0; }           // Cstring : C string
-                inline bool operator <  (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
-                inline bool operator <  (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
+                inline bool operator <  (const char *other) const __attribute__((always_inline))        { return strcmp (this->__c_str__, other) < 0; }           // Cstring : C string
+                inline bool operator <  (const Cstring& other) const __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator < (const Cstring<M>& other) const { return strcmp (this->__c_str__, other.c_str ()) < 0; }    // Cstring : Cstring
 
-                inline bool operator <= (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other) <= 0; }          // Cstring : C string
-                inline bool operator <= (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other) <= 0; }          // Cstring : C string
-                inline bool operator <= (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
-                inline bool operator <= (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
+                inline bool operator <= (const char *other) const __attribute__((always_inline))        { return strcmp (this->__c_str__, other) <= 0; }          // Cstring : C string
+                inline bool operator <= (const Cstring& other) const __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator <= (const Cstring<M>& other) const { return strcmp (this->__c_str__, other.c_str ()) <= 0; }    // Cstring : Cstring
 
-                inline bool operator >  (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other) > 0; }           // Cstring : C string    
-                inline bool operator >  (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other) > 0; }           // Cstring : C string    
-                inline bool operator >  (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
-                inline bool operator >  (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
+                inline bool operator >  (const char *other) const __attribute__((always_inline))        { return strcmp (this->__c_str__, other) > 0; }           // Cstring : C string    
+                inline bool operator >  (const Cstring& other) const __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator > (const Cstring<M>& other) const { return strcmp (this->__c_str__, other.c_str ()) > 0; }    // Cstring : Cstring
 
-                inline bool operator >= (const char *other) __attribute__((always_inline))        { return strcmp (this->__c_str__, other) >= 0; }          // Cstring : C string    
-                inline bool operator >= (char *other) __attribute__((always_inline))              { return strcmp (this->__c_str__, other) >= 0; }          // Cstring : C string    
-                inline bool operator >= (const Cstring& other) __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
-                inline bool operator >= (Cstring& other) __attribute__((always_inline))           { return strcmp (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
+                inline bool operator >= (const char *other) const __attribute__((always_inline))        { return strcmp (this->__c_str__, other) >= 0; }          // Cstring : C string    
+                inline bool operator >= (const Cstring& other) const __attribute__((always_inline))     { return strcmp (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator >= (const Cstring<M>& other) const { return strcmp (this->__c_str__, other.c_str ()) >= 0; }    // Cstring : Cstring
+
             #else
-                inline bool operator <  (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) < 0; }           // Cstring : C string
-                inline bool operator <  (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) < 0; }           // Cstring : C string
-                inline bool operator <  (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
-                inline bool operator <  (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
+                inline bool operator <  (const char *other) const __attribute__((always_inline))        { return strcoll (this->__c_str__, other) < 0; }           // Cstring : C string
+                inline bool operator <  (const Cstring& other) const __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) < 0; } // Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator < (const Cstring<M>& other) const { return strcoll (this->__c_str__, other.c_str ()) < 0; }    // Cstring : Cstring
 
-                inline bool operator <= (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) <= 0; }          // Cstring : C string
-                inline bool operator <= (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) <= 0; }          // Cstring : C string
-                inline bool operator <= (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
-                inline bool operator <= (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
+                inline bool operator <= (const char *other) const __attribute__((always_inline))        { return strcoll (this->__c_str__, other) <= 0; }          // Cstring : C string
+                inline bool operator <= (const Cstring& other) const __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) <= 0; }// Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator <= (const Cstring<M>& other) const { return strcoll (this->__c_str__, other.c_str ()) <= 0; }    // Cstring : Cstring
 
-                inline bool operator >  (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) > 0; }           // Cstring : C string    
-                inline bool operator >  (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) > 0; }           // Cstring : C string    
-                inline bool operator >  (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
-                inline bool operator >  (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
+                inline bool operator >  (const char *other) const __attribute__((always_inline))        { return strcoll (this->__c_str__, other) > 0; }           // Cstring : C string    
+                inline bool operator >  (const Cstring& other) const __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) > 0; } // Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator > (const Cstring<M>& other) const { return strcoll (this->__c_str__, other.c_str ()) > 0; }    // Cstring : Cstring
 
-                inline bool operator >= (const char *other) __attribute__((always_inline))        { return strcoll (this->__c_str__, other) >= 0; }          // Cstring : C string    
-                inline bool operator >= (char *other) __attribute__((always_inline))              { return strcoll (this->__c_str__, other) >= 0; }          // Cstring : C string    
-                inline bool operator >= (const Cstring& other) __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
-                inline bool operator >= (Cstring& other) __attribute__((always_inline))           { return strcoll (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
+                inline bool operator >= (const char *other) const __attribute__((always_inline))        { return strcoll (this->__c_str__, other) >= 0; }          // Cstring : C string    
+                inline bool operator >= (const Cstring& other) const __attribute__((always_inline))     { return strcoll (this->__c_str__, other.__c_str__) >= 0; }// Cstring : Cstring
+                template<size_t M>
+                inline __attribute__((always_inline))
+                bool operator >= (const Cstring<M>& other) const { return strcoll (this->__c_str__, other.c_str ()) >= 0; }    // Cstring : Cstring
+
             #endif
 
 
             // [] operator
-            inline char &operator [] (size_t i) __attribute__((always_inline)) { return __c_str__ [i]; }
-            inline char &operator [] (int i) __attribute__((always_inline)) { return __c_str__ [i]; }
-            // inline char &operator [] (unsigned int i) __attribute__((always_inline)) { return __c_str__ [i]; }
-            inline char &operator [] (long i) __attribute__((always_inline)) { return __c_str__ [i]; }
-            inline char &operator [] (unsigned long i) __attribute__((always_inline)) { return __c_str__ [i]; }
+            // inline char &operator [] (size_t i) __attribute__((always_inline)) { return __c_str__ [i]; }
+            // inline const char &operator [] (size_t i) const __attribute__((always_inline)) { return __c_str__ [i]; }
 
 
             // some std::string-like member functions
-            inline const char *c_str () __attribute__((always_inline)) { return (const char *) __c_str__; } 
+            inline char *c_str () __attribute__((always_inline)) { return __c_str__; } 
+            inline const char *c_str () const __attribute__((always_inline)) { return (const char *) __c_str__; } 
         
             inline size_t length () __attribute__((always_inline)) { return strlen (__c_str__); } 
 
