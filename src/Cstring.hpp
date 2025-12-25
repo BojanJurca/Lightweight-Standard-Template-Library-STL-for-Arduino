@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  Nov 26, 2025 Bojan Jurca
+ *  Dec 25, 2025 Bojan Jurca
  *  
  */
 
@@ -278,7 +278,7 @@
                 strncpy (this->__c_str__, other.c_str (), N + 1);
                 this->__errorFlags__ = other.errorFlags ();                 // inherit all errors from original string
                 if (this->__c_str__ [N]) {
-                    this->__errorFlags__ = err_overflow;                    // err_overflow
+                    this->__errorFlags__ |= err_overflow;                    // err_overflow
                     this->__c_str__ [N] = 0;                                // mark the end of the string regardles OVERFLOW
                     this->__rTrimUnfinishedUtf8Character__ ();
                 }
