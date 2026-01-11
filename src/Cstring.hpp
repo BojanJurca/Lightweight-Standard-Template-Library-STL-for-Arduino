@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  Dec 25, 2025 Bojan Jurca
+ *  January 1, 2026 Bojan Jurca
  *  
  */
 
@@ -73,17 +73,17 @@
             }            
                     
             Cstring (const char& other) {                      // for declarations with initialization, like Cstring<15> d ('c'); (convert char to Cstring)
-                #if N > 0
+                if constexpr (N >= 1) {
                     this->__c_str__ [0] = other;
                     this->__c_str__ [1] = 0;
                     if (this->__c_str__ [N]) {
                         __errorFlags__ = err_overflow;                            // err_overflow
                         this->__c_str__ [N] = 0;                                  // mark the end of the string regardles OVERFLOW
                     }
-                #else
+                } else{
                     this->__c_str__ [0] = 0;
                     __errorFlags__ = err_overflow;                                // err_overflow
-                #endif
+                }
             }
 
             #ifdef __LOCALE_HPP__
@@ -251,7 +251,7 @@
 
 
             // = operator
-            Cstring operator = (const char *other) {           // for assigning C char array to Cstring, like: a = "abc";
+            Cstring& operator = (const char *other) {           // for assigning C char array to Cstring, like: a = "abc";
                 if (other) {                                                // check if NULL char * pointer to overcome from possible programmers' errors
                     this->__errorFlags__ = 0;                               // clear error flags
                     strncpy (this->__c_str__, other, N + 1);
@@ -264,7 +264,7 @@
                 return *this;
             }
     
-            Cstring operator = (const Cstring& other) {       // for assigning other Cstring to Cstring, like: a = b;
+            Cstring& operator = (const Cstring& other) {       // for assigning other Cstring to Cstring, like: a = b;
                 if (this != &other) {
                     this->__errorFlags__ = 0;                               // clear error flags
                     strncpy (this->__c_str__, other.__c_str__, N + 1);
@@ -274,7 +274,7 @@
             }
 
             template<size_t M>
-            Cstring operator = (const Cstring<M>& other) {    // for assigning other Cstring to Cstring of different size, like: a = b;
+            Cstring& operator = (const Cstring<M>& other) {    // for assigning other Cstring to Cstring of different size, like: a = b;
                 strncpy (this->__c_str__, other.c_str (), N + 1);
                 this->__errorFlags__ = other.errorFlags ();                 // inherit all errors from original string
                 if (this->__c_str__ [N]) {
@@ -285,20 +285,20 @@
                 return *this;
             }
 
-            Cstring operator = (const char& other) {           // for assigning character to Cstring, like: a = 'b';
+            Cstring& operator = (const char other) {           // for assigning character to Cstring, like: a = 'b';
                 this->__errorFlags__ = 0;                                   // clear error flags
-                #if N > 0
+                if constexpr (N >= 1) {
                     this->__c_str__ [0] = other; 
                     this->__c_str__ [1] = 0;                                // mark the end of the string
-                #else
+                } else {
                     this->__c_str__ [0] = 0; 
                     this->__errorFlags__ = err_overflow;                    // err_overflow
-                #endif
+                }
                 return *this;
             }
 
             #ifdef __LOCALE_HPP__
-                 Cstring operator = (const utf8char& other) {  // for assigning character to Cstring, like Cstring<15> d  = utf8char ("🌎"));
+                 Cstring& operator = (const utf8char& other) {  // for assigning character to Cstring, like Cstring<15> d  = utf8char ("🌎"));
                     if ((other.c_str [0] & 0x80) == 0 && N > 0) {             // 0xxxxxxx = 1 byte character
                         this->__c_str__ [0] = other.c_str [0];          
                         this->__c_str__ [1] = 0;
@@ -325,7 +325,7 @@
                 }
             #endif
 
-            Cstring operator = (const int number) {                   // for assigning int to Cstring, like: a = 1234;
+            Cstring& operator = (const int number) {                   // for assigning int to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%i", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -336,7 +336,7 @@
                 return *this;
             }
 
-            Cstring operator = (const unsigned int number) {           // for assigning unsigned int to Cstring, like: a = 1234;
+            Cstring& operator = (const unsigned int number) {           // for assigning unsigned int to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%u", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -347,7 +347,7 @@
                 return *this;
             }
 
-            Cstring operator = (const long number) {                   // for assigning long to Cstring, like: a = 1234;
+            Cstring& operator = (const long number) {                   // for assigning long to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%ld", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -358,7 +358,7 @@
                 return *this;
             }
 
-            Cstring operator = (const unsigned long number) {          // for assigning unsigned long to Cstring, like: a = 1234;
+            Cstring& operator = (const unsigned long number) {          // for assigning unsigned long to Cstring, like: a = 1234;
                 snprintf (this->__c_str__, N + 2, "%lu", number);
                 if (this->__c_str__ [N]) {
                     this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -371,7 +371,7 @@
 
             // this doesn't work on AVR boards
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator = (const long long number) {              // for assigning long to Cstring, like: a = 1234;
+                Cstring& operator = (const long long number) {              // for assigning long to Cstring, like: a = 1234;
                     snprintf (this->__c_str__, N + 2, "%lld", number);
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -382,7 +382,7 @@
                     return *this;
                 }
 
-                Cstring operator = (const unsigned long long number) {     // for assigning unsigned long to Cstring, like: a = 1234;
+                Cstring& operator = (const unsigned long long number) {     // for assigning unsigned long to Cstring, like: a = 1234;
                     snprintf (this->__c_str__, N + 2, "%lu", number);
                     if (this->__c_str__ [N]) {
                         this->__errorFlags__ = err_overflow;                      // err_overflow
@@ -394,7 +394,7 @@
                 }
             #endif
 
-            Cstring operator = (const float number) {                  // for assigning float to Cstring, like: a = 1234.5;
+            Cstring& operator = (const float number) {                  // for assigning float to Cstring, like: a = 1234.5;
                 #ifdef ARDUINO_ARCH_AVR
                     dtostrf (number, -(N + 1), 2, this->__c_str__);
                 #else
@@ -418,7 +418,7 @@
                 return *this;
             }
 
-            Cstring operator = (const double number) {                 // for assigning double to Cstring, like: a = 1234.5;
+            Cstring& operator = (const double number) {                 // for assigning double to Cstring, like: a = 1234.5;
                 #ifdef ARDUINO_ARCH_AVR
                     dtostrf (number, -(N + 1), 2, this->__c_str__);
                 #else
@@ -442,7 +442,7 @@
                 return *this;
             }
 
-            Cstring operator = (const long double number) {            // for assigning double to Cstring, like: a = 1234.5;
+            Cstring& operator = (const long double number) {            // for assigning double to Cstring, like: a = 1234.5;
                 #ifdef ARDUINO_ARCH_AVR
                     dtostrf (number, -(N + 1), 2, this->__c_str__);
                 #else
@@ -467,7 +467,7 @@
             }
 
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator = (const struct tm st) {                       // for assigning struct tm to Cstring, like: a = st;
+                Cstring& operator = (const struct tm st) {                       // for assigning struct tm to Cstring, like: a = st;
                     char buf [80];
                     #ifdef __LOCALE_HPP__
                         strftime (buf, sizeof (buf), lc_time_locale->getTimeFormat (), &st);
@@ -599,7 +599,7 @@
                 return *this;
             }   
 
-            Cstring operator += (const long number) {                // concatenate a long to Cstring, like: a += 12;
+            Cstring& operator += (const long number) {                // concatenate a long to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
                     snprintf (this->__c_str__ + l, N + 2 - l, "%ld", number);
@@ -611,7 +611,7 @@
                 return *this;
             }   
 
-            Cstring operator += (const unsigned long number) {        // concatenate an unsigned long to Cstring, like: a += 12;
+            Cstring& operator += (const unsigned long number) {        // concatenate an unsigned long to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
                     snprintf (this->__c_str__ + l, N + 2 - l, "%lu", number);
@@ -625,7 +625,7 @@
 
             // this doesn't work on AVR boards
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator += (const long long number) {           // concatenate a long to Cstring, like: a += 12;
+                Cstring& operator += (const long long number) {           // concatenate a long to Cstring, like: a += 12;
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
                         snprintf (this->__c_str__ + l, N + 2 - l, "%lld", number);
@@ -637,7 +637,7 @@
                     return *this;
                 }   
 
-                Cstring operator += (const unsigned long long number) {   // concatenate an unsigned long to Cstring, like: a += 12;
+                Cstring& operator += (const unsigned long long number) {   // concatenate an unsigned long to Cstring, like: a += 12;
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
                         snprintf (this->__c_str__ + l, N + 2 - l, "%llu", number);
@@ -650,7 +650,7 @@
                 }   
             #endif
 
-            Cstring operator += (const float number) {                // concatenate a flaot to Cstring, like: a += 12;
+            Cstring& operator += (const float number) {                // concatenate a flaot to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
 
@@ -676,7 +676,7 @@
                 return *this;
             }   
 
-            Cstring operator += (const double number) {                // concatenate a double to Cstring, like: a += 12;
+            Cstring& operator += (const double number) {                // concatenate a double to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
 
@@ -703,7 +703,7 @@
             }   
 
 
-            Cstring operator += (const long double number) {           // concatenate a double to Cstring, like: a += 12;
+            Cstring& operator += (const long double number) {           // concatenate a double to Cstring, like: a += 12;
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     size_t l = strlen (this->__c_str__);
 
@@ -730,7 +730,7 @@
             }   
 
             #ifndef ARDUINO_ARCH_AVR
-                Cstring operator += (const struct tm st) {                    // concatenate a struct tm to Cstring, like: a += st;
+                Cstring& operator += (const struct tm st) {                    // concatenate a struct tm to Cstring, like: a += st;
                     if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                         size_t l = strlen (this->__c_str__);
                         char buf [80];
