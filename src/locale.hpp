@@ -127,7 +127,7 @@
     };
 
     // Create a working instance
-    locale default_locale;
+    inline locale default_locale;
 
     // ----- Locale en_150.UTF-8  -----
     class en_150_UTF_8_locale : public locale {

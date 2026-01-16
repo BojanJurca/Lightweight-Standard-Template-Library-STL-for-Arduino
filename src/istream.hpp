@@ -222,6 +222,6 @@
     };
 
     // Create a working instnces
-    istream cin;
+    inline istream cin;
 
 #endif

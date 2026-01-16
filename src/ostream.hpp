@@ -546,6 +546,6 @@
     #endif
 
     // Create a working instances
-    ostream cout;
+    inline ostream cout;
 
 #endif
