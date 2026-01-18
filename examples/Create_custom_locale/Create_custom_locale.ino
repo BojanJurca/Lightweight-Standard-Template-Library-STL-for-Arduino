@@ -26,7 +26,7 @@
 class sl_SI_UTF_8_locale : public locale { 
     public:
         // 2️⃣ override locale name
-        const char* name () const override { return "sl_SI.UTF-8"; } 
+        inline const char* name () const override { return "sl_SI.UTF-8"; } 
 
         // 3️⃣ override strcoll function that lc_collate would use with your own
         int charorder (const utf8char& u8c) {
@@ -48,7 +48,7 @@ class sl_SI_UTF_8_locale : public locale {
             return 3 * *u8c.c_str; // unhandeled UTF-8 character
         }
 
-        int strcoll (const char *s1, const char *s2) {
+        inline int strcoll (const char *s1, const char *s2) {
             utf8_iterator it1 (s1); // 4️⃣ use utf8_iterators to iterate through strings of characters
             utf8_iterator end1 = utf8_iterator (s1 + strlen (s1));
             utf8_iterator it2 (s2);
@@ -67,7 +67,7 @@ class sl_SI_UTF_8_locale : public locale {
         }
 
         // 5️⃣ override toupper and tolower functions that lc_ctype would use with your own
-        bool toupper (char* ps) {
+        inline bool toupper (char* ps) {
             utf8_iterator end = utf8_iterator (ps + strlen (ps));
             for (utf8_iterator it (ps) /* begin */; it < end; ++it) { // 6️⃣ use utf8_iterator to iterate through string of characters
 
@@ -92,7 +92,7 @@ class sl_SI_UTF_8_locale : public locale {
             return true;
         }
 
-        bool tolower (char* ps) {
+        inline bool tolower (char* ps) {
             utf8_iterator end = utf8_iterator (ps + strlen (ps));
             for (utf8_iterator it (ps) /* begin */; it < end; ++it) {
 
@@ -118,11 +118,11 @@ class sl_SI_UTF_8_locale : public locale {
         }
 
         // 7️⃣ override getDecimalSeparator and getThousandsSeparator functions that lc_numeric would use with your own
-        char getDecimalSeparator () const override { return ','; }
-        char getThousandsSeparator () const override { return '.'; }
+        inline char getDecimalSeparator () const override { return ','; }
+        inline char getThousandsSeparator () const override { return '.'; }
 
         // 8️⃣ override getTimeFormat function that lc_time would use with your own
-        const char* getTimeFormat () const override { return "%d.%m.%Y %H:%M:%S"; }
+        inline const char* getTimeFormat () const override { return "%d.%m.%Y %H:%M:%S"; }
 };
 // 9️⃣ Create a working instance of your class and insert it into supported locale list
 bool __sl_SI_UTF_8_locale__ = addlocale (new sl_SI_UTF_8_locale);
