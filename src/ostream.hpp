@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  Oct 23, 2025, Bojan Jurca
+ *  January 1, 2026, Bojan Jurca
  *
  */
 
@@ -20,7 +20,7 @@
         #define __CINIT__
 
         #ifdef ARDUINO_ARCH_AVR 
-            void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
+            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -28,7 +28,7 @@
                 delay (waitAfterSerial);
             }
         #else
-            void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
+            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -86,19 +86,19 @@
 
         public:
 
-            ostream& operator << (const char* value) {
+            inline ostream& operator << (const char* value) {
                 Serial.print (value);
                 return *this;
             }
 
             template<size_t N>
-            ostream& operator << (const char (&value) [N]) {
+            inline ostream& operator << (const char (&value) [N]) {
                 return *this << static_cast<const char *> (value);
             }
 
 
             template<typename T>
-            ostream& operator << (const T& value) {
+            inline ostream& operator << (const T& value) {
                 Serial.print (value);            
                 return *this;
             }
@@ -106,7 +106,7 @@
 
         private:
 
-            void __showPointPrintInt__ (char *buf, int len) {
+            inline void __showPointPrintInt__ (char *buf, int len) {
                 int m = (len + 2) % 3;
                 for (int i = 0; i < len; ++i) {
                     Serial.print (buf [i]);
@@ -121,7 +121,7 @@
                 }
             }
 
-            void __showPointPrintFloat__ (char *buf) {
+            inline void __showPointPrintFloat__ (char *buf) {
                 for (int i = 0;; i++) {
                     switch (buf [i]) {
                         case '.':   // decimal separator reached
@@ -141,7 +141,7 @@
             }
 
             #ifdef __LOCALE_HPP__
-                void __localizeSeparators__ (char *buf) {
+                inline void __localizeSeparators__ (char *buf) {
                     for (int i = 0; buf [i]; i++) {
                         switch (buf [i]) {
                             case '.':   // decimal separator
@@ -156,7 +156,7 @@
             #endif
 
             #ifdef ARDUINO_ARCH_AVR
-                void __printHexFloat__(float value) {
+                inline void __printHexFloat__(float value) {
                     union { float f; uint32_t u; } data;
                     data.f = value;
                     uint32_t bits = data.u;
@@ -238,7 +238,7 @@
     // explicit ostream class specializations for manipulators
 
     template<>
-    ostream& ostream::operator << <ostreamManipulator> (const enum ostreamManipulator& manipulator) {
+    inline ostream& ostream::operator << <ostreamManipulator> (const enum ostreamManipulator& manipulator) {
         switch (manipulator) {
             case showpoint:
                                 __showpoint__ = true;
@@ -266,7 +266,7 @@
     // explicit ostream class specializations for integer data types
 
     template<>
-    ostream& ostream::operator << <int16_t> (const int16_t& value) {
+    inline ostream& ostream::operator << <int16_t> (const int16_t& value) {
         if (__showpoint__) {
             char buf [7]; // max: -32768, min: 32767
             __showPointPrintInt__ (buf, sprintf (buf, "%i", value));
@@ -277,7 +277,7 @@
     }
 
     template<>
-    ostream& ostream::operator << <uint16_t> (const uint16_t& value) {
+    inline ostream& ostream::operator << <uint16_t> (const uint16_t& value) {
         if (__showpoint__) {
             char buf [6]; // max: 65535
             __showPointPrintInt__ (buf, sprintf (buf, "%u", value));
@@ -288,7 +288,7 @@
     }
 
     template<>
-    ostream& ostream::operator << <int32_t> (const int32_t& value) {
+    inline ostream& ostream::operator << <int32_t> (const int32_t& value) {
         if (__showpoint__) {
             char buf [12]; // min: -2147483648, max: 2147483647
             __showPointPrintInt__ (buf, sprintf (buf, "%li", value));
@@ -299,7 +299,7 @@
     }
 
     template<>
-    ostream& ostream::operator << <uint32_t> (const uint32_t& value) {
+    inline ostream& ostream::operator << <uint32_t> (const uint32_t& value) {
         if (__showpoint__) {
             char buf [11]; // max: 4294967295
             __showPointPrintInt__ (buf, sprintf (buf, "%lu", value));
@@ -311,7 +311,7 @@
 
     #ifdef ARDUINO_ARCH_AVR
         template<>
-        ostream& ostream::operator << <uint64_t> (const uint64_t& value) {
+        inline ostream& ostream::operator << <uint64_t> (const uint64_t& value) {
             if (value == 0) {
                 Serial.print ('0');
                 return *this;
@@ -334,7 +334,7 @@
         }
 
         template<>
-        ostream& ostream::operator << <int64_t> (const int64_t& value) {
+        inline ostream& ostream::operator << <int64_t> (const int64_t& value) {
             if (value < 0) {
                 Serial.print ('-');
                 ostream::operator << <uint64_t> ((uint64_t) (-(value + 1)) + 1); // convert to uint64_t (considering possible overflow)
@@ -345,7 +345,7 @@
         }
     #else
         template<>
-        ostream& ostream::operator << <int64_t> (const int64_t& value) {
+        inline ostream& ostream::operator << <int64_t> (const int64_t& value) {
             if (__showpoint__) {
                 char buf [21]; // min: -9223372036854775808, max: 9223372036854775807
                 __showPointPrintInt__ (buf, sprintf (buf, "%lli", value));
@@ -356,7 +356,7 @@
         }
 
         template<>
-        ostream& ostream::operator << <uint64_t> (const uint64_t& value) {
+        inline ostream& ostream::operator << <uint64_t> (const uint64_t& value) {
             if (__showpoint__) {
                 char buf [21]; // max: 18446744073709551615
                 __showPointPrintInt__ (buf, sprintf (buf, "%llu", value));
@@ -370,7 +370,7 @@
     // explicit ostream class specializations for floats and doubles
 
     template<>
-    ostream& ostream::operator << <float> (const float& value) {
+    inline ostream& ostream::operator << <float> (const float& value) {
         char buf [61]; // min: -3.4028235×10^38, max 60 characters (considering max precision = 19)
         switch (__fpOutput__) {
             case defaultfloat:
@@ -413,7 +413,7 @@
     }
 
     template<>
-    ostream& ostream::operator << <double> (const double& value) {
+    inline ostream& ostream::operator << <double> (const double& value) {
         const int bufSize = (sizeof (double) == 4 /* only 4 bytes on AVR boards */) ? 61 : 331; // min: -1.7976931348623157×10^308 -> max cca 4932 characters (considering max precision = 19)
         char buf [bufSize];
         switch (__fpOutput__) {
@@ -457,7 +457,7 @@
     }
  
     template<>
-    ostream& ostream::operator << <long double> (const long double& value) {
+    inline ostream& ostream::operator << <long double> (const long double& value) {
         const int bufSize = (sizeof (long double) == 4 /* only 4 bytes on AVR boards */) ? 61 : 331; // min: -1.7976931348623157×10^308 -> max 331 characters (considering max precision = 19)
         char buf [bufSize];
         switch (__fpOutput__) {
@@ -503,7 +503,7 @@
     // explicit ostream class specialization for time_t and struct tm
     #ifndef ARDUINO_ARCH_AVR 
         template<>
-        ostream& ostream::operator << <struct tm> (const struct tm& value) {
+        inline ostream& ostream::operator << <struct tm> (const struct tm& value) {
             char buf [80];
             #ifndef __LOCALE_HPP__
                 strftime (buf, sizeof (buf), "%Y/%m/%d %T", &value);
@@ -518,7 +518,7 @@
     // explicit ostream class specialization for uth8char
     #ifdef __UTF8CHAR__
         template<>
-        ostream& ostream::operator << <utf8char> (const utf8char& value) {
+        inline ostream& ostream::operator << <utf8char> (const utf8char& value) {
             utf8char u8 = value;
 
             char c = u8.__c_str__ [0] = value.__c_str__ [0];

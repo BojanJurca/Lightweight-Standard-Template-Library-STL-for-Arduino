@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  Oct 23, 2025, Bojan Jurca
+ *  January 1, 2026, Bojan Jurca
  *
  */
 
@@ -16,17 +16,17 @@
         public:
         utf8char () {}
 
-        utf8char (const char* s) {
+        inline utf8char (const char* s) {
             int len = length (static_cast<unsigned char> (s [0]));
             memcpy (c_str, s, len);
             c_str [len] = '\0';
         }
 
-        bool operator == (const utf8char& other) const {
+        inline bool operator == (const utf8char& other) const {
             return strcmp (c_str, other.c_str) == 0;
         }
 
-        static int length (unsigned char lead) {
+        inline int length (unsigned char lead) {
             if ((lead & 0x80) == 0) return 1;           // 0xxxxxxx
             if ((lead & 0xE0) == 0xC0) return 2;        // 110xxxxx
             if ((lead & 0xF0) == 0xE0) return 3;        // 1110xxxx
@@ -47,7 +47,7 @@
                 if ((lead & 0xF8) == 0xF0) return 4;        // 11110xxx
             }
 
-        utf8char operator *() const {
+        inline utf8char operator *() const {
             int len = length (static_cast<unsigned char> (*__ptr__));
             utf8char u8c;
             memcpy (u8c.c_str, __ptr__, len);
@@ -55,21 +55,21 @@
             return u8c;
         }
 
-        char* get () const { return (char *) __ptr__; }
+        inline char* get () const { return (char *) __ptr__; }
 
-        void set (const utf8char& c) {
+        inline void set (const utf8char& c) {
             int len = length (static_cast<unsigned char> (*__ptr__));
             memcpy ((void *) __ptr__, c.c_str, len); // overwrite in-place
         }
 
-        utf8_iterator& operator ++ () {
+        inline utf8_iterator& operator ++ () {
             int len = length (static_cast<unsigned char> (*__ptr__));
             __ptr__ += len;
             return *this;
         }
 
-        bool operator < (const utf8_iterator& other) const { return __ptr__ < other.__ptr__; }
-        bool operator <= (const utf8_iterator& other) const { return __ptr__ <= other.__ptr__; }
+        inline bool operator < (const utf8_iterator& other) const { return __ptr__ < other.__ptr__; }
+        inline bool operator <= (const utf8_iterator& other) const { return __ptr__ <= other.__ptr__; }
     };
 
 
@@ -93,15 +93,15 @@
             locale *nextLocale = NULL;
 
             // locale name
-            virtual const char* name () const { return "ASCII"; }
+            virtual inline const char* name () const { return "ASCII"; }
 
             // lc_collate
-            virtual int strcoll (const char *s1, const char *s2) {
+            virtual inline int strcoll (const char *s1, const char *s2) {
                 return strcmp (s1, s2);
             }
 
             // lc_ctype
-            virtual bool toupper (char *ps) {
+            virtual inline bool toupper (char *ps) {
                 while (*ps) {
                     if (*ps >= 'a' && *ps <= 'z')
                         *ps = (*ps - ('a' - 'A'));
@@ -110,7 +110,7 @@
                 return true;
             }
 
-            virtual bool tolower (char *ps) {
+            virtual inline bool tolower (char *ps) {
                 while (*ps) {
                     if (*ps >= 'A' && *ps <= 'Z')
                         *ps = (*ps + ('a' - 'A'));
@@ -120,10 +120,10 @@
             }            
 
             // lc_numeric
-            virtual char getDecimalSeparator () const { return '.'; }
-            virtual char getThousandsSeparator () const { return ','; }
+            virtual inline char getDecimalSeparator () const { return '.'; }
+            virtual inline char getThousandsSeparator () const { return ','; }
             // lc_time
-            virtual const char* getTimeFormat () const { return "%Y/%m/%d %r"; }
+            virtual inline const char* getTimeFormat () const { return "%Y/%m/%d %r"; }
     };
 
     // Create a working instance
@@ -133,17 +133,17 @@
     class en_150_UTF_8_locale : public locale {
         public:
             // locale name
-            const char* name () const override { return "en_150.UTF-8"; }
+            inline const char* name () const override { return "en_150.UTF-8"; }
             // lc_ctype
             // lc_numeric
-            char getDecimalSeparator () const override { return ','; }
-            char getThousandsSeparator () const override { return '.'; }
+            inline char getDecimalSeparator () const override { return ','; }
+            inline char getThousandsSeparator () const override { return '.'; }
             // lc_time
-            const char* getTimeFormat () const override { return "%d/%m/%Y %H:%M:%S"; }
+            inline const char* getTimeFormat () const override { return "%d/%m/%Y %H:%M:%S"; }
     };
 
     // Add new locale instance to the supported locale list
-    bool addlocale (locale *loc) {
+    inline bool addlocale (locale *loc) {
         if (loc->name () == NULL) // only the default locale has no ID string
             return false;
 
@@ -162,12 +162,12 @@
     bool __locale_en_150_UTF_8__ = addlocale (new en_150_UTF_8_locale);
 
     // setlocale
-    locale *lc_collate_locale = &default_locale;
-    locale *lc_ctype_locale = &default_locale;
-    locale *lc_numeric_locale = &default_locale;
-    locale *lc_time_locale = &default_locale;
+    inline locale *lc_collate_locale = &default_locale;
+    inline locale *lc_ctype_locale = &default_locale;
+    inline locale *lc_numeric_locale = &default_locale;
+    inline locale *lc_time_locale = &default_locale;
 
-    bool setlocale (localeCategory_t category, const char *name) {
+    inline bool setlocale (localeCategory_t category, const char *name) {
         // find locale with name
         locale *p = &default_locale;
         while (p && strcmp (p->name (), name))
@@ -194,13 +194,13 @@
     }
 
     // strcoll
-    int strcoll (const char *s1, const char *s2) { return lc_collate_locale->strcoll (s1, s2); } 
-    int strcoll (String& s1, String& s2) { return lc_collate_locale->strcoll ((char *) s1.c_str (), (char *) s2.c_str ()); } 
+    inline int strcoll (const char *s1, const char *s2) { return lc_collate_locale->strcoll (s1, s2); } 
+    inline int strcoll (String& s1, String& s2) { return lc_collate_locale->strcoll ((char *) s1.c_str (), (char *) s2.c_str ()); } 
 
     // toupper, tolower
-    bool toupper (char *cp) { return lc_ctype_locale->toupper (cp); }
-    bool toupper (String& s) { return lc_ctype_locale->toupper ((char *) s.c_str ()); }
-    bool tolower (char *cp) { return lc_ctype_locale->tolower (cp); }
-    bool tolower (String& s) { return lc_ctype_locale->tolower ((char *) s.c_str ()); }
+    inline bool toupper (char *cp) { return lc_ctype_locale->toupper (cp); }
+    inline bool toupper (String& s) { return lc_ctype_locale->toupper ((char *) s.c_str ()); }
+    inline bool tolower (char *cp) { return lc_ctype_locale->tolower (cp); }
+    inline bool tolower (String& s) { return lc_ctype_locale->tolower ((char *) s.c_str ()); }
 
 #endif

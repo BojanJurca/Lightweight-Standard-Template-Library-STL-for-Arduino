@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  nOV 26, 2025, Bojan Jurca
+ *  January 1, 2026, Bojan Jurca
  *
  */
 
@@ -25,7 +25,7 @@
         #define __CINIT__
 
         #ifdef ARDUINO_ARCH_AVR 
-            void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
+            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -33,7 +33,7 @@
                 delay (waitAfterSerial);
             }
         #else
-            void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
+            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -53,7 +53,7 @@
       public:
 
         // istream >> char
-        istream& operator >> (char& value) {
+        inline istream& operator >> (char& value) {
             while (!Serial.available ()) 
                 delay (10);
             value = Serial.read ();            
@@ -61,7 +61,7 @@
         }
 
         // istream >> int
-        istream& operator >> (int& value) {
+        inline istream& operator >> (int& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -91,7 +91,7 @@
         } 
 
         // istream >> long
-        istream& operator >> (long& value) {
+        inline istream& operator >> (long& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -141,7 +141,7 @@
         } 
 
         // istream >> double
-        istream& operator >> (double& value) {
+        inline istream& operator >> (double& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -161,7 +161,7 @@
         } 
 
         // istream >> char * // warning, it doesn't chech buffer overflow
-        istream& operator >> (char *value) {
+        inline istream& operator >> (char *value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -181,7 +181,7 @@
 
         // istream >> any other class that has a constructor of type T (char *)
         template<typename T>
-        istream& operator >> (T& value) {
+        inline istream& operator >> (T& value) {
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -201,7 +201,7 @@
 
         private:
 
-            void __unLocalizeSeparators__ (char *buf) {
+            inline void __unLocalizeSeparators__ (char *buf) {
                 #ifdef __LOCALE_HPP__
                     char thousandsSeparator = lc_numeric_locale->getThousandsSeparator ();
                     char decimalSeparator = lc_numeric_locale->getDecimalSeparator ();
