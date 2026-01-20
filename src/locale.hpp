@@ -127,7 +127,7 @@
     };
 
     // Create a working instance
-    inline locale default_locale;
+    static inline locale default_locale;
 
     // ----- Locale en_150.UTF-8  -----
     class en_150_UTF_8_locale : public locale {
@@ -143,7 +143,7 @@
     };
 
     // Add new locale instance to the supported locale list
-    inline bool addlocale (locale *loc) {
+    static inline bool addlocale (locale *loc) {
         if (loc->name () == NULL) // only the default locale has no ID string
             return false;
 
@@ -167,7 +167,7 @@
     inline locale *lc_numeric_locale = &default_locale;
     inline locale *lc_time_locale = &default_locale;
 
-    inline bool setlocale (localeCategory_t category, const char *name) {
+    static inline bool setlocale (localeCategory_t category, const char *name) {
         // find locale with name
         locale *p = &default_locale;
         while (p && strcmp (p->name (), name))
@@ -194,13 +194,13 @@
     }
 
     // strcoll
-    inline int strcoll (const char *s1, const char *s2) { return lc_collate_locale->strcoll (s1, s2); } 
-    inline int strcoll (String& s1, String& s2) { return lc_collate_locale->strcoll ((char *) s1.c_str (), (char *) s2.c_str ()); } 
+    static inline int strcoll (const char *s1, const char *s2) { return lc_collate_locale->strcoll (s1, s2); } 
+    static inline int strcoll (String& s1, String& s2) { return lc_collate_locale->strcoll ((char *) s1.c_str (), (char *) s2.c_str ()); } 
 
     // toupper, tolower
-    inline bool toupper (char *cp) { return lc_ctype_locale->toupper (cp); }
-    inline bool toupper (String& s) { return lc_ctype_locale->toupper ((char *) s.c_str ()); }
-    inline bool tolower (char *cp) { return lc_ctype_locale->tolower (cp); }
-    inline bool tolower (String& s) { return lc_ctype_locale->tolower ((char *) s.c_str ()); }
+    static inline bool toupper (char *cp) { return lc_ctype_locale->toupper (cp); }
+    static inline bool toupper (String& s) { return lc_ctype_locale->toupper ((char *) s.c_str ()); }
+    static inline bool tolower (char *cp) { return lc_ctype_locale->tolower (cp); }
+    static inline bool tolower (String& s) { return lc_ctype_locale->tolower ((char *) s.c_str ()); }
 
 #endif

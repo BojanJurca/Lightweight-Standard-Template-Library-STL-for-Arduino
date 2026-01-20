@@ -20,7 +20,7 @@
         #define __CINIT__
 
         #ifdef ARDUINO_ARCH_AVR 
-            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
+            static inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -28,7 +28,7 @@
                 delay (waitAfterSerial);
             }
         #else
-            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
+            static inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -106,7 +106,7 @@
 
         private:
 
-            inline void __showPointPrintInt__ (char *buf, int len) {
+            static inline void __showPointPrintInt__ (char *buf, int len) {
                 int m = (len + 2) % 3;
                 for (int i = 0; i < len; ++i) {
                     Serial.print (buf [i]);
@@ -121,7 +121,7 @@
                 }
             }
 
-            inline void __showPointPrintFloat__ (char *buf) {
+            static inline void __showPointPrintFloat__ (char *buf) {
                 for (int i = 0;; i++) {
                     switch (buf [i]) {
                         case '.':   // decimal separator reached
@@ -141,7 +141,7 @@
             }
 
             #ifdef __LOCALE_HPP__
-                inline void __localizeSeparators__ (char *buf) {
+                static inline void __localizeSeparators__ (char *buf) {
                     for (int i = 0; buf [i]; i++) {
                         switch (buf [i]) {
                             case '.':   // decimal separator
@@ -156,7 +156,7 @@
             #endif
 
             #ifdef ARDUINO_ARCH_AVR
-                inline void __printHexFloat__(float value) {
+                static inline void __printHexFloat__(float value) {
                     union { float f; uint32_t u; } data;
                     data.f = value;
                     uint32_t bits = data.u;
@@ -546,6 +546,6 @@
     #endif
 
     // Create a working instances
-    inline ostream cout;
+    static inline ostream cout;
 
 #endif
