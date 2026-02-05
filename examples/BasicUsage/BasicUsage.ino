@@ -37,7 +37,7 @@ void setup () {
     }
 
     // Output vector elements using index 
-    for (int i = 0; i < Fibonacci.size (); i++)
+    for (size_t i = 0; i < Fibonacci.size (); i++)
         cout << Fibonacci [i] << " ";
     cout << endl;
 
