@@ -48,7 +48,7 @@ void setup () {
 
     cout << "There are " << Fibonacci.size () << " elements in the queue" << endl;
     // Use index to scan the queue
-    for (int i = 0; i < Fibonacci.size (); i++)
+    for (size_t i = 0; i < Fibonacci.size (); i++)
         cout << Fibonacci [i] << "   ";
     cout << endl;
     // Display all the queue elements at once
