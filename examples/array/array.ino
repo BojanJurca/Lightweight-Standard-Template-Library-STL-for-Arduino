@@ -14,7 +14,7 @@ void setup () {
 
     cout << "There are " << Fibonacci.size () << " elements in the array" << endl;
     // Use index to scan the array
-    for (int i = 0; i < Fibonacci.size (); i++)
+    for (size_t i = 0; i < Fibonacci.size (); i++)
         cout << Fibonacci [i] << "   ";
     cout << endl;
     // Use iterator to scan the array
