@@ -52,7 +52,7 @@ void setup () {
 
     cout << "There are " << Fibonacci.size () << " elements in the vector" << endl;
     // Use index to scan the vector
-    for (int i = 0; i < Fibonacci.size (); i++)
+    for (size_t i = 0; i < Fibonacci.size (); i++)
         cout << Fibonacci [i] << "   ";
     cout << endl;
     // Use iterator to scan the vector
