@@ -145,7 +145,6 @@ void setup () {
     String athlet [] = { "Luka Dončić", "Tadej Pogačar", "Anže Kopitar", "Primož Rogljič" };
     // Sort
     int n = sizeof (athlet) / sizeof (athlet [0]);
-    bool swapped;
     for (int i = 0; i < n - 1; i++) {
         for (int j = i; j < n; j++) {
             if (strcoll (athlet [i], athlet [j]) > 0) {
