@@ -6,6 +6,7 @@
  *  The data storage is internaly implemented as balanced binary search tree for good searching performance.
  *
  *  Map functions are not thread-safe.
+
  * 
  *  Nov 26, 2025, Bojan Jurca
  *  

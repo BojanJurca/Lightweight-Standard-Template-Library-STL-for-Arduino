@@ -222,6 +222,11 @@
     };
 
     // Create a working instnces
-    static inline istream cin;
+    #ifdef ARDUINO_ARCH_AVR
+        extern istream cin;
+        istream cin;
+    #else
+        inline istream cin;
+    #endif
 
 #endif

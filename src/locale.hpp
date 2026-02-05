@@ -31,6 +31,7 @@
             if ((lead & 0xE0) == 0xC0) return 2;        // 110xxxxx
             if ((lead & 0xF0) == 0xE0) return 3;        // 1110xxxx
             if ((lead & 0xF8) == 0xF0) return 4;        // 11110xxx
+            return 0; // doesn't happen
         }
     };
 
@@ -45,6 +46,7 @@
                 if ((lead & 0xE0) == 0xC0) return 2;        // 110xxxxx
                 if ((lead & 0xF0) == 0xE0) return 3;        // 1110xxxx
                 if ((lead & 0xF8) == 0xF0) return 4;        // 11110xxx
+                return 0; // doesn't happen
             }
 
         inline utf8char operator *() const {
@@ -127,7 +129,12 @@
     };
 
     // Create a working instance
-    inline locale default_locale;
+    #ifdef ARDUINO_ARCH_AVR
+        extern locale default_locale;
+        locale default_locale;
+    #else
+        inline locale default_locale;
+    #endif
 
     // ----- Locale en_150.UTF-8  -----
     class en_150_UTF_8_locale : public locale {
@@ -162,10 +169,21 @@
     bool __locale_en_150_UTF_8__ = addlocale (new en_150_UTF_8_locale);
 
     // setlocale
-    inline locale *lc_collate_locale = &default_locale;
-    inline locale *lc_ctype_locale = &default_locale;
-    inline locale *lc_numeric_locale = &default_locale;
-    inline locale *lc_time_locale = &default_locale;
+    #ifdef ARDUINO_ARCH_AVR
+        extern locale *lc_collate_locale;
+        locale *lc_collate_locale = &default_locale;
+        extern locale *lc_ctype_locale;
+        locale *lc_ctype_locale = &default_locale;
+        extern locale *lc_numeric_locale;
+        locale *lc_numeric_locale = &default_locale;
+        extern locale *lc_time_locale;
+        locale *lc_time_locale = &default_locale;
+    #else
+        inline locale *lc_collate_locale = &default_locale;
+        inline locale *lc_ctype_locale = &default_locale;
+        inline locale *lc_numeric_locale = &default_locale;
+        inline locale *lc_time_locale = &default_locale;
+    #endif
 
     inline bool setlocale (localeCategory_t category, const char *name) {
         // find locale with name

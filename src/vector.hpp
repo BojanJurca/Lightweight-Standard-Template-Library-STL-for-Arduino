@@ -30,6 +30,11 @@
     #define __VECTOR_HPP__
 
 
+    #ifdef __ALGORITHM_HPP__
+        #pragma message "Include vector.hpp prior to including algorithm.hpp"
+    #endif
+
+
     // ----- TUNNING PARAMETERS -----
 
     // #define THROW_VECTOR_QUEUE_EXCEPTIONS  // uncomment this line if you want vector to throw exceptions
@@ -105,7 +110,7 @@
                             #endif                      
                         }
 
-                        for (int i = 0; i < N; ++i)
+                        for (size_t i = 0; i < N; ++i)
                             if (push_back (array [i])) // error
                                 break;
                     }
@@ -120,7 +125,7 @@
             ~vector () { 
                 if (__elements__ != NULL) {
                     #ifndef ARDUINO_ARCH_AVR
-                        for (int i = 0; i < __capacity__; i++)
+                        for (size_t i = 0; i < __capacity__; i++)
                             __elements__ [i].~vectorType ();
                     #else
                         // objects not supported for AVR boards 
@@ -153,7 +158,7 @@
             *    - could not allocate enough memory for requested storage
             */
         
-            signed char reserve (int newCapacity) {
+            signed char reserve (size_t newCapacity) {
                 if (newCapacity < __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
@@ -195,7 +200,7 @@
            /*
             *  [] operator enables elements of vector to be addressed by their positions (indexes) like:
             *  
-            *    for (int i = 0; i < E.size (); i++)
+            *    for (size_t i = 0; i < E.size (); i++)
             *      Serial.printf ("E [%i] = %i\n", i, E [i]);    
             *    
             *    or
@@ -205,8 +210,8 @@
             *  If the index is not a valid index, the result is unpredictable
             */
       
-            vectorType &operator [] (int position) {
-                if (position < 0 || position >= __size__) {
+            vectorType &operator [] (size_t position) {
+                if (position >= __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif                      
@@ -215,8 +220,8 @@
                 return __elements__ [(__front__ + position) % __capacity__];
             }
 
-            const vectorType &operator [] (int position) const {
-                if (position < 0 || position >= __size__) {
+            const vectorType &operator [] (size_t position) const {
+                if (position >= __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif                      
@@ -230,8 +235,8 @@
             *  Same as [] operator, so it is not really needed but added here because it is supported in STL C++ vectors
             */      
 
-            vectorType &at (int position) {
-                if (position < 0 || position >= __size__) {
+            vectorType &at (size_t position) {
+                if (position >= __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif                      
@@ -302,7 +307,7 @@
             bool operator == (const vector& other) {
                 if (this->__size__ != other.size ()) return false;
                 int e = this->__front__;
-                for (int i = 0; i < this->__size__; i++) {
+                for (size_t i = 0; i < this->__size__; i++) {
                     if (this->__elements__ [e] != other [i])
                         return false;
                     e = (e + 1) % this->__capacity__;
@@ -471,7 +476,7 @@
                 public:
 
                     // constructor
-                    iterator (vector* vect, int pos) { 
+                    iterator (vector* vect, size_t pos) { 
                         __vector__ = vect; 
                         __position__ = pos;
                     }
@@ -502,7 +507,7 @@
                 private:
 
                     vector* __vector__;
-                    int __position__;
+                    size_t __position__;
 
             };
 
@@ -537,7 +542,7 @@
                     return pop_back ();
                 
                 // calculate logical index of element to be deleted
-                int pos = position - begin ();
+                int pos = (int) (position - begin ());
 
                 // do we have to free the space occupied by the element to be deleted? This is the slowest option
                 if (__capacity__ > __size__ - 1 + __increment__ - 1)  
@@ -546,11 +551,11 @@
                     // else (if failed to change capacity) proceeed
 
                 // we have to reposition the elements, weather from the __front__ or from the calculated back, whichever is faster
-                if (pos < __size__ - pos) {
+                if (pos < (int) (__size__ - pos)) {
                     // move all elements form position to 1
                     int e1 = (__front__ + pos) % __capacity__;
-                    for (int i = pos; i > 0; i --) {
-                        int e2 = (e1 + __capacity__ - 1) % __capacity__; // e1 - 1
+                    for (size_t i = pos; i > 0; i --) {
+                        size_t e2 = (e1 + __capacity__ - 1) % __capacity__; // e1 - 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
                     }
@@ -559,8 +564,8 @@
                 } else {
                     // move elements from __size__ - 1 to position
                     int e1 = (__front__ + pos) % __capacity__; 
-                    for (int i = pos; i < __size__ - 1; i ++) {
-                        int e2 = (e1 + 1) % __capacity__; // e2 = e1 + 1
+                    for (size_t i = pos; i < __size__ - 1; i ++) {
+                        size_t e2 = (e1 + 1) % __capacity__; // e2 = e1 + 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
                     }
@@ -585,7 +590,7 @@
                     return push_front (element); 
                 
                 // calculate logical index of element to be deleted
-                int pos = position - begin ();
+                int pos = (int) (position - begin ());
 
                 // do we have to resize the space occupied by existing the elements? This is the slowest option
                 if (__capacity__ < __size__ + 1) {
@@ -593,17 +598,17 @@
                     if (e)                              
                         return e;
                     // else
-                    __elements__ [pos] = element;  
-                    return err_ok; 
+                    __elements__ [pos] = element;
+                    return err_ok;
                 }
       
                 // we have to reposition the elements, weather from the __front__ or from the calculated back, whichever is faster
-                if (pos < __size__ - pos) {
+                if (pos < (int) (__size__ - pos)) {
                     // move elements form 0 to position 1 position down
                     __front__ = (__front__ + __capacity__ - 1) % __capacity__; // __front__ - 1
                     __size__ ++;
                     int e1 = __front__;
-                    for (int i = 0; i < pos; i++) {
+                    for (size_t i = 0; i < (size_t) pos; i++) {
                         int e2 = (e1 + 1) % __capacity__; // e2 = e1 + 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
@@ -616,8 +621,8 @@
                     int back = (__front__ + __size__) % __capacity__; // calculated back + 1
                     __size__ ++;
                     int e1 = back;
-                    for (int i = __size__ - 1; i > pos; i--) {
-                        int e2 = (e1 + __capacity__ - 1) % __capacity__; // e2 = e1 - 1
+                    for (size_t i = __size__ - 1; i > (size_t) pos; i--) {
+                        size_t e2 = (e1 + __capacity__ - 1) % __capacity__; // e2 = e1 - 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
                     }
@@ -647,11 +652,11 @@
       private:
 
             vectorType *__elements__ = NULL;  // initially the vector has no elements, __elements__ buffer is empty
-            int __capacity__ = 0;             // initial number of elements (or not occupied slots) in __elements__
-            int __increment__ = 5;            // by default, increment elements buffer for 5 element when needed
-            int __reservation__ = 0;          // no memory reservatio by default
-            int __size__ = 0;                 // initially there are not elements in __elements__
-            int __front__ = 0;                // points to the first element in __elements__, which do not exist yet at instance creation time
+            size_t __capacity__ = 0;             // initial number of elements (or not occupied slots) in __elements__
+            size_t __increment__ = 5;            // by default, increment elements buffer for 5 element when needed
+            size_t __reservation__ = 0;          // no memory reservatio by default
+            size_t __size__ = 0;                 // initially there are not elements in __elements__
+            size_t __front__ = 0;                // points to the first element in __elements__, which do not exist yet at instance creation time
 
     
            /*
@@ -661,13 +666,13 @@
             *    - could not allocate enough memory for requested storage
             */
 
-            signed char __changeCapacity__ (int newCapacity, int deleteElementAtPosition = -1, int leaveFreeSlotAtPosition = -1) {
+            signed char __changeCapacity__ (size_t newCapacity, int deleteElementAtPosition = -1, int leaveFreeSlotAtPosition = -1) {
                 if (newCapacity < __reservation__) newCapacity = __reservation__;
                 if (newCapacity == 0) {
                     // delete old buffer
                     if (__elements__ != NULL) {
                         #ifndef ARDUINO_ARCH_AVR 
-                            for (int i = 0; i < __capacity__; i++)
+                            for (size_t i = 0; i < __capacity__; i++)
                                 __elements__ [i].~vectorType ();
                         #else
                             // objects not supported for AVR boards
@@ -708,13 +713,13 @@
                 if (leaveFreeSlotAtPosition >= 0) __size__ ++;      // a slot for 1 element will be added
                 if (__size__ > newCapacity) __size__ = newCapacity; // shouldn't really happen
                 
-                int e = __front__;
-                for (int i = 0; i < __size__; i++) {
+                size_t e = __front__;
+                for (size_t i = 0; i < __size__; i++) {
                     // is i-th element supposed to be deleted? Don't copy it then ...
-                    if (i == deleteElementAtPosition) e = (e + 1) % __capacity__; // e ++
+                    if (i == (size_t) deleteElementAtPosition) e = (e + 1) % __capacity__; // e ++
                     
                     // do we have to leave a free slot for a new element at i-th place? Continue with the next index ...
-                    if (i == leaveFreeSlotAtPosition) continue;
+                    if (i == (size_t) leaveFreeSlotAtPosition) continue;
                     
                     newElements [i] = __elements__ [e];
                     e = (e + 1) % __capacity__;
@@ -723,7 +728,7 @@
                 // delete the old elements' buffer
                 if (__elements__ != NULL) {
                     #ifndef ARDUINO_ARCH_AVR
-                        for (int i = 0; i < __capacity__; i++)
+                        for (size_t i = 0; i < __capacity__; i++)
                             __elements__ [i].~vectorType ();
                     #else
                         // objects not supported for AVR boards
@@ -830,7 +835,7 @@
                             #endif                      
                         }
 
-                        for (int i = 0; i < N; ++i) {
+                        for (size_t i = 0; i < N; ++i) {
                             if (!array [i]) {                             // ... check if parameter construction is valid
                                 #ifdef __THROW_LIST_EXCEPTIONS__
                                     throw err_bad_alloc;
@@ -852,7 +857,7 @@
             
             ~vector () {
                 if (__elements__ != NULL) {
-                    for (int i = 0; i < __capacity__; i++)
+                    for (size_t i = 0; i < __capacity__; i++)
                         __elements__ [i].~String ();
                     free (__elements__);
                 }
@@ -882,7 +887,7 @@
             *    - could not allocate enough memory for requested storage
             */
         
-            signed char reserve (int newCapacity) {
+            signed char reserve (size_t newCapacity) {
                 if (newCapacity < __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_bad_alloc;
@@ -923,7 +928,7 @@
            /*
             *  [] operator enables elements of vector to be addressed by their positions (indexes) like:
             *  
-            *    for (int i = 0; i < E.size (); i++)
+            *    for (size_t i = 0; i < E.size (); i++)
             *      Serial.printf ("E [%i] = %i\n", i, E [i]);    
             *    
             *    or
@@ -933,8 +938,8 @@
             *  If the index is not a valid index, the result is unpredictable
             */
       
-            String &operator [] (int position) {
-                if (position < 0 || position >= __size__) {
+            String &operator [] (size_t position) {
+                if (position >= __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif 
@@ -948,8 +953,8 @@
             *  Same as [] operator, so it is not really needed but added here because it is supported in STL C++ vectors
             */      
 
-            String &at (int position) {
-                if (position < 0 || position >= __size__) {
+            String &at (size_t position) {
+                if (position >= __size__) {
                     #ifdef THROW_VECTOR_QUEUE_EXCEPTIONS
                         throw err_out_of_range;
                     #endif    
@@ -1016,8 +1021,8 @@
       
             bool operator == (vector& other) {
                 if (this->__size__ != other.size ()) return false;
-                int e = this->__front__;
-                for (int i = 0; i < this->__size__; i++) {
+                size_t e = this->__front__;
+                for (size_t i = 0; i < this->__size__; i++) {
                     if (this->__elements__ [e] != other [i])
                         return false;
                     e = (e + 1) % this->__capacity__;
@@ -1201,7 +1206,7 @@
                 public:
                             
                     // constructor
-                    iterator (vector* vect, int pos) { 
+                    iterator (vector* vect, size_t pos) { 
                         __vector__ = vect; 
                         __position__ = pos;
                     }
@@ -1232,7 +1237,7 @@
                 private:
           
                     vector* __vector__;
-                    int __position__;
+                    size_t __position__;
                     
             };      
       
@@ -1267,7 +1272,7 @@
                     return pop_back ();
                 
                 // calculate logical index of element to be deleted
-                int pos = position - begin ();
+                int pos = (int) (position - begin ());
 
                 // do we have to free the space occupied by the element to be deleted? This is the slowest option
                 if (__capacity__ > __size__ - 1 + __increment__ - 1)  
@@ -1278,9 +1283,9 @@
                 // we have to reposition the elements, weather from the __front__ or from the calculated back, whichever is faster
                 if (position < __size__ - pos) {
                     // move all elements form position to 1
-                    int e1 = (__front__ + pos) % __capacity__;
-                    for (int i = pos; i > 0; i --) {
-                        int e2 = (e1 + __capacity__ - 1) % __capacity__; // e1 - 1
+                    size_t e1 = (__front__ + pos) % __capacity__;
+                    for (size_t i = pos; i > 0; i --) {
+                        size_t e2 = (e1 + __capacity__ - 1) % __capacity__; // e1 - 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
                     }
@@ -1289,8 +1294,8 @@
                 } else {
                     // move elements from __size__ - 1 to position
                     int e1 = (__front__ + pos) % __capacity__; 
-                    for (int i = pos; i < __size__ - 1; i ++) {
-                        int e2 = (e1 + 1) % __capacity__; // e2 = e1 + 1
+                    for (size_t i = pos; i < __size__ - 1; i ++) {
+                        size_t e2 = (e1 + 1) % __capacity__; // e2 = e1 + 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
                     }
@@ -1323,7 +1328,7 @@
                     return push_front (element); 
                 
                 // calculate logical index of element to be deleted
-                int pos = position - begin ();
+                int pos = (int) (position - begin ());
 
                 // do we have to resize the space occupied by existing the elements? This is the slowest option
                 if (__capacity__ < __size__ + 1) {
@@ -1336,12 +1341,12 @@
                 }
       
                 // we have to reposition the elements, weather from the __front__ or from the calculated back, whichever is faster
-                if (pos < __size__ - pos) {
+                if (pos < (int) (__size__ - pos)) {
                     // move elements form 0 to position 1 position down
                     __front__ = (__front__ + __capacity__ - 1) % __capacity__; // __front__ - 1
                     __size__ ++;
                     int e1 = __front__;
-                    for (int i = 0; i < pos; i++) {
+                    for (size_t i = 0; i < (size_t) pos; i++) {
                         int e2 = (e1 + 1) % __capacity__; // e2 = e1 + 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
@@ -1354,8 +1359,8 @@
                     int back = (__front__ + __size__) % __capacity__; // calculated back + 1
                     __size__ ++;
                     int e1 = back;
-                    for (int i = __size__ - 1; i > pos; i--) {
-                        int e2 = (e1 + __capacity__ - 1) % __capacity__; // e2 = e1 - 1
+                    for (size_t i = __size__ - 1; i > (size_t) pos; i--) {
+                        size_t e2 = (e1 + __capacity__ - 1) % __capacity__; // e2 = e1 - 1
                         __elements__ [e1] = __elements__ [e2];
                         e1 = e2;
                     }
@@ -1384,11 +1389,11 @@
       private:
 
             String *__elements__ = NULL;      // initially the vector has no elements, __elements__ buffer is empty
-            int __capacity__ = 0;             // initial number of elements (or not occupied slots) in __elements__
-            int __increment__ = 5;            // by default, increment elements buffer for 5 element when needed
-            int __reservation__ = 0;          // no memory reservatio by default
-            int __size__ = 0;                 // initially there are not elements in __elements__
-            int __front__ = 0;                // points to the first element in __elements__, which do not exist yet at instance creation time
+            size_t __capacity__ = 0;             // initial number of elements (or not occupied slots) in __elements__
+            size_t __increment__ = 5;            // by default, increment elements buffer for 5 element when needed
+            size_t __reservation__ = 0;          // no memory reservatio by default
+            size_t __size__ = 0;                 // initially there are not elements in __elements__
+            size_t __front__ = 0;                // points to the first element in __elements__, which do not exist yet at instance creation time
 
     
            /*
@@ -1398,12 +1403,12 @@
             *    - could not allocate enough memory for requested storage
             */
 
-            signed char __changeCapacity__ (int newCapacity, int deleteElementAtPosition = -1, int leaveFreeSlotAtPosition = -1) {
+            signed char __changeCapacity__ (size_t newCapacity, int deleteElementAtPosition = -1, int leaveFreeSlotAtPosition = -1) {
                 if (newCapacity < __reservation__) newCapacity = __reservation__;
                 if (newCapacity == 0) {
                     // delete old buffer
                     if (__elements__ != NULL) {
-                        for (int i = 0; i < __capacity__; i++)
+                        for (size_t i = 0; i < __capacity__; i++)
                             __elements__ [i].~String ();
                         free (__elements__);
                     }
@@ -1434,7 +1439,7 @@
                 #ifndef ARDUINO_ARCH_AVR
                     new (newElements) String [newCapacity];
                 #else
-                    for (int i = 0; i < newCapacity; i++) newElements [i] = String (); // assign empty String
+                    for (size_t i = 0; i < newCapacity; i++) newElements [i] = String (); // assign empty String
                 #endif
 
                 // copy existing elements to the new buffer
@@ -1442,13 +1447,13 @@
                 if (leaveFreeSlotAtPosition >= 0) __size__ ++;      // a slot for 1 element will be added
                 if (__size__ > newCapacity) __size__ = newCapacity; // shouldn't really happen
                 
-                int e = __front__;
-                for (int i = 0; i < __size__; i++) {
+                size_t e = __front__;
+                for (size_t i = 0; i < __size__; i++) {
                     // is i-th element supposed to be deleted? Don't copy it then ...
-                    if (i == deleteElementAtPosition) e = (e + 1) % __capacity__; // e ++
+                    if (i == (size_t) deleteElementAtPosition) e = (e + 1) % __capacity__; // e ++
                     
                     // do we have to leave a free slot for a new element at i-th place? Continue with the next index ...
-                    if (i == leaveFreeSlotAtPosition) continue;
+                    if (i == (size_t) leaveFreeSlotAtPosition) continue;
                     
                     // we don't need to care of an error occured while creating a newElement String, we'll replace it with a valid __elements__ string anyway
                     __swapStrings__ (&newElements [i], &__elements__ [e]);
@@ -1458,7 +1463,7 @@
                 
                 // delete the old elements' buffer   
                 if (__elements__ != NULL) {
-                    for (int i = 0; i < __capacity__; i++)
+                    for (size_t i = 0; i < __capacity__; i++)
                         __elements__ [i].~String ();
                     free (__elements__);
                 }

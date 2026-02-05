@@ -6,8 +6,8 @@
  *  In order to save as much memory as possible, list is implemented with minimal functionality. The elements are single - linked, so same
  *  functions, like pop_back for example can not be efficiently implemented.
  * 
- *  Oct 23, 2025, Bojan Jurca, with great help of Microsoft Copilot regarding templates 
- * 
+ *  February 6, 2026, Bojan Jurca, with a help of Microsoft Copilot regarding templates 
+ *
  */
 
 
@@ -330,6 +330,34 @@
 
 
            /*
+            * Deletes all the occurrences of an element
+            */
+
+        private:
+
+            template<typename T1, typename T2> inline __attribute__((always_inline)) bool __equals__ (const T1& a, const T2& b);
+
+        public:
+
+            void remove (const listType& element) {
+                for (node_t** p = &__front__; *p;) {
+                    node_t* q = *p;
+                    if (__equals__ (q->element, element)) {
+                        if (q == __back__) // if the last element is beeing deleted
+                            __back__ = (p == &__front__) ? NULL : reinterpret_cast<node_t*> (reinterpret_cast<char*> (p) - offsetof (node_t, next));
+                        *p = q->next;
+                        delete q;
+                        __size__--;
+                    } else {
+                        p = &((*p)->next);
+                    }
+                }
+                if (!__front__) // if empty
+                    __back__ = NULL;
+            }
+
+
+           /*
             *  Iterator is needed in order for STL C++ for each loop to work. 
             *  A good source for iterators is: https://www.internalpointers.com/post/writing-custom-iterators-modern-cpp
             *  
@@ -344,6 +372,7 @@
                 // make __mergeSort__ function (algorithm.hpp) a friend so it can access internal structure
                 template <typename forwardIterator> 
                 friend void __mergeSort__(forwardIterator, forwardIterator);
+                friend list;
                 
                 public:
 
@@ -375,6 +404,38 @@
             iterator begin () { return iterator (__front__); }              // first element
             iterator end () { return iterator (NULL); }                     // past the last element
 
+           /*
+             * Deletes the element pointed to by iterator
+             */
+
+            iterator erase (iterator pos) {
+                node_t* target = pos.__p__;
+                if (!target)
+                    return end (); // nothing to delete
+
+                for (node_t** p = &__front__; *p; p = &((*p)->next)) {
+                    if (*p == target) {
+                        node_t* q = *p;
+                        *p = q->next;
+                        if (q == __back__) {
+                            __back__ = NULL;
+                            if (__front__) {
+                                node_t* t = __front__;
+                                while (t->next)
+                                    t = t->next;
+                                __back__ = t;
+                            }
+                        }
+
+                        iterator next (q->next);
+                        delete q;
+                        __size__--;
+                        return next;
+                    }
+                }
+                return end (); // iterator not found
+            }
+
 
             #ifdef __OSTREAM_HPP__
                 // print list to ostream
@@ -395,6 +456,12 @@
             int __size__ = 0;                 // initially there are not elements in the list
 
     };
+
+    template<typename listType> template<typename T1, typename T2> __attribute__((always_inline)) bool list<listType>::__equals__ (const T1& a, const T2& b) { return a == b; }
+    template<> template<> inline __attribute__((always_inline)) bool list<const char*>::__equals__ (const char* const& a, const char* const& b) { return strcmp (a, b) == 0; }
+    template<> template<> inline __attribute__((always_inline)) bool list<char*>::__equals__ (char* const& a, char* const& b) { return strcmp (a, b) == 0; }
+    template<> template<> inline __attribute__((always_inline)) bool list<char*>::__equals__ (const char* const& a, char* const& b) { return strcmp (a, b) == 0; }
+    template<> template<> inline __attribute__((always_inline)) bool list<char*>::__equals__ (char* const& a, const char* const& b) { return strcmp (a, b) == 0; }
 
 
    /*
@@ -504,7 +571,7 @@
                 */                        
             // #endif
       
-                  
+                
            /*
             * List destructor - free the memory occupied by list elements
             */
@@ -774,6 +841,28 @@
 
 
            /*
+            * Deletes all the occurrences of an element
+            */
+
+            void remove (const String& element) {
+                for (node_t** p = &__front__; *p;) {
+                    node_t* q = *p;
+                    if (q->element == element) {
+                        if (q == __back__) // if the last element is beeing deleted
+                            __back__ = (p == &__front__) ? NULL : reinterpret_cast<node_t*> (reinterpret_cast<char*> (p) - offsetof (node_t, next));
+                        *p = q->next;
+                        delete q;
+                        __size__--;
+                    } else {
+                        p = &((*p)->next);
+                    }
+                }
+                if (!__front__) // if empty
+                    __back__ = NULL;
+            }
+
+  
+           /*
             *  Iterator is needed in order for STL C++ for each loop to work. 
             *  A good source for iterators is: https://www.internalpointers.com/post/writing-custom-iterators-modern-cpp
             *  
@@ -788,6 +877,7 @@
                 // make __mergeSort__ function (algorithm.hpp) a friend so it can access internal structure
                 template <typename forwardIterator> 
                 friend void __mergeSort__(forwardIterator, forwardIterator);
+                friend list;
                 
                 public:
                               
@@ -815,6 +905,38 @@
 
             iterator begin () { return iterator (__front__); }              // first element
             iterator end () { return iterator (NULL); }                     // past the last element
+
+           /*
+             * Deletes the element pointed to by iterator
+             */
+
+            iterator erase (iterator pos) {
+                node_t* target = pos.__p__;
+                if (!target)
+                    return end (); // nothing to delete
+
+                for (node_t** p = &__front__; *p; p = &((*p)->next)) {
+                    if (*p == target) {
+                        node_t* q = *p;
+                        *p = q->next;
+                        if (q == __back__) {
+                            __back__ = NULL;
+                            if (__front__) {
+                                node_t* t = __front__;
+                                while (t->next)
+                                    t = t->next;
+                                __back__ = t;
+                            }
+                        }
+
+                        iterator next (q->next);
+                        delete q;
+                        __size__--;
+                        return next;
+                    }
+                }
+                return end (); // iterator not found
+            }
 
 
             #ifdef __OSTREAM_HPP__

@@ -3,13 +3,27 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  January 1, 2026, Bojan Jurca
+ *  February 6, 2026, Bojan Jurca
  *
  */
 
 
 #ifndef __OSTREAM_HPP__
     #define __OSTREAM_HPP__
+
+
+    #ifdef __VECTOR_HPP__
+        #pragma message "Include ostream.hpp prior to including vector.hpp to be able to cout << vector"
+    #endif
+    #ifdef __QUEUE_HPP__
+        #pragma message "Include ostream.hpp prior to including queue.hpp to be able to cout << queue"
+    #endif
+    #ifdef __LIST_HPP__
+        #pragma message "Include ostream.hpp prior to including list.hpp to be able to cout << list"
+    #endif
+    #ifdef __MAP_HPP__
+        #pragma message "Include ostream.hpp prior to including Map.hpp to be able to cout << Map"
+    #endif
 
 
     // ----- CODE -----
@@ -20,7 +34,7 @@
         #define __CINIT__
 
         #ifdef ARDUINO_ARCH_AVR 
-            static inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
+            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -28,7 +42,7 @@
                 delay (waitAfterSerial);
             }
         #else
-            static inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
+            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
                 Serial.begin (serialSpeed);
                 if (waitForSerial)
                     while (!Serial) 
@@ -86,7 +100,7 @@
 
         public:
 
-            inline ostream& operator << (const char* value) {
+            inline ostream& operator << (const char* value) __attribute__((noinline)) {
                 Serial.print (value);
                 return *this;
             }
@@ -106,7 +120,7 @@
 
         private:
 
-            static inline void __showPointPrintInt__ (char *buf, int len) {
+            inline void __showPointPrintInt__ (char *buf, int len) {
                 int m = (len + 2) % 3;
                 for (int i = 0; i < len; ++i) {
                     Serial.print (buf [i]);
@@ -121,7 +135,7 @@
                 }
             }
 
-            static inline void __showPointPrintFloat__ (char *buf) {
+            inline void __showPointPrintFloat__ (char *buf) {
                 for (int i = 0;; i++) {
                     switch (buf [i]) {
                         case '.':   // decimal separator reached
@@ -141,7 +155,7 @@
             }
 
             #ifdef __LOCALE_HPP__
-                static inline void __localizeSeparators__ (char *buf) {
+                inline void __localizeSeparators__ (char *buf) {
                     for (int i = 0; buf [i]; i++) {
                         switch (buf [i]) {
                             case '.':   // decimal separator
@@ -156,7 +170,7 @@
             #endif
 
             #ifdef ARDUINO_ARCH_AVR
-                static inline void __printHexFloat__(float value) {
+                inline void __printHexFloat__(float value) {
                     union { float f; uint32_t u; } data;
                     data.f = value;
                     uint32_t bits = data.u;
@@ -194,7 +208,7 @@
                         mant24 = tmp;            // now there is 1 in bit 23
                         e = -126 - shift;
                     } else {
-                        mant24 = (1u << 23) | frac;
+                        mant24 = (1lu << 23) | frac;
                         e = (int) exp - 127;
                     }
 
@@ -408,6 +422,8 @@
                                     Serial.print (buf);
                                 #endif
                                 return *this;
+            default:            
+                                break;
         }
         return *this;
     }
@@ -452,6 +468,8 @@
                                     Serial.print (buf);
                                 #endif
                                 return *this;
+            default:
+                                break;
         }
         return *this;
     }
@@ -496,6 +514,8 @@
                                     Serial.print (buf);
                                 #endif
                                 return *this;
+            default:
+                                break;
         }
         return *this;
     }
@@ -546,6 +566,11 @@
     #endif
 
     // Create a working instances
-    static inline ostream cout;
+    #ifdef ARDUINO_ARCH_AVR
+        extern ostream cout;
+        ostream cout;
+    #else
+        inline ostream cout;
+    #endif
 
 #endif
