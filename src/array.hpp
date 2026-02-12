@@ -68,6 +68,8 @@
 
             arrayType* data () { return __data__; }
 
+            const arrayType* data () const { return __data__; }
+
 
            /*
             *  [] operator enables elements of array to be addressed by their positions (indexes) like:
@@ -82,7 +84,11 @@
             *  If the index is not a valid index, the result is unpredictable
             */
 
-            inline arrayType &operator [] (size_t ind) __attribute__((always_inline)) { 
+            inline arrayType &operator [] (size_t ind) { 
+                return __data__ [ind]; 
+            }
+
+            inline const arrayType &operator [] (size_t ind) const { 
                 return __data__ [ind]; 
             }
 
