@@ -16,6 +16,12 @@
     #define __MAP_HPP__
 
 
+    #ifdef __ALGORITHM_HPP__
+        #pragma message "Include Map.hpp prior to including algorithm.hpp"
+    #endif
+
+
+
     // ----- TUNNING PARAMETERS -----
 
     #define __MAP_MAX_STACK_SIZE__ 32 // statically allocated stack needed for iterating through elements, 24 should be enough for the number of elemetns that fit into ESP32's memory

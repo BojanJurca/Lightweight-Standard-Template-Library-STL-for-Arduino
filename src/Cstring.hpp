@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  January 1, 2026 Bojan Jurca
+ *  Marchs 12, 2026 Bojan Jurca
  *  
  */
 
@@ -512,6 +512,11 @@
             }
 
             Cstring& operator += (const Cstring& other) {      // concatenate one Cstring to anoterh, like: a += b;
+                if (this == &other) {
+                    Cstring tmp = other;
+                    return (*this += tmp);
+                } // else
+
                 if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
                     strncat (this->__c_str__, other.__c_str__, N + 1 - strlen (this->__c_str__));
                     this->__errorFlags__ |= other.__errorFlags__;             // add all errors from other string

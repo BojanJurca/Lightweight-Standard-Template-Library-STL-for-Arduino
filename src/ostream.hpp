@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  February 6, 2026, Bojan Jurca
+ *  March 12, 2026, Bojan Jurca
  *
  */
 
@@ -305,7 +305,7 @@
     inline ostream& ostream::operator << <int32_t> (const int32_t& value) {
         if (__showpoint__) {
             char buf [12]; // min: -2147483648, max: 2147483647
-            __showPointPrintInt__ (buf, sprintf (buf, "%li", value));
+            __showPointPrintInt__ (buf, sprintf (buf, "%li", (long int) value));
         } else {
             Serial.print (value);
         }
@@ -316,7 +316,7 @@
     inline ostream& ostream::operator << <uint32_t> (const uint32_t& value) {
         if (__showpoint__) {
             char buf [11]; // max: 4294967295
-            __showPointPrintInt__ (buf, sprintf (buf, "%lu", value));
+            __showPointPrintInt__ (buf, sprintf (buf, "%lu", (unsigned long) value));
         } else {
             Serial.print (value);
         }
@@ -565,12 +565,16 @@
         }
     #endif
 
-    // Create a working instances
-    #ifdef ARDUINO_ARCH_AVR
-        extern ostream cout;
-        ostream cout;
+    // Create a working singleton instances
+    inline ostream& __getCoutInstance__ () {
+        static ostream instance;
+        return instance;
+    }
+
+    #if __cplusplus >= 201703L
+        inline ostream& cout = __getCoutInstance__ ();
     #else
-        inline ostream cout;
+        static ostream& cout = __getCoutInstance__ ();
     #endif
 
 #endif

@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  January 1, 2026, Bojan Jurca
+ *  March 12, 2026, Bojan Jurca
  *
  */
 
@@ -128,13 +128,18 @@
             virtual inline const char* getTimeFormat () const { return "%Y/%m/%d %r"; }
     };
 
-    // Create a working instance
-    #ifdef ARDUINO_ARCH_AVR
-        extern locale default_locale;
-        locale default_locale;
+    // Create a singleton working instance
+    inline locale& __getDefaultLocaleInstance__ () {
+        static locale instance;
+        return instance;
+    }
+
+    #if __cplusplus >= 201703L
+        inline locale& default_locale = __getDefaultLocaleInstance__ ();
     #else
-        inline locale default_locale;
+        static locale& default_locale = __getDefaultLocaleInstance__ ();
     #endif
+
 
     // ----- Locale en_150.UTF-8  -----
     class en_150_UTF_8_locale : public locale {

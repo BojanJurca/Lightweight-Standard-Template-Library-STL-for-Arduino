@@ -21,7 +21,7 @@
  *                              | __front__           __back__          |
  *                              |<-------------- __capacity__ --------->|  
  *
- *  Oct 23, 2025, Bojan Jurca
+ *  March 12, 2026, Bojan Jurca
  * 
  */
 
@@ -1479,9 +1479,16 @@
             // swap strings by swapping their stack memory so constructors doesn't get called and nothing can go wrong like running out of memory meanwhile 
             void __swapStrings__ (String *a, String *b) {
                 char tmp [sizeof (String)];
-                memcpy (tmp, a, sizeof (String));
-                memcpy (a, b, sizeof (String));
-                memcpy (b, tmp, sizeof (String));
+                #if defined(__GNUC__) && __GNUC__ >= 8
+                    #pragma GCC diagnostic push
+                    #pragma GCC diagnostic ignored "-Wclass-memaccess"
+                #endif                
+                    memcpy (tmp, a, sizeof (String));
+                    memcpy (a, b, sizeof (String));
+                    memcpy (b, tmp, sizeof (String));
+                #if defined(__GNUC__) && __GNUC__ >= 8
+                    #pragma GCC diagnostic pop
+                #endif                
             }
 
     };

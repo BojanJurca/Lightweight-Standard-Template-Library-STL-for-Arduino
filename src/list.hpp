@@ -15,6 +15,14 @@
     #define __LIST_HPP__
 
 
+    #include <new>
+
+
+    #ifdef __ALGORITHM_HPP__
+        #pragma message "Include list.hpp prior to including algorithm.hpp"
+    #endif
+
+
     // ----- TUNNING PARAMETERS -----
 
     // #define THROW_LIST_EXCEPTIONS  // uncomment this line if you want list to throw exceptions
@@ -156,7 +164,7 @@
             *  Calling program should check errorFlags () after constructor is beeing called for possible errors
             */
       
-            list (list& other) {
+            list (const list& other) {
                 // copy other's elements
                 for (auto element: other)
                     if (this->push_back (element)) // error
@@ -208,10 +216,7 @@
                     return err_bad_alloc;
                 }
 
-                memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR 
-                    new (newNode) node_t; 
-                #endif
+                new (newNode) node_t{};
 
                 // add the new element to the end
                 newNode->element = element;
@@ -251,10 +256,7 @@
                     return err_bad_alloc;
                 }
 
-                memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR 
-                    new (newNode) node_t; 
-                #endif
+                new (newNode) node_t{};
 
                 // add the new element to the beginning
                 newNode->element = element;
@@ -403,6 +405,11 @@
 
             iterator begin () { return iterator (__front__); }              // first element
             iterator end () { return iterator (NULL); }                     // past the last element
+
+            typedef iterator const_iterator;
+            const_iterator begin () const { return const_iterator (__front__); }
+            const_iterator end ()   const { return const_iterator (NULL); }
+
 
            /*
              * Deletes the element pointed to by iterator
@@ -631,7 +638,7 @@
             *  Calling program should check errorFlags () after constructor is beeing called for possible errors
             */
       
-            list (list& other) {
+            list (const list& other) {
                 // copy other's elements
                 for (String element: other) {
                     if (!element) {                             // ... check if parameter construction is valid
@@ -707,10 +714,7 @@
                     return err_bad_alloc;
                 }
 
-                memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR 
-                    new (newNode) node_t; 
-                #endif
+                new (newNode) node_t{};
 
                 // add the new element to the end
                 __swapStrings__ (&newNode->element, &element);
@@ -758,10 +762,7 @@
                     return err_bad_alloc;
                 }
 
-                memset (newNode, 0, sizeof (node_t));
-                #ifndef ARDUINO_ARCH_AVR 
-                    new (newNode) node_t; 
-                #endif
+                new (newNode) node_t{};
 
                 // add the new element to the beginning
                 __swapStrings__ (&newNode->element, &element);
@@ -906,6 +907,11 @@
             iterator begin () { return iterator (__front__); }              // first element
             iterator end () { return iterator (NULL); }                     // past the last element
 
+            typedef iterator const_iterator;
+            const_iterator begin () const { return const_iterator (__front__); }
+            const_iterator end ()   const { return const_iterator (NULL); }
+
+
            /*
              * Deletes the element pointed to by iterator
              */
@@ -959,9 +965,16 @@
             // swap strings by swapping their stack memory so constructors doesn't get called and nothing can go wrong like running out of memory meanwhile 
             void __swapStrings__ (String *a, String *b) {
                 char tmp [sizeof (String)];
-                memcpy (&tmp, a, sizeof (String));
-                memcpy (a, b, sizeof (String));
-                memcpy (b, tmp, sizeof (String));
+                #if defined(__GNUC__) && __GNUC__ >= 8
+                    #pragma GCC diagnostic push
+                    #pragma GCC diagnostic ignored "-Wclass-memaccess"
+                #endif
+                    memcpy (&tmp, a, sizeof (String));
+                    memcpy (a, b, sizeof (String));
+                    memcpy (b, tmp, sizeof (String));
+                #if defined(__GNUC__) && __GNUC__ >= 8
+                    #pragma GCC diagnostic pop
+                #endif
             }
 
     };

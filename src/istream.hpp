@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  January 1, 2026, Bojan Jurca
+ *  March 12, 2026, Bojan Jurca
  *
  */
 
@@ -221,12 +221,17 @@
 
     };
 
-    // Create a working instnces
-    #ifdef ARDUINO_ARCH_AVR
-        extern istream cin;
-        istream cin;
+    // Create a working singleton instnces
+    inline istream& __getCinInstance__ () {
+        static istream instance;
+        return instance;
+    }
+
+    #if __cplusplus >= 201703L
+        inline istream& cin = __getCinInstance__ ();
     #else
-        inline istream cin;
+        static istream& cin = __getCinInstance__ ();
     #endif
+
 
 #endif

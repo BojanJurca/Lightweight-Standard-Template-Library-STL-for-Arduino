@@ -428,9 +428,16 @@
                     if (largest != j) {     // if largest is not root
                         // swap [j] and [largest]
                         String tmp;
-                        memcpy (&tmp, &*(first + j), sizeof (String));
-                        memcpy (&*(first + j), &*(first + largest), sizeof (String));
-                        memcpy (&*(first + largest), &tmp, sizeof (String));                        
+                        #if defined(__GNUC__) && __GNUC__ >= 8
+                            #pragma GCC diagnostic push
+                            #pragma GCC diagnostic ignored "-Wclass-memaccess"
+                        #endif                        
+                            memcpy (&tmp, &*(first + j), sizeof (String));
+                            memcpy (&*(first + j), &*(first + largest), sizeof (String));
+                            memcpy (&*(first + largest), &tmp, sizeof (String));                        
+                        #if defined(__GNUC__) && __GNUC__ >= 8
+                            #pragma GCC diagnostic pop
+                        #endif                        
 
                         // heapify the affected subtree in the next iteration
                         j = largest;
@@ -461,9 +468,16 @@
                     if (largest != j) {     // if largest is not root
                         // swap [j] and [largest]
                         String tmp;
-                        memcpy (&tmp, &*(first + j), sizeof (String));
-                        memcpy (&*(first + j), &*(first + largest), sizeof (String));
-                        memcpy (&*(first + largest), &tmp, sizeof (String));                        
+                        #if defined(__GNUC__) && __GNUC__ >= 8
+                            #pragma GCC diagnostic push
+                            #pragma GCC diagnostic ignored "-Wclass-memaccess"
+                        #endif
+                            memcpy (&tmp, &*(first + j), sizeof (String));
+                            memcpy (&*(first + j), &*(first + largest), sizeof (String));
+                            memcpy (&*(first + largest), &tmp, sizeof (String));                        
+                        #if defined(__GNUC__) && __GNUC__ >= 8
+                            #pragma GCC diagnostic pop
+                        #endif
 
                         // heapify the affected subtree in the next iteration
                         j = largest;

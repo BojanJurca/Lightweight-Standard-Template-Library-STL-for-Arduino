@@ -14,6 +14,11 @@
     #define __QUEUE_HPP__
 
 
+    #ifdef __ALGORITHM_HPP__
+        #pragma message "Include queue.hpp preior to including algorithm.hpp"
+    #endif
+
+
     // ----- TUNNING PARAMETERS -----
 
     // #define __THROW_VECTOR_QUEUE_EXCEPTIONS__  // uncomment this line if you want queue to throw exceptions
