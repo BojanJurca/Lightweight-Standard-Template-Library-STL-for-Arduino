@@ -19,7 +19,14 @@ void setup () {
     #endif
 
 
-    setlocale (lc_all, "en_150.UTF-8");
+    #ifndef ARDUINO_ARCH_AVR
+        setlocale (lc_all, "en_150.UTF-8");
+    #else
+        // AVR board do not support time_t and struct tm types so lc_time can not be set
+        // ls_all includes lc_time so passing lc_all will always fail on AVR boards
+        // setlocale would return false
+        setlocale ((localeCategory_t) (lc_collate | lc_ctype | lc_numeric), "en_150.UTF-8");
+    #endif
 
 
     cout << "Temperature of the Sun's photosphere is " <<  5430 << " ℃\n";
