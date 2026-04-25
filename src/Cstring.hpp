@@ -3,7 +3,7 @@
  * 
  *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  * 
- *  Marchs 12, 2026 Bojan Jurca
+ *  March 12, 2026 Bojan Jurca
  *  
  */
 
@@ -236,7 +236,7 @@
                     #ifdef __LOCALE_HPP__
                         strftime (buf, sizeof (buf), lc_time_locale->getTimeFormat (), &st);
                     #else
-                        strftime (buf, sizeof (buf), "%Y/%m/%d %T", &st);
+                        strftime (buf, sizeof (buf), "%Y/%m/%d", &st); // "%Y/%m/%d %T", &st);
                     #endif
 
                     strncpy (this->__c_str__, buf, N + 1);
@@ -742,24 +742,21 @@
 
             #ifndef ARDUINO_ARCH_AVR
                 Cstring& operator += (const struct tm st) {                    // concatenate a struct tm to Cstring, like: a += st;
-                    if (!(__errorFlags__ & err_overflow)) {                       // if overwlow flag has not been set yet
-                        char buf [80];
-                        #ifdef __LOCALE_HPP__
-                            strftime (buf, sizeof (buf), lc_time_locale->getTimeFormat (), &st);
-                        #else
-                            strftime (buf, sizeof (buf), "%Y/%m/%d %T", &st);
-                        #endif
-
-                        strncat (this->__c_str__, buf, N + 1 - strlen (this->__c_str__));
-                        if (this->__c_str__ [N]) {
-                            this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
-                            this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
-                            this->__rTrimUnfinishedUtf8Character__ ();
-                        } 
-                    } 
+                    const char *format = "%Y/%m/%d %T";
+                    char buf [80];
+                    #ifdef __LOCALE_HPP__
+                        format = lc_time_locale->getTimeFormat ();
+                    #endif
+                    strftime (buf, sizeof (buf), format, &st);
+                    strncat (this->__c_str__, buf, N + 1 - strlen (this->__c_str__));
+                    if (this->__c_str__ [N]) {
+                        this->__errorFlags__ |= err_overflow;                 // add err_overflow flag to possibe already existing error flags
+                        this->__c_str__ [N] = 0;                              // mark the end of the string regardles OVERFLOW
+                        this->__rTrimUnfinishedUtf8Character__ ();
+                    }
                     return *this;
                 }
-            #endif   
+            #endif
 
 
             // + operator
@@ -1041,7 +1038,6 @@
             }
 
             bool isValidUtf8 () { 
-                size_t i = 0;
                 for (int i = 0; __c_str__ [i]; i ++) {
                     unsigned char c = __c_str__ [i];
 
@@ -1050,26 +1046,26 @@
                     } else if ((c & 0xE0) == 0xC0) { 
                         // 2-byte sequence
                         i ++;
-                        if (__c_str__ [i] & 0xC0 != 0x80)
+                        if ((__c_str__ [i] & 0xC0) != 0x80)
                             return false; // invalid continuation byte
                     } else if ((c & 0xF0) == 0xE0) { 
                         // 3-byte sequence
                         i ++;
-                        if (__c_str__ [i] & 0xC0 != 0x80)
+                        if ((__c_str__ [i] & 0xC0) != 0x80)
                             return false; // invalid continuation byte
                         i ++;
-                        if (__c_str__ [i] & 0xC0 != 0x80)
+                        if ((__c_str__ [i] & 0xC0) != 0x80)
                             return false; // invalid continuation bytes
                     } else if ((c & 0xF8) == 0xF0) { 
                         // 4-byte sequence
                         i ++;
-                        if (__c_str__ [i] & 0xC0 != 0x80)
+                        if ((__c_str__ [i] & 0xC0) != 0x80)
                             return false; // invalid continuation byte
                         i ++;
-                        if (__c_str__ [i] & 0xC0 != 0x80)
+                        if ((__c_str__ [i] & 0xC0) != 0x80)
                             return false; // invalid continuation byte
                         i ++;
-                        if (__c_str__ [i] & 0xC0 != 0x80)
+                        if ((__c_str__ [i] & 0xC0) != 0x80)
                             return false; // invalid continuation bytes
                     } else {
                         return false; // invalid leading byte

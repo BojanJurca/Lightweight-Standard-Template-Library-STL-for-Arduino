@@ -110,6 +110,18 @@
                 return *this << static_cast<const char *> (value);
             }
 
+            #ifdef _IPAddress_h
+                inline ostream& operator << (const IPAddress& ip) {
+                    Serial.print (ip [0]);
+                    Serial.print ('.');
+                    Serial.print (ip [1]);
+                    Serial.print ('.');
+                    Serial.print (ip [2]);
+                    Serial.print ('.');
+                    Serial.print (ip [3]);
+                    return *this;
+                }
+            #endif
 
             template<typename T>
             inline ostream& operator << (const T& value) {

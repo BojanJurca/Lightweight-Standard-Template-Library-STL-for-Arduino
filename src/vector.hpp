@@ -703,7 +703,10 @@
                     return err_bad_alloc;
                 }
 
-                memset (newElements, 0, sizeof (vectorType) * newCapacity);
+                #pragma GCC diagnostic push
+                #pragma GCC diagnostic ignored "-Wclass-memaccess"
+                memset(newElements, 0, sizeof (vectorType) * newCapacity);
+                #pragma GCC diagnostic pop
                 #ifndef ARDUINO_ARCH_AVR
                     new (newElements) vectorType [newCapacity]; 
                 #endif
@@ -1435,7 +1438,10 @@
                     return err_bad_alloc;
                 }
 
+                #pragma GCC diagnostic push
+                #pragma GCC diagnostic ignored "-Wclass-memaccess"
                 memset (newElements, 0, sizeof (String) * newCapacity);
+                #pragma GCC diagnostic pop
                 #ifndef ARDUINO_ARCH_AVR
                     new (newElements) String [newCapacity];
                 #else

@@ -79,10 +79,10 @@
     enum localeCategory_t {
         lc_collate  = 0b00000001, // LC_COLLATE is used for string comparison and sorting. It defines how strings are compared and sorted according to the rules of the specified locale.
         lc_ctype    = 0b00000010, // LC_CTYPE is crucial for character classification and conversion functions. It governs what’s considered a letter, digit, punctuation mark, etc., and how characters convert between uppercase and lowercase.
-        lc_monetary = 0b00000100, // LC_MONETARY is used to format monetary values according to the rules of a specified locale.
+        // lc_monetary = 0b00000100, // LC_MONETARY is used to format monetary values according to the rules of a specified locale.
         lc_numeric  = 0b00001000, // LC_NUMERIC controls the formatting of numbers, specifically the decimal point and thousands separator, according to the rules of a specified locale.
         lc_time     = 0b00010000, // LC_TIME controls the formatting of dates and times according to the locale's rules.
-        lc_messages = 0b00100000, // LC_MESSAGES handles the localization of system messages and prompts. It ensures that messages, warnings, and errors are displayed in the appropriate language and format for the user's locale.
+        // lc_messages = 0b00100000, // LC_MESSAGES handles the localization of system messages and prompts. It ensures that messages, warnings, and errors are displayed in the appropriate language and format for the user's locale.
         lc_all      = 0b00111111
     };
 
@@ -128,18 +128,11 @@
             virtual inline const char* getTimeFormat () const { return "%Y/%m/%d %r"; }
     };
 
-    // Create a singleton working instance
-    inline locale& __getDefaultLocaleInstance__ () {
+    // Create a Meyers Singleton working instances
+    inline locale& __lc_default__ () {
         static locale instance;
         return instance;
     }
-
-    #if __cplusplus >= 201703L
-        inline locale& default_locale = __getDefaultLocaleInstance__ ();
-    #else
-        static locale& default_locale = __getDefaultLocaleInstance__ ();
-    #endif
-
 
     // ----- Locale en_150.UTF-8  -----
     class en_150_UTF_8_locale : public locale {
@@ -156,10 +149,10 @@
 
     // Add new locale instance to the supported locale list
     inline bool addlocale (locale *loc) {
-        if (loc->name () == NULL) // only the default locale has no ID string
+        if (loc == NULL || loc->name () == NULL) // only the default locale has no ID string
             return false;
 
-        locale *p = &default_locale;
+        locale *p = &__lc_default__ ();
         while (p->nextLocale != NULL) {
             if (!strcmp (p->name (), loc->name ()))
                 return false;
@@ -170,48 +163,73 @@
         return true;
     };
 
-    // Create a working instance and insert it into supported locale list
-    bool __locale_en_150_UTF_8__ = addlocale (new en_150_UTF_8_locale);
-
-    // setlocale
+    // Create a instance and insert it into supported locale list
     #ifdef ARDUINO_ARCH_AVR
-        extern locale *lc_collate_locale;
-        locale *lc_collate_locale = &default_locale;
-        extern locale *lc_ctype_locale;
-        locale *lc_ctype_locale = &default_locale;
-        extern locale *lc_numeric_locale;
-        locale *lc_numeric_locale = &default_locale;
-        extern locale *lc_time_locale;
-        locale *lc_time_locale = &default_locale;
+        bool __locale_en_150_UTF_8__ = addlocale (new en_150_UTF_8_locale);
     #else
-        inline locale *lc_collate_locale = &default_locale;
-        inline locale *lc_ctype_locale = &default_locale;
-        inline locale *lc_numeric_locale = &default_locale;
-        inline locale *lc_time_locale = &default_locale;
+        bool __locale_en_150_UTF_8__ = addlocale (new (std::nothrow) en_150_UTF_8_locale);
     #endif
 
+    // setlocale
+    // inline locale *lc_collate_locale = &default_locale;
+    inline locale*& __lc_collate_locale_ptr__ () {
+        static locale* ptr = &__lc_default__ ();
+        return ptr;
+    }
+    #define lc_collate_locale (__lc_collate_locale_ptr__ ())
+    
+    // Meyers Singletons with indirection
+
+    // inline locale *lc_ctype_locale = &default_locale;
+    inline locale*& __lc_ctype_locale_ptr__ () {
+        static locale* ptr = &__lc_default__ ();
+        return ptr;
+    }
+    #define lc_ctype_locale (__lc_ctype_locale_ptr__ ())
+
+    // inline locale *lc_numeric_locale = &default_locale;
+    inline locale*& __lc_numeric_locale_ptr__ () {
+        static locale* ptr = &__lc_default__ ();
+        return ptr;
+    }
+    #define lc_numeric_locale (__lc_numeric_locale_ptr__ ())
+
+    // inline locale *lc_time_locale = &default_locale;
+    inline locale*& __lc_time_locale_ptr__ () {
+        static locale* ptr = &__lc_default__ ();
+        return ptr;
+    }
+    #define lc_time_locale (__lc_time_locale_ptr__ ())        
+
     inline bool setlocale (localeCategory_t category, const char *name) {
-        // find locale with name
-        locale *p = &default_locale;
+        // find locale by name
+        locale *p = &__lc_default__ ();
         while (p && strcmp (p->name (), name))
             p = p->nextLocale;
 
         if (!p) // not found
             return false;
 
-        if (category & lc_collate)
-            lc_collate_locale = p;
-
-        if (category & lc_ctype)
-            lc_ctype_locale = p;
-
-        if (category & lc_numeric)
-            lc_numeric_locale = p;
-
         #ifndef ARDUINO_ARCH_AVR
             if (category & lc_time)
-                lc_time_locale = p;
+                // lc_time_locale = p;
+                __lc_time_locale_ptr__ () = p; // rebind
+        #else
+            if (category & lc_time)
+                return false; // AVR boards do not support struct tm
         #endif
+
+        if (category & lc_collate)
+            // lc_collate_locale = p;
+            __lc_collate_locale_ptr__ () = p; // rebind
+
+        if (category & lc_ctype)
+            // lc_ctype_locale = p;
+            __lc_ctype_locale_ptr__ () = p; // rebind
+
+        if (category & lc_numeric)
+            // lc_numeric_locale = p;
+            __lc_numeric_locale_ptr__ () = p; // rebind
 
         return true;
     }
