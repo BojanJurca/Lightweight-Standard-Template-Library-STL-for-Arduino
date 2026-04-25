@@ -131,7 +131,17 @@ bool __sl_SI_UTF_8_locale__ = addlocale (new sl_SI_UTF_8_locale);
 void setup () {
     cinit (); // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
 
-    setlocale (lc_all, "sl_SI.UTF-8"); // 🔟 call setlocale to choose the locale you just have created
+
+    // 🔟 call setlocale to choose the locale you just have created
+    #ifndef ARDUINO_ARCH_AVR
+            setlocale (lc_all, "sl_SI.UTF-8"); 
+    #else
+        // AVR board do not support time_t and struct tm types so lc_time can not be set
+        // ls_all includes lc_time so passing lc_all will always fail on AVR boards
+        // setlocale would return false
+        setlocale ((localeCategory_t) (lc_collate | lc_ctype | lc_numeric), "sl_SI.UTF-8");
+    #endif
+
 
     // lc_ctype
 
