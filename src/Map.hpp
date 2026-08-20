@@ -7,7 +7,7 @@
  *
  *  Map functions are not thread-safe.
  * 
- *  Oct 23, 2025, Bojan Jurca
+ *  Aug 12, 2026, Bojan Jurca
  *  
  */
 
@@ -86,16 +86,14 @@
                 Map (std::initializer_list<Pair> il) {
                     for (auto i: il) {
 
-                        if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                            if (!*(String *) &i.first) {                           // ... check if parameter construction is valid
-                                // log_e ("BAD_ALLOC");
+                        if constexpr (is_same<keyType, String>::value)
+                            if (!i.first) { // if i.first construction failed
                                 __errorFlags__ = err_bad_alloc;         // report error if it is not
                                 return;
                             }
 
-                        if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                            if (!*(String *) &i.second) {                         // ... check if parameter construction is valid
-                                // log_e ("BAD_ALLOC");
+                        if constexpr (is_same<valueType, String>::value)
+                            if (!i.second) { // if i.second construction failed
                                 __errorFlags__ = err_bad_alloc;         // report error if it is not
                                 return;
                             }
@@ -113,8 +111,8 @@
                 Map (const typename Map<keyType, valueType>::Pair (&array) [N]) {
                     for (int i = 0; i < N; ++i) {
                         
-                        if (is_same<keyType, String>::value)     // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                            if (!*(String *) &(array [i]).first) {        // ... check if parameter construction is valid
+                        if constexpr (is_same<keyType, String>::value)
+                            if (!array [i].first) { // if array [i].first construction failed
                                 #ifdef USE_MAP_EXCEPTIONS
                                     throw err_bad_alloc;
                                 #endif
@@ -122,8 +120,8 @@
                                 break;
                             }
 
-                        if (is_same<valueType, String>::value)   // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                            if (!*(String *) &(array [i]).second) {       // ... check if parameter construction is valid
+                        if constexpr (is_same<valueType, String>::value)
+                            if (!array [i].second) { // if array [i].second construction failed
                                 #ifdef USE_MAP_EXCEPTIONS
                                     throw err_bad_alloc;
                                 #endif
@@ -221,9 +219,8 @@
                 // copy other's pairs
                 for (auto e: other) {
 
-                    if (is_same<keyType, String>::value)     // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                        if (!*(String *) &e.first) {                            // ... check if parameter construction is valid
-                            // log_e ("BAD_ALLOC");
+                    if constexpr (is_same<keyType, String>::value)
+                        if (!e.first) { // if e.first construction failed
                             #ifdef USE_MAP_EXCEPTIONS
                                 throw err_bad_alloc;
                             #endif
@@ -231,9 +228,8 @@
                             return this;
                         }
 
-                    if (is_same<valueType, String>::value)   // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                        if (!*(String *) &e.second) {                          // ... check if parameter construction is valid
-                            // log_e ("BAD_ALLOC");
+                    if constexpr (is_same<valueType, String>::value)
+                        if (!e.second) { // if e.second construction failed
                             #ifdef USE_MAP_EXCEPTIONS
                                 throw err_bad_alloc;
                             #endif
@@ -267,9 +263,8 @@
                 static valueType dummyValue1 = {};
                 static valueType dummyValue2 = {};
 
-                if (is_same<keyType, String>::value)      // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &key) {              // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<keyType, String>::value)
+                    if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -306,9 +301,8 @@
                 static valueType dummyValue1 = {};
                 static valueType dummyValue2 = {};
 
-                if (is_same<keyType, String>::value)      // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &key) {              // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<keyType, String>::value)
+                    if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -342,9 +336,8 @@
 
             signed char erase (keyType key) { 
 
-                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &key) {                 // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<keyType, String>::value)
+                    if (!key) { // if key construction is valid
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -368,9 +361,8 @@
 
             signed char insert (Pair pair) { 
 
-                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &pair.first) {                        // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<keyType, String>::value)
+                    if (!pair.first) { // if pair.first construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -378,9 +370,8 @@
                         return err_bad_alloc;                   // report error if it is not
                     }
 
-                if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &pair.second) {                      // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<valueType, String>::value)
+                    if (!pair.second) { // if pair.second construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -399,9 +390,8 @@
 
             signed char insert (keyType key, valueType value) { 
 
-                if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &key) {                             // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<keyType, String>::value)
+                    if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -409,9 +399,8 @@
                         return err_bad_alloc;                   // report error if it is not
                     }
 
-                if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &value) {               // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<valueType, String>::value)
+                    if (!value) { // if value construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -608,9 +597,8 @@
             
             iterator find (keyType key) {
 
-                if (is_same<keyType, String>::value)      // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                    if (!*(String *) &key) {              // ... check if parameter construction is valid
-                        // log_e ("BAD_ALLOC");
+                if constexpr (is_same<keyType, String>::value)
+                    if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
                         #endif
@@ -689,12 +677,12 @@
                     *pInserted = n;
 
                         // in case of Strings - it is possible that key and value didn't get constructed, so just swap stack memory with parameters - this always succeeds
-                        if (is_same<keyType, String>::value)   // if key is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                            if (!*(String *) &n->pair.first)                       // ... check if parameter construction is valid
-                                __swapStrings__ ((String *) &n->pair.first, (String *) &key); 
-                        if (is_same<valueType, String>::value) // if value is of type String ... (if anyone knows hot to do this in compile-time a feedback is welcome)
-                            if (!*(String *) &n->pair.second)                     // ... check if parameter construction is valid
-                                __swapStrings__ ((String *) &n->pair.second, (String *) &value);
+                        if constexpr (is_same<keyType, String>::value)
+                            if (!n->pair.first) // if n->pair.first construction failed
+                                __swapStrings__ (n->pair.first, key); 
+                        if constexpr (is_same<valueType, String>::value)
+                            if (!n->pair.second) // if n->pair.second construction failed
+                                __swapStrings__ (n->pair.second, value);
 
                     *p = n;
                     __size__ ++;
@@ -703,8 +691,6 @@
                 
                 // 2. case: add a new node to the left subtree of the current node
                 if (key < (*p)->pair.first) {
-                    // log_i ("add a new node to the left subtree");
-
                     int h = __insert__ (&((*p)->leftSubtree), key, value, pInserted);
                     if (h < 0) return h; // < 0 means an error
                     (*p)->leftSubtreeHeight = h;
@@ -746,7 +732,6 @@
     
                 // 3. case: the node with the same values already exists 
                 if (!((*p)->pair.first < key)) { // meaning at this point that key == (*p)->pair.first
-                    // log_e ("NOT_UNIQUE");
                     #ifdef USE_MAP_EXCEPTIONS
                         throw err_not_unique;
                     #endif
@@ -755,8 +740,6 @@
                 }
         
                 // 4. case: add a new node to the right subtree of the current node
-                // log_i ("add a new node to the right subtree");
-
                 int h = __insert__ (&((*p)->rightSubtree), key, value, pInserted);
                 if (h < 0) return h; // < 0 means an error
                 (*p)->rightSubtreeHeight = h;
@@ -799,7 +782,6 @@
             signed char __erase__ (__balancedBinarySearchTreeNode__ **p, keyType& key) { // returns the height of balanced binary search tree or error
                 // 1. case: a leaf has been reached - key was not found
                 if ((*p) == NULL) {
-                    // log_e ("NOT_FOUND");
                     #ifdef USE_MAP_EXCEPTIONS
                         throw err_not_found;
                     #endif                    
