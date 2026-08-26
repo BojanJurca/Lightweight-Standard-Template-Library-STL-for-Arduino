@@ -451,9 +451,16 @@
             for (-- n; n > 0; n --) {
                 // move current root to end
                 String tmp;
-                memcpy (&tmp, &*(first + 0), sizeof (String));
-                memcpy (&*(first + 0), &*(first + n), sizeof (String));
-                memcpy (&*(first + n), &tmp, sizeof (String));                        
+                #if defined(__GNUC__) && __GNUC__ >= 8
+                    #pragma GCC diagnostic push
+                    #pragma GCC diagnostic ignored "-Wclass-memaccess"
+                #endif
+                    memcpy (&tmp, &*(first + 0), sizeof (String));
+                    memcpy (&*(first + 0), &*(first + n), sizeof (String));
+                    memcpy (&*(first + n), &tmp, sizeof (String));                        
+                #if defined(__GNUC__) && __GNUC__ >= 8
+                    #pragma GCC diagnostic pop
+                #endif
 
                 // heapify the reduced heap 0 .. n
                 int j = 0;

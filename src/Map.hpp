@@ -111,7 +111,8 @@
                 Map (const typename Map<keyType, valueType>::Pair (&array) [N]) {
                     for (int i = 0; i < N; ++i) {
                         
-                        if constexpr (is_same<keyType, String>::value)
+                        constexpr bool key_is_String = is_same<keyType, String>::value;
+                        if (key_is_String)
                             if (!array [i].first) { // if array [i].first construction failed
                                 #ifdef USE_MAP_EXCEPTIONS
                                     throw err_bad_alloc;
@@ -120,7 +121,8 @@
                                 break;
                             }
 
-                        if constexpr (is_same<valueType, String>::value)
+                        constexpr bool value_is_String = is_same<valueType, String>::value;
+                        if (value_is_String)
                             if (!array [i].second) { // if array [i].second construction failed
                                 #ifdef USE_MAP_EXCEPTIONS
                                     throw err_bad_alloc;
@@ -219,7 +221,8 @@
                 // copy other's pairs
                 for (auto e: other) {
 
-                    if constexpr (is_same<keyType, String>::value)
+                    constexpr bool key_is_String = is_same<keyType, String>::value;
+                    if (key_is_String)
                         if (!e.first) { // if e.first construction failed
                             #ifdef USE_MAP_EXCEPTIONS
                                 throw err_bad_alloc;
@@ -228,7 +231,8 @@
                             return this;
                         }
 
-                    if constexpr (is_same<valueType, String>::value)
+                    constexpr bool value_is_String = is_same<valueType, String>::value;
+                    if (value_is_String)
                         if (!e.second) { // if e.second construction failed
                             #ifdef USE_MAP_EXCEPTIONS
                                 throw err_bad_alloc;
@@ -263,7 +267,8 @@
                 static valueType dummyValue1 = {};
                 static valueType dummyValue2 = {};
 
-                if constexpr (is_same<keyType, String>::value)
+                constexpr bool key_is_String = is_same<keyType, String>::value;
+                if (key_is_String)
                     if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -301,7 +306,8 @@
                 static valueType dummyValue1 = {};
                 static valueType dummyValue2 = {};
 
-                if constexpr (is_same<keyType, String>::value)
+                constexpr bool key_is_String = is_same<keyType, String>::value;
+                if (key_is_String)
                     if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -336,7 +342,8 @@
 
             signed char erase (keyType key) { 
 
-                if constexpr (is_same<keyType, String>::value)
+                constexpr bool key_is_String = is_same<keyType, String>::value;
+                if (key_is_String)
                     if (!key) { // if key construction is valid
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -361,7 +368,8 @@
 
             signed char insert (Pair pair) { 
 
-                if constexpr (is_same<keyType, String>::value)
+                constexpr bool key_is_String = is_same<keyType, String>::value;
+                if (key_is_String)
                     if (!pair.first) { // if pair.first construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -370,7 +378,8 @@
                         return err_bad_alloc;                   // report error if it is not
                     }
 
-                if constexpr (is_same<valueType, String>::value)
+                constexpr bool value_is_String = is_same<valueType, String>::value;
+                if (value_is_String)
                     if (!pair.second) { // if pair.second construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -390,7 +399,8 @@
 
             signed char insert (keyType key, valueType value) { 
 
-                if constexpr (is_same<keyType, String>::value)
+                constexpr bool key_is_String = is_same<keyType, String>::value;
+                if (key_is_String)
                     if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -399,7 +409,8 @@
                         return err_bad_alloc;                   // report error if it is not
                     }
 
-                if constexpr (is_same<valueType, String>::value)
+                constexpr bool value_is_String = is_same<valueType, String>::value;
+                if (value_is_String)
                     if (!value) { // if value construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -597,7 +608,8 @@
             
             iterator find (keyType key) {
 
-                if constexpr (is_same<keyType, String>::value)
+                constexpr bool key_is_String = is_same<keyType, String>::value;
+                if (key_is_String)
                     if (!key) { // if key construction failed
                         #ifdef USE_MAP_EXCEPTIONS
                             throw err_bad_alloc;
@@ -677,12 +689,14 @@
                     *pInserted = n;
 
                         // in case of Strings - it is possible that key and value didn't get constructed, so just swap stack memory with parameters - this always succeeds
-                        if constexpr (is_same<keyType, String>::value)
+                        constexpr bool key_is_String = is_same<keyType, String>::value;
+                        if (key_is_String)
                             if (!n->pair.first) // if n->pair.first construction failed
-                                __swapStrings__ (n->pair.first, key); 
-                        if constexpr (is_same<valueType, String>::value)
+                                __swapStrings__ ((String *)&n->pair.first, (String *) &key); 
+                        constexpr bool value_is_String = is_same<valueType, String>::value;
+                        if (value_is_String)
                             if (!n->pair.second) // if n->pair.second construction failed
-                                __swapStrings__ (n->pair.second, value);
+                                __swapStrings__ ((String *) &n->pair.second, (String *) &value);
 
                     *p = n;
                     __size__ ++;
