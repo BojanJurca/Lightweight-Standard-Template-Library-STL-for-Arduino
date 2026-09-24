@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  March 12, 2026, Bojan Jurca
+ *  Sep 9, 2026, Bojan Jurca
  *
  */
 
@@ -126,6 +126,19 @@
             virtual inline char getThousandsSeparator () const { return ','; }
             // lc_time
             virtual inline const char* getTimeFormat () const { return "%Y/%m/%d %r"; }
+
+            // Temperature unit is not part of C++ locale settings - let's just assume that
+            // the only countries that use Fahrenheit (°F) are USA, Belize, Bahami, Palau, Kayman islands
+            // everybody else uses Celsius (°C) 
+            // and that corresponding locale is implemented
+            virtual char getTemperatureUnit () const {
+                if (strncmp (name (), "en_US.", 6) == 0 ||
+                    strncmp (name (), "en_BS.", 6) == 0 ||
+                    strncmp (name (), "en_BZ.", 6) == 0 ||
+                    strncmp (name (), "en_KY.", 6) == 0 ||
+                    strncmp (name (), "en_PW.", 6) == 0) return 'F';
+                return 'C';
+            }
     };
 
     // Create a Meyers Singleton working instances
@@ -147,6 +160,16 @@
             inline const char* getTimeFormat () const override { return "%d/%m/%Y %H:%M:%S"; }
     };
 
+    // ----- Locale en_150.UTF-8  -----
+    class en_US_UTF_8_locale : public locale {
+        public:
+            // locale name
+            inline const char* name () const override { return "en_US.UTF-8"; }
+            // lc_ctype
+            // lc_numeric
+            // lc_time
+    };
+
     // Add new locale instance to the supported locale list
     inline bool addlocale (locale *loc) {
         if (loc == NULL || loc->name () == NULL) // only the default locale has no ID string
@@ -166,11 +189,20 @@
     // Create a instance and insert it into supported locale list
     #ifdef ARDUINO_ARCH_AVR
         bool __locale_en_150_UTF_8__ = addlocale (new en_150_UTF_8_locale);
+        bool __locale_en_US_UTF_8__ = addlocale (new en_US_UTF_8_locale);
     #else
         bool __locale_en_150_UTF_8__ = addlocale (new (std::nothrow) en_150_UTF_8_locale);
+        bool __locale_en_US_UTF_8__ = addlocale (new (std::nothrow) en_US_UTF_8_locale);
     #endif
 
     // setlocale
+    // inline locale *getlocale = &default_locale;
+    inline locale*& __lc_current_locale_ptr__ () {
+        static locale* ptr = &__lc_default__ ();
+        return ptr;
+    }
+    inline locale* getlocale () { return __lc_current_locale_ptr__ (); }
+
     // inline locale *lc_collate_locale = &default_locale;
     inline locale*& __lc_collate_locale_ptr__ () {
         static locale* ptr = &__lc_default__ ();
@@ -209,6 +241,8 @@
 
         if (!p) // not found
             return false;
+
+        __lc_current_locale_ptr__ () = p; // rebind
 
         #ifndef ARDUINO_ARCH_AVR
             if (category & lc_time)

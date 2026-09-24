@@ -3,7 +3,7 @@
  *
  *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
  *
- *  March 12, 2026, Bojan Jurca
+ *  Sep 9, 2026, Bojan Jurca
  *
  */
 
@@ -548,31 +548,32 @@
     #endif
 
     // explicit ostream class specialization for uth8char
-    #ifdef __UTF8CHAR__
+    #ifdef __LOCALE_HPP__
+
         template<>
-        inline ostream& ostream::operator << <utf8char> (const utf8char& value) {
+        inline ostream& ostream::operator<<(const utf8char& value) {
             utf8char u8 = value;
 
-            char c = u8.__c_str__ [0] = value.__c_str__ [0];
+            char c = u8.c_str [0] = value.c_str [0];
             if ((c & 0x80) == 0) { // 1-byte character
-                u8.__c_str__ [1] = 0;
+                u8.c_str [1] = 0;
             } else if ((c & 0xE0) == 0xC0) { // 2-byte character
-                u8.__c_str__ [1] = value.__c_str__ [1];
-                u8.__c_str__ [2] = 0;
+                u8.c_str [1] = value.c_str [1];
+                u8.c_str [2] = 0;
             } else if ((c & 0xF0) == 0xE0) { // 3-byte character
-                u8.__c_str__ [1] = value.__c_str__ [1];
-                u8.__c_str__ [2] = value.__c_str__ [2];
-                u8.__c_str__ [3] = 0;
+                u8.c_str [1] = value.c_str [1];
+                u8.c_str [2] = value.c_str [2];
+                u8.c_str [3] = 0;
             } else if ((c & 0xF8) == 0xF0) { // 4-byte character
-                u8.__c_str__ [1] = value.__c_str__ [1];
-                u8.__c_str__ [2] = value.__c_str__ [2];
-                u8.__c_str__ [3] = value.__c_str__ [3];
-                u8.__c_str__ [4] = 0;
+                u8.c_str [1] = value.c_str [1];
+                u8.c_str [2] = value.c_str [2];
+                u8.c_str [3] = value.c_str [3];
+                u8.c_str [4] = 0;
             } else { // invalid UTF-8 character
-                u8.__c_str__ [1] = 0; 
+                u8.c_str [1] = 0; 
             }
 
-            Serial.print (u8.__c_str__);
+            Serial.print (u8.c_str);
             return *this;
         }
     #endif
