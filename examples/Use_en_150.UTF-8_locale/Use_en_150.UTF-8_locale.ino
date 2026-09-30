@@ -1,6 +1,6 @@
 #include <locale.hpp>
 
-// Please note tht as soon as locale.hpp is included the following three locales are 
+// Please note that as soon as locale.hpp is included the following three locales are 
 // already available: ASCII (default), en_US.UTF-8 and en_150.UTF-8.
 // Any additional locale you would like to use you need to implement on your own as shown in Create_custom_locale example
 
@@ -9,7 +9,9 @@
 
 
 void setup () {
-    cinit (); // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
+
+    // Optionally call:
+    // cinit (); // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
 
     cout << fixed << setprecision (6) << showpoint;
 
