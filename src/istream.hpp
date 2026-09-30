@@ -1,15 +1,17 @@
 /*
  *  istream.hpp for Arduino
  *
- *  This file is part of cin, cout library for Arduino: https://github.com/BojanJurca/cin-cout-for-Arduino
+ *  This file is part of Lightweight C++ Standard Template Library (STL) for Arduino: https://github.com/BojanJurca/Lightweight-Standard-Template-Library-STL-for-Arduino
  *
- *  March 12, 2026, Bojan Jurca
+ *  Oct 10, 2026, Bojan Jurca
  *
  */
 
 
 #ifndef __ISTREAM_HPP__
     #define __ISTREAM_HPP__
+
+    #include <iostream_common.hpp>
 
 
     // ----- TUNNING PARAMETERS -----
@@ -18,30 +20,6 @@
 
 
     // ----- CODE -----
-
-
-    // Serial initialization
-    #ifndef __CINIT__
-        #define __CINIT__
-
-        #ifdef ARDUINO_ARCH_AVR 
-            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 9600) {
-                Serial.begin (serialSpeed);
-                if (waitForSerial)
-                    while (!Serial) 
-                        delay (10);
-                delay (waitAfterSerial);
-            }
-        #else
-            inline void cinit (bool waitForSerial = false, unsigned int waitAfterSerial = 100, unsigned int serialSpeed = 115200) {
-                Serial.begin (serialSpeed);
-                if (waitForSerial)
-                    while (!Serial) 
-                        delay (10);
-                delay (waitAfterSerial);
-            }
-        #endif
-    #endif
 
 
     class istream {
@@ -54,6 +32,8 @@
 
         // istream >> char
         inline istream& operator >> (char& value) {
+            __checkIostreamInitialized__ ();
+
             while (!Serial.available ()) 
                 delay (10);
             value = Serial.read ();            
@@ -62,6 +42,8 @@
 
         // istream >> int
         inline istream& operator >> (int& value) {
+            __checkIostreamInitialized__ ();
+
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -92,6 +74,8 @@
 
         // istream >> long
         inline istream& operator >> (long& value) {
+            __checkIostreamInitialized__ ();
+
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -122,6 +106,8 @@
 
         // istream >> float
         istream& operator >> (float& value) {
+            __checkIostreamInitialized__ ();
+
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -142,6 +128,8 @@
 
         // istream >> double
         inline istream& operator >> (double& value) {
+            __checkIostreamInitialized__ ();
+
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -162,6 +150,8 @@
 
         // istream >> char * // warning, it doesn't chech buffer overflow
         inline istream& operator >> (char *value) {
+            __checkIostreamInitialized__ ();
+
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
@@ -182,6 +172,8 @@
         // istream >> any other class that has a constructor of type T (char *)
         template<typename T>
         inline istream& operator >> (T& value) {
+            __checkIostreamInitialized__ ();
+            
             buf [0] = 0;
             int i = 0;
             while (i < __CONSOLE_BUFFER_SIZE__ - 1) {
