@@ -42,7 +42,8 @@ void fft (complex<T> (&output) [N], const complex<T> (&input) [N]) {
 
 void setup () {
 
-    cinit (true);                                             // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
+    // Optionally call:
+    // cinit (true);                                             // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
 
     #define N 256
 
