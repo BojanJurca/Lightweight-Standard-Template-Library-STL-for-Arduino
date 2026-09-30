@@ -14,7 +14,8 @@
 
 void setup () {
 
-    cinit ();                                                       // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
+    // Optionally call:
+    // cinit ();                                                       // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
 
     // Initialize list with some Fibonacci numbers
     list<int> Fibonacci ( { -1, 0, 1, 1, 2, 3, 5, 8 } );
