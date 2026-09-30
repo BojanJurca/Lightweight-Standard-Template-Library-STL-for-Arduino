@@ -1,8 +1,6 @@
 #include <locale.hpp>
 // #include <istream.hpp>
 #include <ostream.hpp>
-
-
 /*
 
     Create your own locale. The following is an example for sl_SI.UTF-8.
@@ -129,7 +127,9 @@ bool __sl_SI_UTF_8_locale__ = addlocale (new sl_SI_UTF_8_locale);
 
 
 void setup () {
-    cinit (); // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
+
+    // Optionally call:
+    // cinit (); // three optional arguments: bool waitForSerial = false, unsigned int waitAfterSerial = 100 [ms], unsigned int serialSpeed = 115200 (9600 for AVR boards)
 
 
     // 🔟 call setlocale to choose the locale you just have created
